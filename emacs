@@ -610,27 +610,29 @@ The 'MJR' comments come in one of two forms:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: PKG SETUP: linum")
-(if (require 'linum nil :noerror)
-    (progn (global-linum-mode -1)
-           (dolist (m '(emacs-lisp-mode-hook
-                        fortran-mode-hook
-                        perl-mode-hook
-                        cperl-mode-hook
-                        lisp-mode-hook
-                        ess-mode-hook
-                        sh-mode-hook
-                        c++-mode-hook
-                        java-mode-hook
-                        js-mode-hook
-                        python-mode-hook
-                        ruby-mode-hook
-                        text-mode-hook
-                        html-mode-hook
-                        c-mode-hook))
-             (add-hook m (lambda ()
-                           (message "MJR: POST-INIT(%s): HOOK: +linum-mode" (MJR-date "%Y-%m-%d_%H:%M:%S" nil))
-                           (linum-mode 1)))))
-    (message "MJR: INIT: PKG SETUP: linum: WARNING: Could not load package"))
+(if (not MJR-pookie-mode)
+    (if (require 'linum nil :noerror)
+        (progn (global-linum-mode -1)
+               (dolist (m '(emacs-lisp-mode-hook
+                            fortran-mode-hook
+                            perl-mode-hook
+                            cperl-mode-hook
+                            lisp-mode-hook
+                            ess-mode-hook
+                            sh-mode-hook
+                            c++-mode-hook
+                            java-mode-hook
+                            js-mode-hook
+                            python-mode-hook
+                            ruby-mode-hook
+                            text-mode-hook
+                            html-mode-hook
+                            c-mode-hook))
+                 (add-hook m (lambda ()
+                               (message "MJR: POST-INIT(%s): HOOK: +linum-mode" (MJR-date "%Y-%m-%d_%H:%M:%S" nil))
+                               (linum-mode 1)))))
+        (message "MJR: INIT: PKG SETUP: linum: WARNING: Could not load package"))
+    (message "MJR: INIT: PKG SETUP: linum: WARNING: SKIP: pookie mode!"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: PKG SETUP: dired")
