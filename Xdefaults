@@ -19,6 +19,17 @@
 !!   (/ 1920 (* 7085 1/100 245/100 1.0)) => 11.06 inches
 !!   (/ 1200 (* 5911 1/100 245/100 1.0)) =>  8.29 inches
 
+!! Fonts I like
+!!
+!! -*-fixed-WT-r-*-*-*-SZ-*-*-*-*-*-16
+!!   SZ: 200 140 130 120 110
+!!   WT: medium bold
+!!
+!! -*-terminus-WT-r-*-*-*-SZ-*-*-*-*-*-16
+!!   SZ: 220 180 160 140 120
+!!   WT: medium bold
+
+
 #define SMALL_FONT -xos4-terminus-medium-r-*-*-*-120-100-100-*-*-iso8859-16
 #define MED_FONT   -xos4-terminus-bold-r-*-*-*-160-100-100-*-*-iso8859-16
 #define LARGE_FONT -xos4-terminus-bold-r-*-*-*-220-100-100-*-*-iso8859-16

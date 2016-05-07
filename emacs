@@ -38,6 +38,8 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(require 'cl)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: STAGE: Start Customizing Emacs....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -51,18 +53,38 @@
 (message "MJR: INIT: STAGE: Manual-Meta-Config...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(setq MJR-expert-mode 't)                     ;; Make Emacs less or more friendly
-(setq MJR-pookie-mode nil)                    ;; Set some things they way my girl likes it
-(setq MJR-home-bin    "/home/richmit/bin")    ;; Where to look for scripts (NO TRAILING SLASH)
-(setq MJR-home-cor    "/home/richmit/core")   ;; Location for 'core' data (NO TRAILING SLASH)
-(setq MJR-home-dot    "/home/richmit")        ;; Location dot files 
-(setq MJR-uname       "richmit")              ;; Default user name used for stuff like tramp
+;; Set MJR-expert-mode, MJR-pookie-mode, & MJR-uname
+(let ((urln (user-real-login-name)))
+  (cond ((find urln '("richmit"
+                      "a0864027"
+                      "mjr") :test #'string=) (setq MJR-expert-mode 't
+                                                    MJR-pookie-mode nil
+                                                    MJR-uname       "richmit"))
+        ((string= urln "jrichli")             (setq MJR-expert-mode nil
+                                                    MJR-pookie-mode 't
+                                                    MJR-uname       "jrichli"))
+        ('t                                   (setq MJR-expert-mode 't
+                                                    MJR-pookie-mode nil
+                                                    MJR-uname urln))))
 
-(message "MJR: INIT: STAGE: Manual-Meta-Config: Expert: %s" MJR-expert-mode)
-(message "MJR: INIT: STAGE: Manual-Meta-Config: Pookie: %s" MJR-pookie-mode)
-(message "MJR: INIT: STAGE: Manual-Meta-Config: bin: %s"    MJR-home-bin)
-(message "MJR: INIT: STAGE: Manual-Meta-Config: core: %s"   MJR-home-cor)
-(message "MJR: INIT: STAGE: Manual-Meta-Config: uname: %s"  MJR-uname)
+;; Set MJR-home
+(setq MJR-home (or (find-if #'file-exists-p (mapcar (lambda (p) (concat p MJR-uname)) '("/Users/"
+                                                                                        "/home/"
+                                                                                        "/u/")))
+                   (expand-file-name "~")))
+;; Set MJR-home-bin, MJR-home-cor, & MJR-home-dot
+(if MJR-home
+    (progn
+    (if (file-exists-p (concat MJR-home "/bin" )) (setq MJR-home-bin (concat MJR-home "/bin")))    ;; Where to look for scripts (NO TRAILING SLASH)
+    (if (file-exists-p (concat MJR-home "/core")) (setq MJR-home-cor (concat MJR-home "/core")))   ;; Location for 'core' data (NO TRAILING SLASH)
+    (if (file-exists-p (concat MJR-home "/"    )) (setq MJR-home-dot (concat MJR-home "/"    ))))) ;; Location dot files 
+
+(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-expert-mode: %s" MJR-expert-mode)
+(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-pookie-mode: %s" MJR-pookie-mode)
+(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home:        %s" MJR-home)
+(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-bin:    %s" MJR-home-bin)
+(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-cor:    %s" MJR-home-cor)
+(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-uname:       %s" MJR-uname)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: STAGE: Auto-Meta-Config...")
@@ -101,10 +123,12 @@
     (if fap
         (if (string-match "\\.pdf$" fap)
             (if (file-exists-p fap)
-                (call-process-shell-command (concat MJR-home-bin "/mjrpdfview " fap))
+                (start-process-shell-command "mjrpdfview" "mjrpdfview" (concat MJR-home-bin "/mjrpdfview")  fap)
+                ;; We don't use "start-process" as we may need shell expansion for the file name
                 (message "MJR: MJR-view-pdf-at-point: ERROR: File a name at point, but it did not exist in the filesystem: %s" fap))
             (message "MJR: MJR-view-pdf-at-point: ERROR: Found a file name at piont, but it was not a PDF: %s" fap))
         (message "MJR: MJR-view-pdf-at-point: ERROR: Cound not find a filename name at point!"))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-follow-mode ()
@@ -737,8 +761,19 @@ The 'MJR' comments come in one of two forms:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-term (PROGRAM-TO-RUN NAME-OF-BUFFER)
   "Fire off an ansi-term with a nice, default buffer name."
-  (interactive (let* ((daProg (read-string "Program to run: " "/bin/bash"))
-                      (daName (read-string "Buffer name: " (concat "TERM:" (file-name-nondirectory (concat daProg))))))
+  (interactive (let* ((daProg (if (require 'ido nil :noerror)
+                                  (ido-completing-read "Program to run: " '("sn" "bash"))
+                                  (read-string "Program to run: " "bash")))
+                      (daName (read-string "Buffer name: " (concat "TERM:" (let ((cns (file-name-nondirectory daProg)))
+                                                                             (cond ((string-equal cns "sn")   "screen")
+                                                                                   ((string-equal cns "s")    "screen")
+                                                                                   ((string-equal cns "bash") "shell")
+                                                                                   ((string-equal cns "ksh")  "shell")
+                                                                                   ((string-equal cns "ash")  "shell")
+                                                                                   ((string-equal cns "sh")   "shell")
+                                                                                   ((string-equal cns "csh")  "shell")
+                                                                                   ((string-equal cns "tcsh") "shell")
+                                                                                   ('t                        cns)))))))
                  (list daProg daName)))
   (if (not (server-running-p))
       (server-start))
@@ -895,20 +930,14 @@ The 'MJR' comments come in one of two forms:
       (setq org-confirm-babel-evaluate 't)                      ;; Ask about evals
       (setq org-export-babel-evaluate nil)                      ;; Do NOT eval on export
       (setq org-log-into-drawer "LOGBOOK")                      ;; Put TODO changes and notes in LOGBOOK drawer
-      (setq org-agenda-files (list "~/ORG/os.org"))             ;; Files for agendas
+      (setq org-agenda-files (list "~/TODO.org"))               ;; My generic TODO file
 
-      ;; (setq org-todo-keywords                                   ;; TODO keywords
-      ;;       '((sequence "ACTION:NEW(t!)"
-      ;;                   "ACTION:ASSIGNED(a!@)"
-      ;;                   "ACTION:WORK(w!)"
-      ;;                   "ACTION:HOLD(h@)" "|"
-      ;;                   "ACTION:DONE(d!)"
-      ;;                   "ACTION:CANCELED(c!)")))
-      
       (add-hook 'org-mode-hook                                  ;; Get my favorite keys back
                 (lambda ()
                   (message "MJR: POST-INIT(%s): HOOK: org-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S" nil))
-                  (local-set-key (kbd "C-c C-d")   'MJR-date)))
+                  ;;(local-set-key (kbd "C-c C-d")   'MJR-date)
+                  (local-set-key  (kbd "C-c a")      'org-agenda)
+                  ))
       ;; Setup orgtbl in other modes
       (if nil
           (dolist (m '(emacs-lisp-mode-hook
@@ -1006,7 +1035,7 @@ The 'MJR' comments come in one of two forms:
                       (c-add-style "MJR"
                                    `("k&r"
                                      (c-doc-comment-style . 'javadoc)
-                                     (c-tab-always-indent .t)
+                                     (c-tab-always-indent . t)
                                      (c-recognize-knr-p . nil)
                                      (c-basic-offset . 2)
                                      (c-comment-only-line-offset . 0)
@@ -1079,7 +1108,9 @@ The 'MJR' comments come in one of two forms:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: PKG SETUP: Maxima setup...")
 (let ((max-path (find-if (lambda (p) (file-exists-p (concat p "/maxima.el")))
-                         (list "/usr/local/big/maxima/5.36.0_sbcl-1.2.11/share/maxima/5.36.0/emacs" ;; Custom build on Debian 8 @ home
+                         (list "/usr/local/big/maxima/5.38.0_sbcl-1.3.4/share/maxima/5.36.0/emacs"  ;; Custom build on Debian 8 @ home
+                               "/usr/local/big/maxima/5.36.0_sbcl-1.2.11/share/maxima/5.36.0/emacs" ;; Custom build on Debian 8 @ home
+                               "/usr/local/big/maxima/5.37.0_sbcl-1.2.14/share/maxima/5.37.0/emacs" ;; Custom build on Debian 8 @ home
                                "~/s/linux/local/share/maxima/5.25.1/emacs"                          ;; Custom biuld on linux @ TI
                                "/opt/local/share/maxima/5.16.3/emacs"                               ;; Typical MacOS X with macports
                                "/usr/share/maxima/5.34.1/emacs/"                                    ;; Standard location for Debian 8
@@ -1091,7 +1122,9 @@ The 'MJR' comments come in one of two forms:
              (eval-after-load "maxima"
                '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: maxima!" (MJR-date "%Y-%m-%d_%H:%M:%S" nil))
                        (let ((max-cmd  (find-if #'file-exists-p 
-                                                (list "/usr/local/big/maxima/5.36.0_sbcl-1.2.11/bin/maxima" ;; Custom build on Debian 8 @ home
+                                                (list "/usr/local/big/maxima/5.38.0_sbcl-1.3.4/bin/maxima"  ;; Custom build on Debian 8 @ home
+                                                      "/usr/local/big/maxima/5.37.0_sbcl-1.2.14/bin/maxima" ;; Custom build on Debian 8 @ home
+                                                      "/usr/local/big/maxima/5.36.0_sbcl-1.2.11/bin/maxima" ;; Custom build on Debian 8 @ home
                                                       "~/s/linux/local/bin/maxima"                          ;; Custom biuld on linux @ TI
                                                       "/opt/local/bin/maxima"                               ;; Typical MacOS X with macports
                                                       "/usr/local/bin/maxima"                               ;; Typical place
@@ -1111,15 +1144,24 @@ The 'MJR' comments come in one of two forms:
       (message "MJR: INIT: PKG SETUP: Maxima not found...")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(message "MJR: INIT: PKG SETUP: bookmarks setup...")
+(eval-after-load "bookmark"
+  '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: bookmarks!" (MJR-date "%Y-%m-%d_%H:%M:%S" nil))
+          (if (file-exists-p "~/world/stuff/notes/computer/") (add-to-list 'bookmark-alist '(cnotes (filename . "~/world/stuff/notes/computer/"))))
+          (if (file-exists-p "/Users/Shared/Doc2/index.org")  (add-to-list 'bookmark-alist '(doc2   (filename . "/Users/Shared/Doc2/index.org"))))
+          (if (file-exists-p "~/world/stuff/my_ref/")         (add-to-list 'bookmark-alist '(ref    (filename . "~/world/stuff/my_ref/"))))
+          ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: PKG SETUP: iMaxima setup...")
-(eval-after-load "imaxima."
+(eval-after-load "imaxima"
   '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: imaxima!" (MJR-date "%Y-%m-%d_%H:%M:%S" nil))
           ;; The type size used in LaTeX. Options: 9, 10, 11, 12
           (setq imaxima-pt-size 9)
           ;; Default size of font. Options: "small", "normalsize", "large", "Large", "LARGE", "huge", "Huge"
           (setq imaxima-fnt-size "small")
           ;; Scale all images by this factor. Default: 1.0
-          (setq imaxima-scale-factor 1.0)
+          (setq imaxima-scale-factor 2.0)
           ;; Use maxima mode 
           (setq imaxima-use-maxima-mode-flag 't)))
 
@@ -1180,7 +1222,9 @@ The 'MJR' comments come in one of two forms:
              (eval-after-load "slime"
                '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: slime!" (MJR-date "%Y-%m-%d_%H:%M:%S" nil))
                        (let ((slime-lisp-bin (find-if #'file-exists-p
-                                                      (list "/usr/local/bin/sbcl-1.2.8"
+                                                      (list "/usr/local/big/sbcl/1.3.4/bin/sbcl"
+                                                            "/usr/local/big/sbcl/1.2.14/bin/sbcl"
+                                                            "/usr/local/big/sbcl/1.2.11/bin/sbcl"
                                                             "~/s/linux/local/bin/sbcl"
                                                             "/usr/local/bin/sbcl-run"
                                                             "/usr/local/bin/sbcl"
@@ -1226,47 +1270,49 @@ The 'MJR' comments come in one of two forms:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: PKG SETUP: ido...")
-(if (require 'ido nil :noerror)
-    (progn (setq ido-use-filename-at-point 'guess)
-           (setq ido-use-url-at-point nil)
-           ;; Set ignore directory list
-           (dolist (directory-re '("\\`RCS/" "\\`auto/" "\\`\\.git/"))
-             (add-to-list 'ido-ignore-directories directory-re))
-           ;; I can't get ido-ignore-extensions to work
-           (dolist (ext '("fasl" "ufasl" "fas" "lib" "o" "dvi" "asd" "so"
-                          "aux" "bbl" "bcf" "blg" "log" "out" "run.xml")) 
-             (add-to-list 'ido-ignore-files (concat "\\." ext "$"))) 
-           ;; Set ignore file list
-           (dolist (file-re '("\\`RCS/" "\\`\\.git/" "\\`\\.DS_Store" "\\`a\\.out"))
-             (add-to-list 'ido-ignore-files file-re))
-           ;; Set ignore buffer list
-           (dolist (buffer-re '("\\`\\*ESS\\*" "\\`\\*slime-events\\*" "\\`\\*Apropos\\*"
-                                "\\`\\*Completions\\*" "\\`\\*vc\\*" "\\`\\log-edit-files\\*"
-                                "\\`\\*slime-compilation\\*" "\\`\\*inferior-lisp\\*" "\\`\\*Warning\\*"))
-             (add-to-list 'ido-ignore-buffers buffer-re))
-           ;; Order of matches based on extension -- for some reason this doesn't work
-           (setq ido-file-extensions-order '(".org" ".lisp" ".R" ".rb" ".tex" ".txt" ".hpp" ".cpp" ".h" ".c" ".asd" ".log"))
-           ;;(setq ido-ignore-extensions t)
-           ;;(add-to-list completion-ignored-extensions ".dvi")
-           (setq ido-enable-flex-matching t)
-           (setq ido-everywhere t)
-           (ido-mode 1)
-           ;; Wack the pathname at the end of the input string
-           (define-key ido-common-completion-map (kbd "<M-backspace>") (lambda ()
-                                                                         (interactive)
-                                                                         (goto-char (point-max))
-                                                                         (let ((sp (point))
-                                                                               (ep (progn (search-backward "/") (forward-char) (point))))
-                                                                           (if (not (= sp ep))
-                                                                               (kill-region sp ep)))))
-           (define-key ido-common-completion-map (kbd "<M-DEL>") (lambda ()
-                                                                   (interactive)
-                                                                   (goto-char (point-max))
-                                                                   (let ((sp (point))
-                                                                         (ep (progn (search-backward "/") (forward-char) (point))))
-                                                                     (if (not (= sp ep))
-                                                                         (kill-region sp ep))))))
-    (message "MJR: INIT: PKG SETUP: ido: WARNING: Could not load ido package"))
+(if (not MJR-pookie-mode)
+    (if (require 'ido nil :noerror)
+        (progn (setq ido-use-filename-at-point 'guess)
+               (setq ido-use-url-at-point nil)
+               ;; Set ignore directory list
+               (dolist (directory-re '("\\`RCS/" "\\`auto/" "\\`\\.git/"))
+                 (add-to-list 'ido-ignore-directories directory-re))
+               ;; I can't get ido-ignore-extensions to work
+               (dolist (ext '("fasl" "ufasl" "fas" "lib" "o" "dvi" "asd" "so"
+                              "aux" "bbl" "bcf" "blg" "log" "out" "run.xml")) 
+                 (add-to-list 'ido-ignore-files (concat "\\." ext "$"))) 
+               ;; Set ignore file list
+               (dolist (file-re '("\\`RCS/" "\\`\\.git/" "\\`\\.DS_Store" "\\`a\\.out"))
+                 (add-to-list 'ido-ignore-files file-re))
+               ;; Set ignore buffer list
+               (dolist (buffer-re '("\\`\\*ESS\\*" "\\`\\*slime-events\\*" "\\`\\*Apropos\\*"
+                                    "\\`\\*Completions\\*" "\\`\\*vc\\*" "\\`\\log-edit-files\\*"
+                                    "\\`\\*slime-compilation\\*" "\\`\\*inferior-lisp\\*" "\\`\\*Warning\\*"))
+                 (add-to-list 'ido-ignore-buffers buffer-re))
+               ;; Order of matches based on extension -- for some reason this doesn't work
+               (setq ido-file-extensions-order '(".org" ".lisp" ".R" ".rb" ".tex" ".txt" ".hpp" ".cpp" ".h" ".c" ".asd" ".log"))
+               ;;(setq ido-ignore-extensions t)
+               ;;(add-to-list completion-ignored-extensions ".dvi")
+               (setq ido-enable-flex-matching t)
+               (setq ido-everywhere t)
+               (ido-mode 1)
+               ;; Wack the pathname at the end of the input string
+               (define-key ido-common-completion-map (kbd "<M-backspace>") (lambda ()
+                                                                             (interactive)
+                                                                             (goto-char (point-max))
+                                                                             (let ((sp (point))
+                                                                                   (ep (progn (search-backward "/") (forward-char) (point))))
+                                                                               (if (not (= sp ep))
+                                                                                   (kill-region sp ep)))))
+               (define-key ido-common-completion-map (kbd "<M-DEL>") (lambda ()
+                                                                       (interactive)
+                                                                       (goto-char (point-max))
+                                                                       (let ((sp (point))
+                                                                             (ep (progn (search-backward "/") (forward-char) (point))))
+                                                                         (if (not (= sp ep))
+                                                                             (kill-region sp ep))))))
+        (message "MJR: INIT: PKG SETUP: ido: WARNING: Could not load ido package"))
+    (message "MJR: INIT: PKG SETUP: ido: SKIP: Pookie mode"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: PKG SETUP: package...")
