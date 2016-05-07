@@ -5,13 +5,14 @@
 if [ -e README.md ] ; then
   BAKEXT='.'`date '+%s'`
 
+  echo ' '
   echo BEFORE
   echo ' '
   ls -l ~/.emacs ~/.Xdefaults ~/.emacs.d/mjr-dark-theme.el
   
   for f in ~/.emacs ~/.Xdefaults ~/.emacs.d/mjr-dark-theme.el; do
     if [ -e "$f" ] ; then
-      echo cp "$f" "$f$BAKEXT"
+      cp "$f" "$f$BAKEXT"
     fi
   done
 
@@ -20,9 +21,11 @@ if [ -e README.md ] ; then
   test -e ~/.emacs.d || mkdir ~/.emacs.d
   cp mjr-dark-theme.el ~/.emacs.d/mjr-dark-theme.el
 
+  echo ' '
   echo AFTER
   echo ' '
-  ls -l ~/.emacs ~/.Xdefaults ~/.emacs.d/mjr-dark-theme.el ~/*.$BAKEXT
+  ls -l ~/.emacs ~/.Xdefaults ~/.emacs.d/mjr-dark-theme.el
+  ls -l ~/.emacs$BAKEXT ~/.Xdefaults$BAKEXT ~/.emacs.d/mjr-dark-theme.el$BAKEXT
   
 else
   echo "RUN THIS SCRIPT FROM INSIDE THE GIT REPO!!!"
