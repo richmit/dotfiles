@@ -915,6 +915,7 @@ The 'MJR' comments come in one of two forms:
       (setq org-export-babel-evaluate nil)                      ;; Do NOT eval on export
       (setq org-log-into-drawer "LOGBOOK")                      ;; Put TODO changes and notes in LOGBOOK drawer
       (setq org-agenda-files (list "~/TODO.org"))               ;; My generic TODO file
+      (setq org-babel-min-lines-for-block-output 0)             ;; Always put babel results in blocks
 
       (add-hook 'org-mode-hook                                  ;; Get my favorite keys back
                 (lambda ()
