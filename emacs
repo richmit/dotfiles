@@ -75,9 +75,9 @@
 ;; Set MJR-home-bin, MJR-home-cor, & MJR-home-dot
 (if MJR-home
     (progn
-      (if (file-exists-p (concat MJR-home "/bin" )) (setq MJR-home-bin (concat MJR-home "/bin")))    ;; Where to look for scripts (NO TRAILING SLASH)
-      (if (file-exists-p (concat MJR-home "/core")) (setq MJR-home-cor (concat MJR-home "/core")))   ;; Location for 'core' data (NO TRAILING SLASH)
-      (if (file-exists-p (concat MJR-home "/"    )) (setq MJR-home-dot (concat MJR-home "/"    ))))) ;; Location dot files 
+      (if (file-exists-p (concat MJR-home "/bin" )) (setq MJR-home-bin (concat MJR-home "/bin"))  (setq MJR-home-bin "/"))    ;; Where to look for scripts
+      (if (file-exists-p (concat MJR-home "/core")) (setq MJR-home-cor (concat MJR-home "/core")) (setq MJR-home-cor "/"))   ;; Location for 'core' data
+      (if (file-exists-p (concat MJR-home "/"    )) (setq MJR-home-dot (concat MJR-home "/"    )) (setq MJR-home-dot "/")))) ;; Location dot files 
 
 (message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-expert-mode: %s" MJR-expert-mode)
 (message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-pookie-mode: %s" MJR-pookie-mode)
@@ -114,6 +114,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: STAGE: Define MJR Functions..")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MJR-insert-from-web (url)
+  "Insert snippet from web."
+  (interactive (list (read-string "URL: " "http://www.mitchr.me/")))  
+;; MJR TODO NOTE <2016-06-02 16:49:11 CDT> MJR-insert-from-web: Make sure we have curl...
+  (call-process-shell-command "curl" nil 't nil "-s" url))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-view-pdf-at-point ()
@@ -960,6 +967,16 @@ The 'MJR' comments come in one of two forms:
           (setq calendar-daylight-time-zone-name "CDT")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(message "MJR: INIT: PKG SETUP: root-help setup...")
+(if (file-exists-p "/usr/share/emacs/site-lisp/root-help.el")
+    (progn (autoload 'root-shell "root-help" "Run ROOT (the C++ Data Analysis Framework) shell" t)
+           ;; Put any pre-load root config stuff here...
+           (eval-after-load "root-help"
+             '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: root-help!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                     ;; Put any post-load root config stuff here...
+                     ))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: PKG SETUP: gdb-mode (GUD) setup...")
 (add-hook 'gdb-mode-hook
           (function (lambda ()
@@ -1355,12 +1372,14 @@ The 'MJR' comments come in one of two forms:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(require 'custom)
 (defun MJR-try-theme ()
-  (if (load-theme 'mjr-dark 't  )
-      (message "MJR: INIT: THEME: Loaded mjr-dark!")
-      (progn (message "MJR: INIT: THEME: Failed to load mjr-dark!  Trying manjo-dark")
-             (if (load-theme 'manjo-dark 't)
-                 (message "MJR: INIT: THEME: manjo-dark!")
-                 (message "MJR: INIT: THEME: Failed to load mjr-dark!")))))
+  (if MJR-pookie-mode
+      nil
+      (if (load-theme 'mjr-dark 't  )
+          (message "MJR: INIT: THEME: Loaded mjr-dark!")
+          (progn (message "MJR: INIT: THEME: Failed to load mjr-dark!  Trying manjo-dark")
+                 (if (load-theme 'manjo-dark 't)
+                     (message "MJR: INIT: THEME: manjo-dark!")
+                     (message "MJR: INIT: THEME: Failed to load mjr-dark!"))))))
 (MJR-try-theme)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
