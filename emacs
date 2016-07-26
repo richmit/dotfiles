@@ -116,6 +116,28 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MJR-calc-eval-region ()
+        "Evaluate the region with calc function calc-eval, and insert the result in buffer.
+         Without a prefix arg, inserts at end of region after an = sign.  With argument, replaces region with result."
+        (interactive)
+        (let* ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
+               (reg-max  (if (mark) (max (point) (mark)) (point-max)))
+               (pfx-arg  current-prefix-arg)
+               (val      (if (< reg-min reg-max)
+                             (calc-eval (buffer-substring-no-properties reg-min reg-max)))))
+          (if val
+              (if pfx-arg
+                  (progn
+                    (kill-region reg-min reg-max)
+                    (goto-char reg-min)
+                    (insert  val))
+                  (progn (goto-char reg-max)
+                         (insert (concat "=" val))))
+              (message "MJR-calc-eval-region: Something went wrong"))))
+
+;; C-x * q == Quick Calculation In Minibuffer
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-insert-from-web (url)
   "Insert snippet from web."
   (interactive (list (read-string "URL: " "http://www.mitchr.me/")))  
@@ -351,7 +373,7 @@ The 'MJR' comments come in one of two forms:
         (interactive)
         (let* ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
                (reg-max  (if (mark) (max (point) (mark)) (point-max))))
-          (if (file-exists-p "~/bin/latexit.rb")
+          (if (file-exists-p (concat MJR-home-bin "/latexit.rb"))
               (shell-command-on-region reg-min reg-max (concat MJR-home-bin "/latexit.rb -"))
               (message "MJR: MJR-latexit: ERROR: Could not find the latexit.rb command!")))))
     (message "MJR: INIT: STAGE: Define MJR Functions: MJR-latexit: NOT defined!  We could not find the latexit.rb command"))
@@ -855,6 +877,8 @@ The 'MJR' comments come in one of two forms:
       (require 'org-install)
       ;;(require 'org-habit)
 
+      (setq org-replace-disputed-keys t)  ;; Don't override S-<arrow> keys       
+
       (if (not (require 'htmlize nil :noerror))
           (message "MJR: INIT: PKG SETUP: htmlize: WARNING: Could not load package in init."))
 
@@ -909,7 +933,6 @@ The 'MJR' comments come in one of two forms:
 
       (setq org-html-head-extra "<style>pre {background-color: #0f0f0f; color: #f0f0f0;}</style>") ;; Dark background for code.
       (setq org-html-postamble "Created with %c")
-      
       (setq org-src-fontify-natively t)                         ;; Prety colors
       (setq org-src-tab-acts-natively t)                        ;; tab as in source mode
       (add-hook 'org-mode-hook 'turn-on-font-lock)              ;; Make sure we turn on font-lock
@@ -921,9 +944,11 @@ The 'MJR' comments come in one of two forms:
       (setq org-confirm-babel-evaluate 't)                      ;; Ask about evals
       (setq org-export-babel-evaluate nil)                      ;; Do NOT eval on export
       (setq org-log-into-drawer "LOGBOOK")                      ;; Put TODO changes and notes in LOGBOOK drawer
-      (setq org-agenda-files (list "~/TODO.org"))               ;; My generic TODO file
+      (setq org-agenda-files
+            (let* ((tdp (concat MJR-home "/TODO/")))
+              (if (file-directory-p tdp)
+                  (directory-files tdp 't "\.org$"))))          ;; My generic TODO file
       (setq org-babel-min-lines-for-block-output 0)             ;; Always put babel results in blocks
-
       (add-hook 'org-mode-hook                                  ;; Get my favorite keys back
                 (lambda ()
                   (message "MJR: POST-INIT(%s): HOOK: org-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
@@ -1113,7 +1138,7 @@ The 'MJR' comments come in one of two forms:
                          (list "/usr/local/big/maxima/5.38.0_sbcl-1.3.4/share/maxima/5.36.0/emacs"  ;; Custom build on Debian 8
                                "/usr/local/big/maxima/5.36.0_sbcl-1.2.11/share/maxima/5.36.0/emacs" ;; Custom build on Debian 8
                                "/usr/local/big/maxima/5.37.0_sbcl-1.2.14/share/maxima/5.37.0/emacs" ;; Custom build on Debian 8
-                               "~/s/linux/local/share/maxima/5.29.1/emacs"                          ;; Custom biuld on linux
+                               "/home/richmit/s/linux/local/share/maxima/5.29.1/emacs"              ;; Custom biuld on linux
                                "/opt/local/share/maxima/5.16.3/emacs"                               ;; Typical MacOS X with macports
                                "/usr/share/maxima/5.34.1/emacs/"                                    ;; Standard location for Debian 8
                                "/usr/share/maxima/5.21.1/emacs"))))                                 ;; Standard location for Ubuntu 11.04
@@ -1127,7 +1152,7 @@ The 'MJR' comments come in one of two forms:
                                                 (list "/usr/local/big/maxima/5.38.0_sbcl-1.3.4/bin/maxima"  ;; Custom build on Debian 8 @ home
                                                       "/usr/local/big/maxima/5.37.0_sbcl-1.2.14/bin/maxima" ;; Custom build on Debian 8 @ home
                                                       "/usr/local/big/maxima/5.36.0_sbcl-1.2.11/bin/maxima" ;; Custom build on Debian 8 @ home
-                                                      "~/s/linux/local/bin/maxima"                          ;; Custom biuld on linux @ TI
+                                                      "/home/richmit/s/linux/local/bin/maxima"              ;; Custom biuld on linux @ TI
                                                       "/opt/local/bin/maxima"                               ;; Typical MacOS X with macports
                                                       "/usr/local/bin/maxima"                               ;; Typical place
                                                       "/usr/bin/maxima"))))                                 ;; Standard place for Debian & Ubuntu
@@ -1149,10 +1174,19 @@ The 'MJR' comments come in one of two forms:
 (message "MJR: INIT: PKG SETUP: bookmarks setup...")
 (eval-after-load "bookmark"
   '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: bookmarks!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-          (if (file-exists-p "~/world/stuff/notes/computer/") (add-to-list 'bookmark-alist '(cnotes (filename . "~/world/stuff/notes/computer/"))))
-          (if (file-exists-p "/Users/Shared/Doc2/index.org")  (add-to-list 'bookmark-alist '(doc2   (filename . "/Users/Shared/Doc2/index.org"))))
-          (if (file-exists-p "~/world/stuff/my_ref/")         (add-to-list 'bookmark-alist '(ref    (filename . "~/world/stuff/my_ref/"))))
-          ))
+          (dolist (bp (list (cons "computer_notes" "~/world/stuff/notes/computer/")
+                            (cons "tex_templates"  (concat MJR-home-cor "/texinputs/"))    ;; Place for TeX input files and templtes
+                            (cons "org_templates"  (concat MJR-home-cor "/org-mode/"))     ;; Place for org-mode input files and templtes
+                            (cons "lispy_prod"     (concat MJR-home-cor "/lispy/"))        ;; Place for production copy of *mjrcalc*
+                            (cons "lispy_dev"      "/home/richmit/world/my_prog/lispStuff/lispy/")
+                            (cons "my_refrences"   "/home/richmit/world/stuff/my_ref/")
+                            (cons "doc1"           "/Users/Shared/Doc1/")
+                            (cons "doc2"           "/Users/Shared/Doc2/index.org")
+                            (cons "doc3"           "/Users/Shared/Doc3/index.org")))
+            (let ((bt (car bp))
+                  (bf (cdr bp)))
+              (if (and (file-exists-p bf) (not (assoc bf bookmark-alist)))
+                  (add-to-list 'bookmark-alist (list bt (list (cons 'filename bf)))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: PKG SETUP: iMaxima setup...")
@@ -1227,7 +1261,7 @@ The 'MJR' comments come in one of two forms:
                                                       (list "/usr/local/big/sbcl/1.3.4/bin/sbcl"
                                                             "/usr/local/big/sbcl/1.2.14/bin/sbcl"
                                                             "/usr/local/big/sbcl/1.2.11/bin/sbcl"
-                                                            "~/s/linux/local/bin/sbcl"
+                                                            "/home/richmit/s/linux/local/bin/sbcl"
                                                             "/usr/local/bin/sbcl-run"
                                                             "/usr/local/bin/sbcl"
                                                             "/opt/local/bin/sbcl"
@@ -1344,6 +1378,7 @@ The 'MJR' comments come in one of two forms:
              (eval-after-load "ess-site"
                '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: ess!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                        (setq ess-fancy-comments nil)
+                       (ess-toggle-underscore nil)
                        (add-to-list 'ess-style-alist
                                     '(mjr-ess-style
                                       (ess-indent-level . 2)                       ;; * (ess-indent-level . 4) 
@@ -1419,6 +1454,9 @@ The 'MJR' comments come in one of two forms:
 (global-set-key (kbd "C-c C-f")   'ffap)
 (global-set-key (kbd "C-c C-c")   'compile)
 (global-set-key (kbd "C-x r a")   'append-to-register)
+(global-set-key (kbd "C-x C-b")   'buffer-menu)
+(global-set-key  (kbd "C-c a")      'org-agenda)
+
 
 ;; Not global, but the mini-buffer is kinda everyplace...
 (define-key minibuffer-local-map (kbd "C-p") 'previous-history-element)
