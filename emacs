@@ -1378,7 +1378,8 @@ The 'MJR' comments come in one of two forms:
              (eval-after-load "ess-site"
                '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: ess!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                        (setq ess-fancy-comments nil)
-                       (ess-toggle-underscore nil)
+                       (progn (ess-toggle-underscore 't)
+                              (ess-toggle-underscore nil))
                        (add-to-list 'ess-style-alist
                                     '(mjr-ess-style
                                       (ess-indent-level . 2)                       ;; * (ess-indent-level . 4) 
@@ -1397,7 +1398,14 @@ The 'MJR' comments come in one of two forms:
                        (add-hook 'ess-mode-hook
                                  (lambda ()
                                    (message "MJR: POST-INIT(%s): HOOK: ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                                   (ess-toggle-underscore nil)
+                                   (progn (ess-toggle-underscore 't)
+                                          (ess-toggle-underscore nil))
+                                   (ess-set-style 'mjr-ess-style)))
+                       (add-hook 'inferior-ess-mode-hook
+                                 (lambda ()
+                                   (message "MJR: POST-INIT(%s): HOOK: inferior-ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                   (progn (ess-toggle-underscore 't)
+                                          (ess-toggle-underscore nil))
                                    (ess-set-style 'mjr-ess-style))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
