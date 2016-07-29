@@ -116,26 +116,47 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun MJR-calc-eval-region ()
-        "Evaluate the region with calc function calc-eval, and insert the result in buffer.
-         Without a prefix arg, inserts at end of region after an = sign.  With argument, replaces region with result."
-        (interactive)
+(defun MJR-eval-region (eval-how)
+        "Evaluate the region as calc, elisp, or lisp (via slime), put the result in the kill ring.  With prefix arg also insert result into buffer."
+        (interactive (list (if (require 'ido nil :noerror)
+                               (ido-completing-read "Eval how: " '("calc" "elisp" "lisp"))
+                               (read-string "Eval how: " "calc"))))
+        (message eval-how)
         (let* ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
                (reg-max  (if (mark) (max (point) (mark)) (point-max)))
-               (pfx-arg  current-prefix-arg)
                (val      (if (< reg-min reg-max)
-                             (calc-eval (buffer-substring-no-properties reg-min reg-max)))))
+                             (cond 
+                               ((string-equal eval-how "calc")  (kill-new (calc-eval (buffer-substring-no-properties reg-min reg-max))))
+                               ((string-equal eval-how "elisp") (kill-new (format "%s" (eval (car (read-from-string (buffer-substring-no-properties reg-min reg-max)))))))
+                               ((string-equal eval-how "lisp")  (slime-eval-region reg-min reg-max))))))
           (if val
-              (if pfx-arg
-                  (progn
-                    (kill-region reg-min reg-max)
-                    (goto-char reg-min)
-                    (insert  val))
+              (if current-prefix-arg
                   (progn (goto-char reg-max)
-                         (insert (concat "=" val))))
-              (message "MJR-calc-eval-region: Something went wrong"))))
+                         (insert "=")
+                         (yank))
+                  (message "MJR-eval-region: Value: %s" val))
+              (message "MJR-eval-region: Something went wrong"))))
 
-;; C-x * q == Quick Calculation In Minibuffer
+(global-set-key (kbd "ESC ESC :") 'MJR-eval-region)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MJR-calc-eval-multibase-region ()
+  "Evaluate the region as calc code, and insert at end of region result in several bases."
+  (interactive)
+  (let* ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
+         (reg-max  (if (mark) (max (point) (mark)) (point-max)))
+         (in-num   (if (< reg-min reg-max) (buffer-substring-no-properties reg-min reg-max))))
+    (if in-num
+        (progn (goto-char reg-max)
+               (insert (concat " = "
+                               (calc-eval (list in-num 'calc-number-radix 10))
+                               "  "
+                               (calc-eval (list in-num 'calc-number-radix 16))
+                               "  "
+                               (calc-eval (list in-num 'calc-number-radix 2))
+                               "  "
+                               (calc-eval (list in-num 'calc-number-radix 8)))))
+              (message "MJR-calc-eval-multibase-region: Something went wrong"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-insert-from-web (url)
