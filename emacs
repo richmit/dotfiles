@@ -31,13 +31,15 @@
 ;; @warning   You will need to fix the stuff under "Manual-Meta-Config".@EOL@EOL
 ;; @filedetails
 ;;
-;; This config makes use of some external tools without which some functionaltity will be missing.  Note MJR-* functions requireing missing components will
-;; simply not be defined (i.e. no curl command, then no MJR-insert-from-web function).
+;; This config makes use of some external tools without which some functionality will be missing.  Note MJR-* functions requiring missing components will
+;; simply not be defined, or may simply reduce functionality.
 ;;
 ;;     * MJR-home-bin/mjrpdfview -- Used by MJR-view-pdf-at-point
 ;;     * MJR-home-bin/browser    -- Used by MJR-dict & MJR-google.  Used to set browse-url-firefox-program
 ;;     * MJR-home-bin/latexit.rb -- Used by MJR-latexit
 ;;     * MJR-home-bin/curl       -- Used by MJR-insert-from-web
+;;     * MJR-home-bin/s          -- Used by MJR-term
+;;     * MJR-home-bin/sn         -- Used by MJR-term
 ;;     * Several paths are checked for Macaulay & Maxima.
 ;;
 ;; I keep common stuff in a "core" directory I take with me.  Some stuff this config looks for:
@@ -868,13 +870,16 @@ The 'MJR' comments come in one of two forms:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-term (PROGRAM-TO-RUN NAME-OF-BUFFER)
-  "Fire off an ansi-term with a nice, default buffer name."
+  "Fire off an ansi-term with a nice, default buffer name.  Special support is provided for my screen scripts if they are available."
   (interactive (let* ((daProg (if (require 'ido nil :noerror)
-                                  (ido-completing-read "Program to run: " '("sn" "bash"))
+                                  (ido-completing-read "Program to run: " (append (if (file-exists-p (concat MJR-home-bin "/sn")) (list "sn"))
+                                                                                  (list "bash")
+                                                                                  (if (file-exists-p (concat MJR-home-bin "/s")) (list "s"))
+                                                                                  ))
                                   (read-string "Program to run: " "bash")))
                       (daName (read-string "Buffer name: " (concat "TERM:" (let ((cns (file-name-nondirectory daProg)))
                                                                              (cond ((string-equal cns "sn")   "screen")
-                                                                                   ((string-equal cns "s")    "screen")
+                                                                                   ((string-equal cns "s")    "screen0")
                                                                                    ((string-equal cns "bash") "shell")
                                                                                    ((string-equal cns "ksh")  "shell")
                                                                                    ((string-equal cns "ash")  "shell")
