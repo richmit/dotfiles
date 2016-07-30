@@ -2,7 +2,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;; @file      emacs
-;; @author    Mitch Richling <http://www.mitchr.me>
+;; @author    Mitch Richling <https://www.mitchr.me>
 ;; @brief     My Emacs dot file.@EOL
 ;; @std       Emacs Lisp
 ;; @copyright 
@@ -31,9 +31,33 @@
 ;; @warning   You will need to fix the stuff under "Manual-Meta-Config".@EOL@EOL
 ;; @filedetails
 ;;
+;; This config makes use of some external tools without which some functionaltity will be missing.  Note MJR-* functions requireing missing components will
+;; simply not be defined (i.e. no curl command, then no MJR-insert-from-web function).
+;;
+;;     * MJR-home-bin/mjrpdfview -- Used by MJR-view-pdf-at-point
+;;     * MJR-home-bin/browser    -- Used by MJR-dict & MJR-google.  Used to set browse-url-firefox-program
+;;     * MJR-home-bin/latexit.rb -- Used by MJR-latexit
+;;     * MJR-home-bin/curl       -- Used by MJR-insert-from-web
+;;     * Several paths are checked for Macaulay & Maxima.
+;;
+;; I keep common stuff in a "core" directory I take with me.  Some stuff this config looks for:
+;;     * MJR-home-cor/codeBits/  -- A directory of source code templates and headers used by MJR-PrependHeader
+;;     * MJR-home-cor/elisp      -- A directory containing various bits of elisp
+;;        * MJR-home-cor/elisp/git/
+;;        * MJR-home-cor/elisp/auctex/
+;;        * MJR-home-cor/elisp/pov-mode/
+;;        * MJR-home-cor/elisp/gap/
+;;        * MJR-home-cor/elisp/octave/
+;;        * MJR-home-cor/elisp/processing/
+;;        * MJR-home-cor/elisp/slime/
+;;        * MJR-home-cor/elisp/ess/
+;;     * MJR-home-cor/texinputs   Used for bookmarks  (TeX input files and templtes)
+;;     * MJR-home-cor/org-mode    Used for bookmarks  (org-mode input files and templtes)
+;;     * MJR-home-cor/lispy       Used for bookmarks  (production copy of *mjrcalc*)
+;;
 ;; Stuff to play with later:
 ;;  * htmlfontify.el - (v23.2) 
-;;  * Bubbles - like SameGame.
+;;  * bubbles - like SameGame.
 ;;  * display-time-world
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -44,6 +68,9 @@
 (message "MJR: INIT: STAGE: Start Customizing Emacs....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(message "MJR: INIT: STAGE: Pre-Customizing Emacs (performance tweaks)....")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq gc-cons-threshold 50000000)
 (add-hook 'emacs-startup-hook (lambda ()
                                 (message "MJR: POST-INIT(%s): HOOK: emacs-startup-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
@@ -53,61 +80,86 @@
 (message "MJR: INIT: STAGE: Manual-Meta-Config...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Set MJR-expert-mode, MJR-pookie-mode, & MJR-uname
-(let ((urln (user-real-login-name)))
-  (cond ((find urln '("richmit"
-                      "a0864027"
-                      "mjr") :test #'string=) (setq MJR-expert-mode 't
-                                                    MJR-pookie-mode nil
-                                                    MJR-uname       "richmit"))
-        ((string= urln "jrichli")             (setq MJR-expert-mode nil
-                                                    MJR-pookie-mode 't
-                                                    MJR-uname       "jrichli"))
-        ('t                                   (setq MJR-expert-mode 't
-                                                    MJR-pookie-mode nil
-                                                    MJR-uname urln))))
-
-;; Set MJR-home
-(setq MJR-home (or (find-if #'file-exists-p (mapcar (lambda (p) (concat p MJR-uname)) '("/Users/"
-                                                                                        "/home/"
-                                                                                        "/u/")))
-                   (expand-file-name "~")))
-;; Set MJR-home-bin, MJR-home-cor, & MJR-home-dot
-(if MJR-home
-    (progn
-      (if (file-exists-p (concat MJR-home "/bin" )) (setq MJR-home-bin (concat MJR-home "/bin"))  (setq MJR-home-bin "/"))    ;; Where to look for scripts
-      (if (file-exists-p (concat MJR-home "/core")) (setq MJR-home-cor (concat MJR-home "/core")) (setq MJR-home-cor "/"))   ;; Location for 'core' data
-      (if (file-exists-p (concat MJR-home "/"    )) (setq MJR-home-dot (concat MJR-home "/"    )) (setq MJR-home-dot "/")))) ;; Location dot files 
+;; Set to "auto-config" and the values will be set to a best guess, or hard-wire the value to something here.
+(defvar MJR-expert-mode "auto-config")
+(defvar MJR-pookie-mode "auto-config")
+(defvar MJR-uname       "auto-config")
+(defvar MJR-home        "auto-config")
+(defvar MJR-home-bin    "auto-config")
+(defvar MJR-home-cor    "auto-config")
+(defvar MJR-home-dot    "auto-config")
+(defvar MJR-location    "auto-config")
+(defvar MJR-platform    "auto-config")
 
 (message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-expert-mode: %s" MJR-expert-mode)
 (message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-pookie-mode: %s" MJR-pookie-mode)
+(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-uname:       %s" MJR-uname)
 (message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home:        %s" MJR-home)
 (message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-bin:    %s" MJR-home-bin)
 (message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-cor:    %s" MJR-home-cor)
-(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-uname:       %s" MJR-uname)
+(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-dot:    %s" MJR-home-dot)
+(message "MJR: INIT: STAGE: Manual-Meta-Config: LOCATION:        %s" MJR-location)
+(message "MJR: INIT: STAGE: Manual-Meta-Config: PLATFORM:        %s" MJR-platform)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: STAGE: Auto-Meta-Config...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq MJR-location (cond ((or (file-exists-p "/apps/")
-                              (file-exists-p "/apps/flames/data")
-                              (file-exists-p "/home/flames/data"))    "TI")
-                         ((file-exists-p "/home/Shared/core/")        "HOME")
-                         ('t                                          "UNKNOWN")))
+(cl-flet ((set-if-auto-config (var val)
+                           (if (string-equal (symbol-value var) "auto-config")
+                               (set var val))))
+  ;; If we have a recognized login-name, then auto-config MJR-expert-mode, MJR-pookie-mode, & MJR-uname
+  (let ((urln (user-real-login-name)))
+    (cond ((find urln '("richmit"
+                        "a0864027"
+                        "mjr") :test #'string=) (progn (set-if-auto-config 'MJR-uname       "richmit")))
+          ((string= urln "jrichli")             (progn (set-if-auto-config 'MJR-expert-mode nil)
+                                                       (set-if-auto-config 'MJR-pookie-mode 't))))
+    (set-if-auto-config 'MJR-uname       urln)
+    (set-if-auto-config 'MJR-expert-mode 't)
+    (set-if-auto-config 'MJR-pookie-mode nil))
+  
+  ;; Check some hardwired fixed paths first, then use the magical ~ path if we fail.
+  (set-if-auto-config 'MJR-home (or (find-if #'file-exists-p (mapcar (lambda (p) (concat p MJR-uname)) '("/Users/"
+                                                                                                         "/home/"
+                                                                                                         "/u/")))
+                                    (expand-file-name "~")))
+  ;; Set MJR-home-bin, MJR-home-cor, & MJR-home-dot
+  (if MJR-home
+      (dolist (vvp '((MJR-home-bin . ("bin"  "" ))
+                     (MJR-home-cor . ("core" "" ))
+                     (MJR-home-dot . (""        ))))
+        (let ((variable   (car vvp))
+              (candidates (cdr vvp)))
+          (dolist (candidate candidates)
+            (let ((p (concat MJR-home "/" candidate)))
+              (if (file-exists-p candidate) (set-if-auto-config variable p)))))))
+  ;; Set MJR-location
+  (set-if-auto-config 'MJR-location (cond ((or (file-exists-p "/apps/")
+                                               (file-exists-p "/apps/flames/data")
+                                               (file-exists-p "/home/flames/data"))    "WORK:TI")
+                                          ((or (file-exists-p "/home/Shared/core/")
+                                               (file-exists-p "/Users/Shared/core/"))  "HOME")
+                                          ('t                                          "UNKNOWN")))
+  ;; Set MJR-platform
+  (set-if-auto-config 'MJR-platform (cond ((string-match "mingw-nt"  system-configuration) "WINDOWS")
+                                          ((string-match "linux"     system-configuration) "LINUX")
+                                          ((string-match "darwin"    system-configuration) "DARWIN")
+                                          ('t                                              "UNKNOWN"))))
 
-(setq MJR-platform (cond ((string-match "mingw-nt"  system-configuration) "WINDOWS")
-                         ((string-match "linux"     system-configuration) "LINUX")
-                         ((string-match "darwin"    system-configuration) "DARWIN")
-                         ('t                                              "UNKNOWN")))
-
-(message "MJR: INIT: STAGE: Auto-Meta-Config: LOCATION: %s" MJR-location)
-(message "MJR: INIT: STAGE: Auto-Meta-Config: PLATFORM: %s" MJR-platform)
+(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-expert-mode: %s" MJR-expert-mode)
+(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-pookie-mode: %s" MJR-pookie-mode)
+(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-uname:       %s" MJR-uname)
+(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home:        %s" MJR-home)
+(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home-bin:    %s" MJR-home-bin)
+(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home-cor:    %s" MJR-home-cor)
+(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home-dot:    %s" MJR-home-dot)
+(message "MJR: INIT: STAGE: Auto-Meta-Config: LOCATION:        %s" MJR-location)
+(message "MJR: INIT: STAGE: Auto-Meta-Config: PLATFORM:        %s" MJR-platform)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: STAGE: Require Section...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(require 'cl)
 (require 'compile)
 (require 'paren)
 
@@ -159,25 +211,32 @@
               (message "MJR-calc-eval-multibase-region: Something went wrong"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun MJR-insert-from-web (url)
-  "Insert snippet from web."
-  (interactive (list (read-string "URL: " "http://www.mitchr.me/")))  
-;; MJR TODO NOTE <2016-06-02 16:49:11 CDT> MJR-insert-from-web: Make sure we have curl...
-  (call-process-shell-command "curl" nil 't nil "-s" url))
+(if (file-exists-p (concat MJR-home-bin "/curl"))
+    (progn
+      (message "MJR: INIT: STAGE: Define MJR Functions: MJR-insert-from-web: DEFINED!")
+      (defun MJR-insert-from-web (url)
+        "Insert snippet from web."
+        (interactive (list (read-string "URL: " "https://www.mitchr.me/")))  
+        (call-process-shell-command (concat MJR-home-bin "/curl") nil 't nil "-s" url)))
+    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-insert-from-web: NOT defined!  We could not find the curl command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun MJR-view-pdf-at-point ()
-  "If point is on a pdf file name, then load it up with mjrpdfview"
-  (interactive)
-  (let ((fap (ffap-guess-file-name-at-point)))
-    (if fap
-        (if (string-match "\\.pdf$" fap)
-            (if (file-exists-p fap)
-                (start-process-shell-command "mjrpdfview" "mjrpdfview" (concat MJR-home-bin "/mjrpdfview")  fap)
-                ;; We don't use "start-process" as we may need shell expansion for the file name
-                (message "MJR: MJR-view-pdf-at-point: ERROR: File a name at point, but it did not exist in the filesystem: %s" fap))
-            (message "MJR: MJR-view-pdf-at-point: ERROR: Found a file name at piont, but it was not a PDF: %s" fap))
-        (message "MJR: MJR-view-pdf-at-point: ERROR: Cound not find a filename name at point!"))))
+(if (file-exists-p (concat MJR-home-bin "/mjrpdfview"))
+    (progn
+      (message "MJR: INIT: STAGE: Define MJR Functions: MJR-view-pdf-at-point: DEFINED!")
+      (defun MJR-view-pdf-at-point ()
+        "If point is on a pdf file name, then load it up with mjrpdfview"
+        (interactive)
+        (let ((fap (ffap-guess-file-name-at-point)))
+          (if fap
+              (if (string-match "\\.pdf$" fap)
+                  (if (file-exists-p fap)
+                      (start-process-shell-command "mjrpdfview" "mjrpdfview" (concat MJR-home-bin "/mjrpdfview")  fap)
+                      ;; We don't use "start-process" as we may need shell expansion for the file name
+                      (message "MJR: MJR-view-pdf-at-point: ERROR: File a name at point, but it did not exist in the filesystem: %s" fap))
+                  (message "MJR: MJR-view-pdf-at-point: ERROR: Found a file name at piont, but it was not a PDF: %s" fap))
+              (message "MJR: MJR-view-pdf-at-point: ERROR: Cound not find a filename name at point!")))))
+    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-view-pdf-at-point: NOT defined!  We could not find the mjrpdfview command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-follow-mode ()
@@ -218,6 +277,21 @@ Prefix arg = 16: 5 vertical windows  (C-u C-u)"
                                                 cur-word
                                                 "?s=t'"))))))
     (message "MJR: INIT: STAGE: Define MJR Functions: MJR-dict: NOT defined!  We could not find the browser command"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(if (file-exists-p (concat MJR-home-bin "/browser"))
+    (progn
+      (message "MJR: INIT: STAGE: Define MJR Functions: MJR-google: DEFINED!")
+      (defun MJR-google ()
+        "Lookup current region via google.com in a browser window."
+        (interactive)
+        (let* ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
+               (reg-max  (if (mark) (max (point) (mark)) (point-max)))
+               (query    (if (< reg-min reg-max) (buffer-substring-no-properties reg-min reg-max))))
+          (if query
+              (call-process-shell-command (concat MJR-home-bin "/browser -foreground 100 -new-window 'https://www.google.com/#q=" (url-encode-url query) "'"))
+              (message "MJR-google: Region undefined. Nothing to query.")))))
+    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-google: NOT defined!  We could not find the browser command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: STAGE: Define MJR Functions: MJR-unfill: DEFINED!")
@@ -400,7 +474,7 @@ The 'MJR' comments come in one of two forms:
     (message "MJR: INIT: STAGE: Define MJR Functions: MJR-latexit: NOT defined!  We could not find the latexit.rb command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(if (string-equal MJR-location "TI")
+(if (string-equal MJR-location "WORK:TI")
     (progn
       (message "MJR: INIT: STAGE: Define MJR Functions: MJR-de: DEFINED!")
       (defun MJR-de (at-2-get pfx-arg srch-str)
@@ -1223,17 +1297,13 @@ The 'MJR' comments come in one of two forms:
           (setq imaxima-use-maxima-mode-flag 't)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Setup GAP -- NOTE: Must remove comint.el from GAP mode distribution!!!
-                                        ;(if (and (file-exists-p (concat MJR-home-cor "/elisp/gap"))
-                                        ;         (file-exists-p "/usr/local/bin/gap"))
-                                        ;    (progn
-                                        ;      (add-to-list 'load-path (concat MJR-home-cor "/elisp/gap"))
-                                        ;      (autoload 'gap-mode "gap-mode" "Gap editing mode" t)
-                                        ;      (setq auto-mode-alist (append (list '("\\.gap$" . gap-mode))
-                                        ;                                    auto-mode-alist))
-                                        ;      (autoload 'gap "gap-process" "Run GAP in emacs buffer" t)
-                                        ;      (setq gap-executable "/usr/local/bin/gap")
-                                        ;      (setq gap-start-options (list "-b"))))
+(message "MJR: INIT: PKG SETUP: MapleV")
+(let ((maplev-path (concat MJR-home-cor "/elisp/maplev/lisp/")))
+  (if (file-exists-p (concat maplev-path "maplev.el"))
+      (progn (message "MJR: INIT: PKG SETUP: MAPLEV found... %s" maplev-path)
+             (add-to-list 'load-path maplev-path)
+             (autoload 'maplev "maplev" "Maple editing mode" t)
+             (add-to-list 'auto-mode-alist '("\\.mpl$" . maplev-mode)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: PKG SETUP: OCTAVE setup...")
@@ -1572,22 +1642,3 @@ The 'MJR' comments come in one of two forms:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: STAGE: Done Customizing Emacs....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-;;       (setq load-path (cons (format "%s/.emacs.d/maple" (getenv "HOME")) load-path))
-;; (autoload 'maplev "maplev" "Maple editing mode" t)
-;; (setq 
-;;  auto-mode-alist (cons (cons (concat "\\." (regexp-opt '("mpl" "tst") t)
-;;                                      "$")
-;;                              'maplev-mode)
-;;                        auto-mode-alist)
-;;  maplev-copyright-owner "Joseph S. Riel" ; this is for applying copyrights to Maple code you create
-;;  maplev-default-release "15"
-;;  maplev-executable-alist 
-;;  '(
-;;    ("15" . ("maple15" nil "mint15"))
-;;    ("14" . ("maple14" nil "mint14"))
-;;    ("13" . ("maple13" nil "mint13")))
-;;  maplev-mint-query nil
-;;  maplev-description-quote-char ?\"
-;;  )
