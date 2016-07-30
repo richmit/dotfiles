@@ -132,7 +132,7 @@
               (candidates (cdr vvp)))
           (dolist (candidate candidates)
             (let ((p (concat MJR-home "/" candidate)))
-              (if (file-exists-p candidate) (set-if-auto-config variable p)))))))
+              (if (file-exists-p p) (set-if-auto-config variable p)))))))
   ;; Set MJR-location
   (set-if-auto-config 'MJR-location (cond ((or (file-exists-p "/apps/")
                                                (file-exists-p "/apps/flames/data")
