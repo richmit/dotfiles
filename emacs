@@ -32,12 +32,12 @@
 ;; @filedetails
 ;;
 ;; This config makes use of some external tools without which some functionality will be missing.  Note MJR-* functions requiring missing components will
-;; simply not be defined, or may simply reduce functionality.
+;; simply not be defined, while functions simply using them will have reduced functionality.
 ;;
-;;     * MJR-home-bin/mjrpdfview -- Used by MJR-view-pdf-at-point
-;;     * MJR-home-bin/browser    -- Used by MJR-dict & MJR-google.  Used to set browse-url-firefox-program
-;;     * MJR-home-bin/latexit.rb -- Used by MJR-latexit
-;;     * MJR-home-bin/curl       -- Used by MJR-insert-from-web
+;;     * MJR-home-bin/mjrpdfview -- Required by MJR-view-pdf-at-point
+;;     * MJR-home-bin/browser    -- Required by MJR-dict & MJR-google.  Used to set browse-url-firefox-program
+;;     * MJR-home-bin/latexit.rb -- Required by MJR-latexit
+;;     * MJR-home-bin/curl       -- Required by MJR-insert-from-web
 ;;     * MJR-home-bin/s          -- Used by MJR-term
 ;;     * MJR-home-bin/sn         -- Used by MJR-term
 ;;     * Several paths are checked for Macaulay & Maxima.
@@ -171,25 +171,39 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-eval-region (eval-how)
-        "Evaluate the region as calc, elisp, or lisp (via slime), put the result in the kill ring.  With prefix arg also insert result into buffer."
+        "Evaluate the region as calc, elisp, or lisp (via slime), put the result in the kill ring.  With prefix arg, insert result into buffer.
+
+Note: In non-interactive mode, the result is also displayed as a message for 'calc' and 'elisp'.
+
+Interaction with options:
+  * delete-selection-mode is non-NIL => Then a prefix arg will cause the result to *replace* the region
+  * transient-mark-mode is non-NIL   => If region is not active, then interactive mode is used (results not put on kill ring)
+                                        * for 'calc' ... like calling quick-calc             -- i.e. C-c * q
+                                        * for 'elisp' .. like calling eval-expression        -- i.e. M-:
+                                        * for 'lisp' ... like calling slime-interactive-eval -- i.e. C-: (in a slime buffer)"
         (interactive (list (if (require 'ido nil :noerror)
                                (ido-completing-read "Eval how: " '("calc" "elisp" "lisp"))
                                (read-string "Eval how: " "calc"))))
-        (message eval-how)
-        (let* ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
-               (reg-max  (if (mark) (max (point) (mark)) (point-max)))
-               (val      (if (< reg-min reg-max)
-                             (cond 
-                               ((string-equal eval-how "calc")  (kill-new (calc-eval (buffer-substring-no-properties reg-min reg-max))))
-                               ((string-equal eval-how "elisp") (kill-new (format "%s" (eval (car (read-from-string (buffer-substring-no-properties reg-min reg-max)))))))
-                               ((string-equal eval-how "lisp")  (slime-eval-region reg-min reg-max))))))
-          (if val
-              (if current-prefix-arg
-                  (progn (goto-char reg-max)
-                         (insert "=")
-                         (yank))
-                  (message "MJR-eval-region: Value: %s" val))
-              (message "MJR-eval-region: Something went wrong"))))
+        (if (or (null transient-mark-mode) (region-active-p))
+            (let* ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
+                   (reg-max  (if (mark) (max (point) (mark)) (point-max)))
+                   (val      (if (< reg-min reg-max)
+                                 (cond 
+                                  ((string-equal eval-how "calc")  (kill-new (calc-eval (buffer-substring-no-properties reg-min reg-max))))
+                                  ((string-equal eval-how "elisp") (kill-new (format "%s" (eval (car (read-from-string (buffer-substring-no-properties reg-min reg-max)))))))
+                                  ((string-equal eval-how "lisp")  (slime-eval-save (buffer-substring-no-properties reg-min reg-max)))))))
+              (if val
+                  (if current-prefix-arg
+                      (progn (goto-char reg-max)
+                             (insert "=")
+                             (yank))
+                      (message "MJR-eval-region: Value: %s" val))
+                  (message "MJR-eval-region: Something went wrong")))
+
+            (cond 
+             ((string-equal eval-how "calc")  (call-interactively #'quick-calc))
+             ((string-equal eval-how "elisp") (call-interactively #'eval-expression))
+             ((string-equal eval-how "lisp")  (call-interactively #'slime-interactive-eval)))))
 
 (global-set-key (kbd "ESC ESC :") 'MJR-eval-region)
 
@@ -210,7 +224,7 @@
                                (calc-eval (list in-num 'calc-number-radix 2))
                                "  "
                                (calc-eval (list in-num 'calc-number-radix 8)))))
-              (message "MJR-calc-eval-multibase-region: Something went wrong"))))
+        (message "MJR-calc-eval-multibase-region: Something went wrong"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-bin "/curl"))
@@ -1450,18 +1464,17 @@ The 'MJR' comments come in one of two forms:
 (message "MJR: INIT: PKG SETUP: package...")
 (if (require 'package nil :noerror)
     (progn
-      (add-to-list 'package-archives
-                   '("melpa" . "http://melpa.org/packages/") t)
-      ;; (add-to-list 'package-archives
-      ;;              '("melpa-stable" . "http://stable.melpa.org/packages/") t)
-      )
+      (and 't  (add-to-list 'package-archives '("melpa"        . "http://melpa.org/packages/")        t))
+      (and nil (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/") t))
+      (package-initialize))
     (message "MJR: INIT: PKG SETUP: package: WARNING: Could not load package package"))
-;; To refresh package contents: package-refresh-contents
-;; To install a package: package-install
-;; To list packages: package-list-packagesx
 
-;;(package-refresh-contents)
-;;(package-install "magit")
+;; * To refresh package contents: M-x package-refresh-contents
+;; * To install a package:        M-x package-install
+;; * To list packages:            M-x package-list-packages
+;; * The only thing I currently add is magit.  This is how you install it without the UI:
+;;      (progn (package-refresh-contents)
+;;             (package-install "magit"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: PKG SETUP: ESS")
