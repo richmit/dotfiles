@@ -64,22 +64,30 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(require 'cl)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (message "MJR: INIT: STAGE: Start Customizing Emacs....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Pre-Customizing Emacs (performance tweaks)....")
+(require 'cl)
+(require 'thingatpt)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MJR-quiet-message (&rest rest)
+  "Log a message to the *Messages* buffer, but do not display the message"
+  (let ((inhibit-message 't))
+    (apply #'message rest)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: STAGE: Pre-Customizing Emacs (performance tweaks)....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq gc-cons-threshold 50000000)
 (add-hook 'emacs-startup-hook (lambda ()
-                                (message "MJR: POST-INIT(%s): HOOK: emacs-startup-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                (message "MJR: POST-INIT: HOOK: emacs-startup-hook")
                                 (setq gc-cons-threshold 800000)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Manual-Meta-Config...")
+(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Set to "auto-config" and the values will be set to a best guess, or hard-wire the value to something here.
@@ -93,18 +101,18 @@
 (defvar MJR-location    "auto-config")
 (defvar MJR-platform    "auto-config")
 
-(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-expert-mode: %s" MJR-expert-mode)
-(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-pookie-mode: %s" MJR-pookie-mode)
-(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-uname:       %s" MJR-uname)
-(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home:        %s" MJR-home)
-(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-bin:    %s" MJR-home-bin)
-(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-cor:    %s" MJR-home-cor)
-(message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-dot:    %s" MJR-home-dot)
-(message "MJR: INIT: STAGE: Manual-Meta-Config: LOCATION:        %s" MJR-location)
-(message "MJR: INIT: STAGE: Manual-Meta-Config: PLATFORM:        %s" MJR-platform)
+(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-expert-mode: %s" MJR-expert-mode)
+(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-pookie-mode: %s" MJR-pookie-mode)
+(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-uname:       %s" MJR-uname)
+(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home:        %s" MJR-home)
+(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-bin:    %s" MJR-home-bin)
+(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-cor:    %s" MJR-home-cor)
+(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-dot:    %s" MJR-home-dot)
+(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: LOCATION:        %s" MJR-location)
+(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: PLATFORM:        %s" MJR-platform)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Auto-Meta-Config...")
+(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (cl-flet ((set-if-auto-config (var val)
                            (if (string-equal (symbol-value var) "auto-config")
@@ -148,25 +156,25 @@
                                           ((string-match "darwin"    system-configuration) "DARWIN")
                                           ('t                                              "UNKNOWN"))))
 
-(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-expert-mode: %s" MJR-expert-mode)
-(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-pookie-mode: %s" MJR-pookie-mode)
-(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-uname:       %s" MJR-uname)
-(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home:        %s" MJR-home)
-(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home-bin:    %s" MJR-home-bin)
-(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home-cor:    %s" MJR-home-cor)
-(message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home-dot:    %s" MJR-home-dot)
-(message "MJR: INIT: STAGE: Auto-Meta-Config: LOCATION:        %s" MJR-location)
-(message "MJR: INIT: STAGE: Auto-Meta-Config: PLATFORM:        %s" MJR-platform)
+(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-expert-mode: %s" MJR-expert-mode)
+(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-pookie-mode: %s" MJR-pookie-mode)
+(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-uname:       %s" MJR-uname)
+(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home:        %s" MJR-home)
+(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home-bin:    %s" MJR-home-bin)
+(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home-cor:    %s" MJR-home-cor)
+(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home-dot:    %s" MJR-home-dot)
+(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: LOCATION:        %s" MJR-location)
+(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: PLATFORM:        %s" MJR-platform)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Require Section...")
+(MJR-quiet-message "MJR: INIT: STAGE: Require Section...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'compile)
 (require 'paren)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Define MJR Functions..")
+(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions..")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -229,17 +237,17 @@ Interaction with options:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-bin "/curl"))
     (progn
-      (message "MJR: INIT: STAGE: Define MJR Functions: MJR-insert-from-web: DEFINED!")
+      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-insert-from-web: DEFINED!")
       (defun MJR-insert-from-web (url)
         "Insert snippet from web."
         (interactive (list (read-string "URL: " "https://www.mitchr.me/")))  
         (call-process-shell-command (concat MJR-home-bin "/curl") nil 't nil "-s" url)))
-    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-insert-from-web: NOT defined!  We could not find the curl command"))
+    (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-insert-from-web: NOT defined!  We could not find the curl command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-bin "/mjrpdfview"))
     (progn
-      (message "MJR: INIT: STAGE: Define MJR Functions: MJR-view-pdf-at-point: DEFINED!")
+      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-view-pdf-at-point: DEFINED!")
       (defun MJR-view-pdf-at-point ()
         "If point is on a pdf file name, then load it up with mjrpdfview"
         (interactive)
@@ -275,29 +283,25 @@ Prefix arg = 16: 5 vertical windows  (C-u C-u)"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-bin "/browser"))
     (progn
-      (message "MJR: INIT: STAGE: Define MJR Functions: MJR-dict: DEFINED!")
+      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-dict: DEFINED!")
       (defun MJR-dict ()
         "Lookup current word via dictionary.reference.com in a browser window."
         (interactive)
         (save-restriction
-          (let (cur-word-loc-start cur-word-loc-end cur-word old-loc)
-            (setq old-loc (point))
-            (skip-chars-backward "A-Za-z0?9")
-            (setq cur-word-loc-start (point))
-            (skip-chars-forward "A-Za-z0?9")
-            (setq cur-word-loc-end (point))
-            (setq cur-word (buffer-substring cur-word-loc-start cur-word-loc-end))
-            (goto-char old-loc)
-            (call-process-shell-command (concat MJR-home-bin
-                                                "/browser -foreground 100 -new-window 'http://dictionary.reference.com/browse/" 
-                                                cur-word
-                                                "?s=t'"))))))
-    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-dict: NOT defined!  We could not find the browser command"))
+          (let* ((cur-word (if (and transient-mark-mode (region-active-p) (mark))
+                               (buffer-substring-no-properties (min (point) (mark)) (max (point) (mark)))
+                               (if (thing-at-point-looking-at "[A-Za-z][A-Za-z]*" 50) (match-string 0))))
+                 (look-url (if cur-word (concat "http://dictionary.reference.com/browse/" cur-word "?s=t"))))
+            (message "URL: %s" look-url)
+            (if 't
+                (call-process-shell-command (concat MJR-home-bin "/browser -foreground 100 -new-window '" look-url "'"))
+                (eww look-url))))))
+    (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-dict: NOT defined!  We could not find the browser command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-bin "/browser"))
     (progn
-      (message "MJR: INIT: STAGE: Define MJR Functions: MJR-google: DEFINED!")
+      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-google: DEFINED!")
       (defun MJR-google ()
         "Lookup current region via google.com in a browser window."
         (interactive)
@@ -307,10 +311,10 @@ Prefix arg = 16: 5 vertical windows  (C-u C-u)"
           (if query
               (call-process-shell-command (concat MJR-home-bin "/browser -foreground 100 -new-window 'https://www.google.com/#q=" (url-encode-url query) "'"))
               (message "MJR-google: Region undefined. Nothing to query.")))))
-    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-google: NOT defined!  We could not find the browser command"))
+    (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-google: NOT defined!  We could not find the browser command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Define MJR Functions: MJR-unfill: DEFINED!")
+(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-unfill: DEFINED!")
 (defun MJR-unfill ()
   "Unfill paragraph or region."
   (interactive "*")
@@ -318,58 +322,65 @@ Prefix arg = 16: 5 vertical windows  (C-u C-u)"
     (fill-paragraph nil (region-active-p))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Define MJR Functions: MJR-date: DEFINED!")
-(defun MJR-date (dformat)
+(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-date: DEFINED!")
+(defun MJR-date (date-stamp-format)
   "Insert the date at the point when called interactively
 
 If called interactively a date/time stamp is inserted at the point using a format determined by the prefix argument:
 
-  |-----+---------------+----------------------+---------------+-----------------------------------------------|
-  | ARG | KEYS          | DATE FORMAT          |               |                                               |
-  |-----+---------------+----------------------+---------------+-----------------------------------------------|
-  |  -5 | M-- 4 C-c C-d | %s                   | UNIX          | Seconds since 1970-01-01 00:00:00 Z           |
-  |  -4 | M-- 4 C-c C-d | %Y-%m-%dT%H:%M#Z     | ISO 8601\secs | sitemap, XML, SLQ (#Z is +HH:MM or -HH:MM tz) |
-  |  -3 | M-- 3 C-c C-d | %Y-%m-%d %H:%M #Z    |               |                                               |
-  |  -2 | M-- 2 C-c C-d | %Y-%m-%d %H:%M       |               |                                               |
-  |  -1 | M--   C-c C-d | %Y-%m-%d             |               |                                               |
-  |   1 |       C-c C-d | %Y-%m-%d             |               |                                               |
-  |   2 | M-2   C-c C-d | %Y-%m-%d %H:%M:%S    |               |                                               |
-  |   3 | M-3   C-c C-d | %Y-%m-%d %H:%M:%S #Z |               |                                               |
-  |   4 | C-u   C-c C-d | %Y-%m-%dT%H:%M:%S#Z  | ISO 8601      | sitemap, XML, SLQ (#Z is +HH:MM or -HH:MM tz) |
-  |   5 | M-5   C-c C-d | %s                   | UNIX          | Seconds since 1970-01-01 00:00:00 Z           |
-  |-----+---------------+----------------------+---------------+-----------------------------------------------|
+  |-----+-------------+----------------------+---------------+-----------------------------------------------|
+  | ARG | KEYS        | DATE FORMAT          |               |                                               |
+  |-----+-------------+----------------------+---------------+-----------------------------------------------|
+  |  -5 | M-- 4 C-c d | %s                   | UNIX          | Seconds since 1970-01-01 00:00:00 Z           |
+  |  -4 | M-- 4 C-c d | %Y-%m-%dT%H:%M#Z     | ISO 8601\secs | sitemap, XML, SLQ (#Z is +HH:MM or -HH:MM tz) |
+  |  -3 | M-- 3 C-c d | %Y-%m-%d %H:%M #Z    |               |                                               |
+  |  -2 | M-- 2 C-c d | %Y-%m-%d %H:%M       |               |                                               |
+  |  -1 | M--   C-c d | %Y-%m-%d             |               |                                               |
+  |   0 | M-0         |                      |               | NOP -- empty string                           |
+  |   1 |       C-c d | %Y-%m-%d             |               |                                               |
+  |   2 | M-2   C-c d | %Y-%m-%d %H:%M:%S    |               |                                               |
+  |   3 | M-3   C-c d | %Y-%m-%d %H:%M:%S #Z |               |                                               |
+  |   4 | C-u   C-c d | %Y-%m-%dT%H:%M:%S#Z  | ISO 8601      | sitemap, XML, SLQ (#Z is +HH:MM or -HH:MM tz) |
+  |   5 | M-5   C-c d | %s                   | UNIX          | Seconds since 1970-01-01 00:00:00 Z           |
+  |   6 | M-6   C-c d | %Y%m%d%H%M%S         |               | Frequently used for file names                |
+  |-----+-------------+----------------------+---------------+-----------------------------------------------|
 
 When not called interactively, this function returns the time as a string.  The argument is a format string."
-  (interactive (let ((npfx  (prefix-numeric-value current-prefix-arg)))
-                 (cond ((= npfx  5) (list "%s"                   ))
-                       ((= npfx  4) (list "%Y-%m-%dT%H:%M:%S#Z"  ))
-                       ((= npfx  3) (list "%Y-%m-%d %H:%M:%S #Z" ))
-                       ((= npfx  2) (list "%Y-%m-%d %H:%M:%S"    ))
-                       ((= npfx  1) (list "%Y-%m-%d"             ))
-                       ((= npfx -5) (list "%s"                   ))
-                       ((= npfx -4) (list "%Y-%m-%dT%H:%M#Z"     ))
-                       ((= npfx -3) (list "%Y-%m-%d %H:%M #Z"    ))
-                       ((= npfx -2) (list "%Y-%m-%d %H:%M"       ))
-                       ((= npfx -1) (list "%Y-%m-%d"             ))
-                       ('t          (list nil)                   )))) 
-  (if dformat
-      (let* ((curtime   (if (plusp (prefix-numeric-value current-prefix-arg)) (current-time) (org-read-date 't 't)))
-             (time-list (decode-time curtime))
-             (tzo       (nth 8 time-list))
-             (zhr       (/ tzo 3600))
-             (zmn       (/ (- (abs tzo) (* (abs zhr) 3600)) 60))
-             (dstrtmp1  (format-time-string dformat curtime))
-             (dstrtmp2  (replace-regexp-in-string "#Z" (if (zerop zmn)
-                                                           (format "%+02d" zhr)
-                                                           (format "%+02d:%02d" zhr zmn)) dstrtmp1 't 't))
-             (dstr      (replace-regexp-in-string "UTC" "Z" dstrtmp2 't 't)))
-        (if (called-interactively-p) (insert dstr) dstr))
-      (message "MJR: MJR-Date: ERROR: Invalid prefix argument")))
+  (interactive (list (prefix-numeric-value current-prefix-arg)))
+  (let ((date-stamp-format (if (stringp date-stamp-format)
+                               date-stamp-format
+                               (if (integerp date-stamp-format)
+                                   (cond ((= date-stamp-format  6) "%Y%m%d%H%M%S"         )
+                                         ((= date-stamp-format  5) "%s"                   )
+                                         ((= date-stamp-format  4) "%Y-%m-%dT%H:%M:%S#Z"  )
+                                         ((= date-stamp-format  3) "%Y-%m-%d %H:%M:%S #Z" )
+                                         ((= date-stamp-format  2) "%Y-%m-%d %H:%M:%S"    )
+                                         ((= date-stamp-format  1) "%Y-%m-%d"             )
+                                         ((= date-stamp-format -5) "%s"                   )
+                                         ((= date-stamp-format -4) "%Y-%m-%dT%H:%M#Z"     )
+                                         ((= date-stamp-format -3) "%Y-%m-%d %H:%M #Z"    )
+                                         ((= date-stamp-format -2) "%Y-%m-%d %H:%M"       )
+                                         ((= date-stamp-format -1) "%Y-%m-%d"             ))))))
+    (if date-stamp-format 
+        (let* ((curtime   (if (minusp (prefix-numeric-value current-prefix-arg))
+                              (let ((current-prefix-arg nil)) (org-read-date 't 't))
+                              (current-time))) ;; Must protect org-read-date from prefix argument
+               (time-list (decode-time curtime))
+               (tzo       (nth 8 time-list))
+               (zhr       (/ tzo 3600))
+               (zmn       (/ (- (abs tzo) (* (abs zhr) 3600)) 60))
+               (dstrtmp1  (format-time-string date-stamp-format curtime))
+               (dstrtmp2  (replace-regexp-in-string "#Z" (if (zerop zmn)
+                                                             (format "%+02d" zhr)
+                                                             (format "%+02d:%02d" zhr zmn)) dstrtmp1 't 't))
+               (dstr      (replace-regexp-in-string "UTC" "Z" dstrtmp2 't 't)))
+          (if (called-interactively-p) (insert dstr) dstr))
+        "")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Define MJR Functions: MJR-quick-code-comment: DEFINED!")
-(defun MJR-quick-code-comment (lab-tag date-stamp-pref)
-  "Add (dated if no prefix-arg) 'MJR' comments at point or around region.
+(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-quick-code-comment: DEFINED!")
+(defun MJR-quick-code-comment (lab-tag date-stamp-format)
+  "Add 'MJR' comment at point/around region.  Time stamp determined by prefix argument (See: MJR-date).
 
 The 'MJR' comments come in one of two forms:
   * Region: Two formatted comment lines are added on the line before and line after the current region.
@@ -378,11 +389,8 @@ The 'MJR' comments come in one of two forms:
       * Ending comment: 'MJR TYPE END ------------------------- DATE'
   * Line: A formatted comment line is added after the current line (cursor placed ready for content)
     The CONTEXT will be the name of the current function or buffer name.
-    The format will be one of the following four depending on availability of date and context information: 
-     * 'MJR TYPE NOTE <DATE> CONTEXT: '
-     * 'MJR TYPE NOTE <DATE>: '
-     * 'MJR TYPE NOTE CONTEXT: '
-     * 'MJR TYPE NOTE: '"
+    The format will be (note <DATE> and/or CONTEXT might be missing): 
+     * 'MJR TYPE NOTE <DATE> CONTEXT: '"
   (interactive (let ((lab-tags  '("TODO"   ;; TODO Marker
                                   "MOD"    ;; Modification
                                   "REVIEW" ;; Code review comment
@@ -400,17 +408,26 @@ The 'MJR' comments come in one of two forms:
          (line-mode    (not (and mark-active (mark) (not (= (mark) (point))))))
          (region-start (if line-mode (point) (min (point) (mark))))
          (region-end   (if line-mode (point) (max (point) (mark))))
-         (date-fmt     "%Y-%m-%d %H:%M:%S %Z")
-         (date-stamp   (if (< date-stamp-pref 2) (MJR-date date-fmt)))
+         (date-stamp   (MJR-date date-stamp-format))
          (com-start    (if (boundp 'comment-start) (symbol-value 'comment-start) ""))
          (com-end      (if (boundp 'comment-end)   (symbol-value 'comment-end)   "")))
     (if (string-equal com-start ";")
         (setq com-start ";;"))
     (if line-mode
-        (let ((context-name (or (add-log-current-defun) (buffer-name)))) ;; Did have: (buffer-file-name) 
+        (let ((context-name (or (case major-mode
+                                  ('org-mode (condition-case nil
+                                                 (nth 4 (org-heading-components))
+                                               (error nil)))
+                                  (otherwise (add-log-current-defun)))
+                                (if (buffer-file-name)
+                                    (file-name-nondirectory (buffer-file-name)))
+                                (buffer-name)
+                                "")))
           (end-of-line)
-          (insert (concat "\n" com-start " MJR " lab-tag "NOTE" (if date-stamp " <") date-stamp
-                          (if date-stamp ">") (if context-name " ") context-name ": " com-end))
+          (insert (concat "\n" com-start " MJR " lab-tag "NOTE"
+                          (if (not (zerop (length date-stamp))) " <") date-stamp (if (not (zerop (length date-stamp))) ">")
+                          (if (not (zerop (length context-name))) " ") context-name ": "
+                          com-end))
           (backward-char (length com-end)))
         (let ((com-1 (concat " MJR " lab-tag "BEGIN ----------------------- " date-stamp))
               (com-2 (concat " MJR " lab-tag "END ------------------------- " date-stamp)))
@@ -424,7 +441,7 @@ The 'MJR' comments come in one of two forms:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-cor "/codeBits/"))
     (progn
-      (message "MJR: INIT: STAGE: Define MJR Functions: MJR-PrependHeader: DEFINED!")
+      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-PrependHeader: DEFINED!")
       (defun MJR-PrependHeader (cat-str file-type)
         "Determine the buffer file type, and populate the buffer with an appropriate header and, if the buffer is empty, a template.
 
@@ -465,7 +482,7 @@ The 'MJR' comments come in one of two forms:
                                 (if do-template
                                     (if  (file-readable-p tpl-file-name)
                                          (insert-file-contents tpl-file-name)
-                                         (message "MJR: MJR-PrependHeader: ERROR: Could not find TEMPLATE file for this file type")))
+                                         (MJR-quiet-message "MJR: MJR-PrependHeader: ERROR: Could not find TEMPLATE file for this file type")))
                                 (message "MJR: MJR-PrependHeader: INFO: Header prepended"))
                               (message "MJR: MJR-PrependHeader: ERROR: Found TOP file, but can not read it"))
                           (message "MJR: MJR-PrependHeader: ERROR: Could not find TOP file for this file type")))
@@ -476,7 +493,7 @@ The 'MJR' comments come in one of two forms:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-bin "/latexit.rb"))
     (progn
-      (message "MJR: INIT: STAGE: Define MJR Functions: MJR-latexit: DEFINED!")
+      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-latexit: DEFINED!")
       (defun MJR-latexit()
         "This function runs latex on the highlighted region, and displays the result with xpdf.
 
@@ -487,12 +504,13 @@ The 'MJR' comments come in one of two forms:
           (if (file-exists-p (concat MJR-home-bin "/latexit.rb"))
               (shell-command-on-region reg-min reg-max (concat MJR-home-bin "/latexit.rb -"))
               (message "MJR: MJR-latexit: ERROR: Could not find the latexit.rb command!")))))
-    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-latexit: NOT defined!  We could not find the latexit.rb command"))
+    (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-latexit: NOT defined!  We could not find the latexit.rb command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(if (string-equal MJR-location "WORK:TI")
+(if (and (string-equal MJR-location "WORK:TI")
+         (file-exists-p "/usr/local/bin/de"))
     (progn
-      (message "MJR: INIT: STAGE: Define MJR Functions: MJR-de: DEFINED!")
+      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-de: DEFINED!")
       (defun MJR-de (at-2-get pfx-arg srch-str)
         "Lookup the people in LDAP
 
@@ -544,10 +562,44 @@ The 'MJR' comments come in one of two forms:
                     (message "MJR-de: ERROR: The 'de' utility was not found!"))
                 (message "MJR-de: ERROR: The search string is probably wrong: %s" srch-str))
             (message "MJR-de: ERROR: Could not figure out what to surch for.  Try marking some text."))))
-    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-de: ERROR: Not defined!  Not at TI"))
+    (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-de: ERROR: Not defined!  Not at TI"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Define MJR Functions: MJR-stats-numbers-in-column: DEFINED!")
+(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-user-lookup: DEFINED!")
+(defvar MJR-user-lookup-uname-commands     '("/usr/local/bin/pde"  "/usr/bin/getent passwd" "/usr/bin/finger")
+  "Command to use to look-up unames -- first one found is used.")
+(defvar MJR-user-lookup-non-uname-commands '("/usr/local/bin/de")
+  "Command to use to look-up unames -- first one found is used.")
+(defvar MJR-user-lookup-non-uname-regex    "^\\(a[0-9]\\{7\\}\\|x[a-zA-Z0-9]\\{7\\}\\)$" ;; This value matches employee IDs at my day job
+  "Non-unames that match this regex will be looked up.  If nil, then all non-unames are looked up")
+(defun MJR-user-lookup ()
+  "Lookup user name at point or in active region (requires transient-mark-mode)"
+  (interactive)
+  (save-restriction
+    (let* ((fnd-thingy (if (and transient-mark-mode (region-active-p) (mark))
+                           (buffer-substring-no-properties (min (point) (mark)) (max (point) (mark)))
+                           (if (thing-at-point-looking-at "[a-zA-Z][a-zA-Z0-9_-]+" 30) (match-string 0))))
+           (fnd-uname (and fnd-thingy (find fnd-thingy (system-users) :test #'string-equal))))
+      (if (null fnd-thingy)
+          (message "MJR-user-lookup: Unable to find user name-like thing at point")
+          (if fnd-uname
+              (let ((lookup-cmd (find-if (lambda (f) (file-exists-p (first (split-string f))))
+                                         MJR-user-lookup-uname-commands)))
+                (if (null lookup-cmd)
+                    (message "MJR-user-lookup: Unable to find working uname lookup command")
+                    (shell-command (concat lookup-cmd " " fnd-thingy))))
+              (let ((lookup-cmd (find-if (lambda (f) (file-exists-p (first (split-string f))))
+                                         MJR-user-lookup-non-uname-commands)))
+                (if (null lookup-cmd)
+                    (message "MJR-user-lookup: Unable to find working non-uname lookup command")
+                    (if (null MJR-user-lookup-non-uname-regex)
+                        (message "MJR-user-lookup: Not looking non-uname because of empty regex.")
+                        (if (null (string-match MJR-user-lookup-non-uname-regex fnd-thingy))
+                            (message "MJR-user-lookup: Non-uname failed to match non-uname regex.")
+                            (shell-command (concat lookup-cmd " " fnd-thingy)))))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-stats-numbers-in-column: DEFINED!")
 (defun MJR-stats-numbers-in-column ()
   "Compute various statistics on the the numbers highlighted by a rectangle, and put a summary in the kill ring."
   (interactive)
@@ -585,7 +637,7 @@ The 'MJR' comments come in one of two forms:
       (message the-sumary))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Generic Global Emacs Config Stuff...")
+(MJR-quiet-message "MJR: INIT: STAGE: Generic Global Emacs Config Stuff...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (if MJR-pookie-mode
@@ -646,8 +698,6 @@ The 'MJR' comments come in one of two forms:
 (if MJR-expert-mode (setq enable-recursive-minibuffers t))
 ;; Show matching parens
 (show-paren-mode 1)
-;; Get rid of mail indicator in mode line
-(setq display-time-mail-string "")
 ;; Put file size in mode line
 (size-indication-mode)
 ;; Put column number in mode line
@@ -673,21 +723,22 @@ The 'MJR' comments come in one of two forms:
 ;; (set-mouse-color "black")
 ;; Set up default window selection keys (S-arrows)
 (if (version< emacs-version "23.1") (windmove-default-keybindings))
-                                        ;Global font lock mode
+;; Global font lock mode
 (global-font-lock-mode 1)
-                                        ; Set the mark ring size
+;; Set the mark ring size
 (setq mark-ring-max 64)
 ;; Only split vertically
 (setq split-width-threshold nil)
 ;; Set up a shell for emacs shell mode to use.
 (setq explicit-shell-file-name "/bin/bash")
+;; Keep SQL buffers in the current window
+(add-to-list 'same-window-buffer-names "*SQL*")
 ;; Set the browser approprately
 (if (file-exists-p (concat MJR-home-bin "/browser"))
     (setq browse-url-firefox-program (concat MJR-home-bin "/browser")))
-
 ;; Setup various handy auto-mode-alist items
 (add-to-list 'auto-mode-alist '("\\.sql.m4$"                . sql-mode))          ;; SQL with m4
-(add-to-list 'auto-mode-alist '("\\.txt.m4$"                . sql-mode))          ;; Text with m4
+(add-to-list 'auto-mode-alist '("\\.txt.m4$"                . text-mode))         ;; Text with m4
 (add-to-list 'auto-mode-alist '("\\.elisp$"                 . emacs-lisp-mode))   ;; Emacs lisp code
 (add-to-list 'auto-mode-alist '("\\.clisp$"                 . lisp-mode))         ;; SLIME-lisp-mode
 (add-to-list 'auto-mode-alist '("\\.[fF]95$"                . f90-mode))          ;; Use f90 mode with fortran 1995
@@ -700,17 +751,22 @@ The 'MJR' comments come in one of two forms:
 (add-to-list 'auto-mode-alist '("^/tmp/pico\\.[0-9][0-9]*$" . mail-mode))         ;; alpine tmp files -- use mail-mode
 (add-to-list 'auto-mode-alist '("tmp/mutt/\\.*mutt"         . mail-mode))         ;; mutt tmp files -- use mail-mode
 (add-to-list 'auto-mode-alist '("\\.R$"                     . R-mode))            ;; Use R mode
+;; Fringe on the right only
+(fringe-mode '(0 . 8))
+;; prettify-symbols in prog-mode.el
+;; (setq prettify-symbols-unprettify-at-point 't)
+;; (global-prettify-symbols-mode t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Built-in Mode Config...")
+(MJR-quiet-message "MJR: INIT: STAGE: Built-in Mode Config...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: vc")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: vc")
 ;; Use ediff for = binding
 (eval-after-load "vc-hooks"
-  '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: vc-hooks" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: vc-hooks" (MJR-date "%Y-%m-%d_%H:%M:%S"))
           (define-key vc-prefix-map "=" 'vc-ediff)))
 ;; No confirmation for C-x v v and C-x v i, and C-x v u
 (setq vc-suppress-confirm 't)
@@ -723,14 +779,32 @@ The 'MJR' comments come in one of two forms:
 ;; split window vertically for merge
 (setq ediff-merge-split-window-function 'split-window-vertically)
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: time")
+;; (MJR-quiet-message "MJR: INIT: PKG SETUP: semantic")
+;; (require 'semantic)
+;; (setq semantic-decoration-styles nil)
+;; (semantic-mode 1)
+;; (require 'semantic/sb)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: PKG SETUP: time")
 (if (require 'time nil :noerror)
     (progn
       ;; Time zone list for display-time-world
       (require 'time)
       ;; Put time and date in mode line
+      (setq display-time-mail-string "") ;; Get rid of mail indicator in mode line
       (setq display-time-day-and-date 't)
+      ;; (setq display-time-string-forms '((propertize (format "%04d-%02d-%02d %02d:%02d %s"
+      ;;                                                 (string-to-int year)
+      ;;                                                 (string-to-int month)
+      ;;                                                 (string-to-int day)
+      ;;                                                 (string-to-int 12-hours)
+      ;;                                                 (string-to-int minutes)
+      ;;                                                 (upcase am-pm))
+      ;;                                         'face 'mode-line-emphasis)))
+      (setq display-time-format "%Y-%m-%d %I:%M%p")
       (display-time)
       ;; Configure the cities I like for (display-time-world )
       (setq display-time-world-list '(("America/Los_Angeles"  "San Jose")
@@ -741,26 +815,26 @@ The 'MJR' comments come in one of two forms:
                                       ("Europe/Paris"         "Nice")
                                       ("Asia/Calcutta"        "Bangalore")
                                       ("Asia/Tokyo"           "Tokyo"))))
-    (message "MJR: INIT: PKG SETUP: time: WARNING: Could not load package"))
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: time: WARNING: Could not load package"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: server")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: server")
 (eval-after-load "server"
-  '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: server" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: server" (MJR-date "%Y-%m-%d_%H:%M:%S"))
           ;; Set a default name for the server each emacs instance will create
           (setq server-name (format "mjr-emacs-server-%d" (emacs-pid)))))
 (autoload 'server-running-p "server" "Test whether server NAME is running." t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: speedbar")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: speedbar")
 (eval-after-load "speedbar"
-  '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: speedbar!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: speedbar!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
           (dolist (ext '(".lisp" ".clisp" ".rb" ".f90" ".sql" ".f95" ".f08" ".f03" ".f2008"
                          ".f2003" ".F95" ".F08" ".F03" ".F2008" ".F2003" ".for" ".FOR" ".ps" "m2" "maple" "bash" "sh" ))
             (speedbar-add-supported-extension ext))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: linum")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: linum")
 (if (not MJR-pookie-mode)
     (if (require 'linum nil :noerror)
         (progn (global-linum-mode -1)
@@ -780,18 +854,18 @@ The 'MJR' comments come in one of two forms:
                             html-mode-hook
                             c-mode-hook))
                  (add-hook m (lambda ()
-                               (message "MJR: POST-INIT(%s): HOOK: +linum-mode" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                               (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: +linum-mode" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                                (linum-mode 1)))))
-        (message "MJR: INIT: PKG SETUP: linum: WARNING: Could not load package"))
-    (message "MJR: INIT: PKG SETUP: linum: WARNING: SKIP: pookie mode!"))
+        (MJR-quiet-message "MJR: INIT: PKG SETUP: linum: WARNING: Could not load package"))
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: linum: WARNING: SKIP: pookie mode!"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: dired")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: dired")
 (eval-after-load "dired"
-  '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: dired!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: dired!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
           (add-hook 'dired-mode-hook
                     (lambda ()
-                      (message "MJR: POST-INIT(%s): HOOK: diredc-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: diredc-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                       (if (boundp 'ido-enable-replace-completing-read)
                           (setq ido-enable-replace-completing-read nil))))  ;; If ido is loaded, make sure we don't use it in dired
           (define-key dired-mode-map (kbd "<mouse-3>") (lambda (event)
@@ -810,27 +884,32 @@ The 'MJR' comments come in one of two forms:
                                                            (find-file (file-name-sans-versions file t)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: git")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: git")
 (let ((git-el-files (list (concat MJR-home-cor "/elisp/git/git.el")
                           (concat MJR-home-cor "/elisp/git/git-blame.el"))))
   (if (every #'file-exists-p git-el-files)
       (dolist (git-el-file git-el-files)
         (load git-el-file))
-      (message "MJR: INIT: PKG SETUP: git: WARNING: Could not find custom git package")))
+      (MJR-quiet-message "MJR: INIT: PKG SETUP: git: WARNING: Could not find custom git package")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: sh-mode")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: sh-mode")
 (eval-after-load "sh-script"
-  '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: sh-script!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: sh-script!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
           (add-hook 'sh-mode-hook (lambda ()
-                                    (message "MJR: POST-INIT(%s): HOOK: sh-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                    (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: sh-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                                     (setq sh-basic-offset 2
                                           sh-indentation 2)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: eshell")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: eshell")
+(eval-after-load "em-term"
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: em-term!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+      (add-to-list 'eshell-visual-commands "s")
+      (add-to-list 'eshell-visual-commands "sn")
+      (add-to-list 'eshell-visual-subcommands '("git" "log" "l" "ll" "diff" "show"))))
 (eval-after-load "esh-mode"
-  '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: esh-mode!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: esh-mode!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
           (defun MJR-eshell-insert-last-word (n)
             (interactive "p")
             (insert (car (reverse (split-string (eshell-previous-input-string (- n 1)))))))
@@ -873,7 +952,7 @@ The 'MJR' comments come in one of two forms:
           (setq eshell-history-size 1048576)
           (add-hook 'eshell-mode-hook
                     (function (lambda ()
-                                (message "MJR: POST-INIT(%s): HOOK: eshell-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: eshell-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                                 (MJR-try-theme)  ;; Duno why, but eshell needs to have the theme reapplied after it starts...
                                 (setq pcomplete-cycle-completions nil)
                                 (local-set-key "\M-."  'MJR-eshell-insert-last-word)
@@ -883,29 +962,40 @@ The 'MJR' comments come in one of two forms:
                                 (setenv "EDITOR" (format "emacsclient -s %s" server-name)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun MJR-term (PROGRAM-TO-RUN NAME-OF-BUFFER)
-  "Fire off an ansi-term with a nice, default buffer name.  Special support is provided for my screen scripts if they are available."
-  (interactive (let* ((daProg (if (require 'ido nil :noerror)
-                                  (ido-completing-read "Program to run: " (append (if (file-exists-p (concat MJR-home-bin "/sn")) (list "sn"))
-                                                                                  (list "bash")
-                                                                                  (if (file-exists-p (concat MJR-home-bin "/s")) (list "s"))
-                                                                                  ))
-                                  (read-string "Program to run: " "bash")))
-                      (daName (read-string "Buffer name: " (concat "TERM:" (let ((cns (file-name-nondirectory daProg)))
-                                                                             (cond ((string-equal cns "sn")   "screen")
-                                                                                   ((string-equal cns "s")    "screen0")
-                                                                                   ((string-equal cns "bash") "shell")
-                                                                                   ((string-equal cns "ksh")  "shell")
-                                                                                   ((string-equal cns "ash")  "shell")
-                                                                                   ((string-equal cns "sh")   "shell")
-                                                                                   ((string-equal cns "csh")  "shell")
-                                                                                   ((string-equal cns "tcsh") "shell")
-                                                                                   ('t                        cns)))))))
-                 (list daProg daName)))
-  (if (not (server-running-p))
-      (server-start))
-  (setenv "EDITOR" (format "emacsclient -s %s" server-name))
-  (ansi-term PROGRAM-TO-RUN NAME-OF-BUFFER))
+(defun MJR-term (PROGRAM-TO-RUN)
+  "Fire off an ansi-term with a nice, default buffer name.  Sets the EDITOR environment variable and makes sure emacs-server is running."
+  (interactive (list (if (require 'ido nil :noerror)
+                         (ido-completing-read "Program to run: " (remove-if-not #'file-exists-p (list "/bin/bash"
+                                                                                                      (concat MJR-home-bin "/t")
+                                                                                                      (concat MJR-home-bin "/tn")
+                                                                                                      (concat MJR-home-bin "/td")
+                                                                                                      (concat MJR-home-bin "/tn")
+                                                                                                      (concat MJR-home-bin "/sn"))))
+                         (read-string "Program to run: " "bash"))))
+  (let* ((cns (file-name-nondirectory PROGRAM-TO-RUN))
+         (bbn (upcase (or (second (assoc cns '(("s"  "screen")
+                                               ("sn" "screen")
+                                               ("tn" "tmux")
+                                               ("tnn" "tmux")
+                                               ("td" "tmux")
+                                               ("t"  "tmux")))) cns))))
+    (if (not (server-running-p))
+        (server-start))
+    (setenv "EDITOR" (format "emacsclient -s %s" server-name))
+    (ansi-term PROGRAM-TO-RUN (dotimes (i 99)
+                                (if (not (get-buffer (format "*%s<%02d>*" bbn (1+ i))))
+                                    (return (format "%s<%02d>" bbn (1+ i))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MJR-bash ()
+  (interactive)
+  (MJR-term "/bin/bash"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(if (file-exists-p (concat MJR-home-bin "/sn"))
+    (defun MJR-sn ()
+      (interactive)
+      (MJR-term (concat MJR-home-bin "/sn"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-emerge-git-conflict (file-name)
@@ -926,13 +1016,13 @@ The 'MJR' comments come in one of two forms:
     (delete-file fileM)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: mail-mode setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: mail-mode setup...")
 (eval-after-load "sendmail"
-  '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: mail-mode!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: mail-mode!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
           (setq compose-mail-user-agent-warnings nil)
           (add-hook 'mail-mode-hook
                     (lambda ()
-                      (message "MJR: POST-INIT(%s): HOOK: mail-mode-hook(1)" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: mail-mode-hook(1)" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                       (if (string-equal (substring (buffer-name) 0 5) "mutt-")
                           (let ((da-frames (frame-list)))
                             (mail-to)
@@ -960,7 +1050,7 @@ The 'MJR' comments come in one of two forms:
             :group 'basic-faces)
           (add-hook 'mail-mode-hook
                     (lambda ()
-                      (message "MJR: POST-INIT(%s): HOOK: mail-mode-hook (2)" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: mail-mode-hook (2)" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                       (font-lock-add-keywords nil 
                                               '(("^[ \t]*>[^>\n].*$"          (0 'message-odd-quoted-text-face))
                                                 ("^[ \t]*>$"                  (0 'message-odd-quoted-text-face))
@@ -985,16 +1075,20 @@ The 'MJR' comments come in one of two forms:
                                                 ("^[ \t]*>.*$"                (0 'message-odd-quoted-text-face))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: org-mode setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: org-mode setup...")
 (if (not (string-equal MJR-platform "WINDOWS"))
     (progn
+      (let ((org-path (concat MJR-home-cor "/elisp/org/lisp")))
+        (if (file-exists-p org-path)
+            (add-to-list 'load-path org-path)))
+      
       (require 'org-install)
       ;;(require 'org-habit)
 
       (setq org-replace-disputed-keys t)  ;; Don't override S-<arrow> keys       
 
       (if (not (require 'htmlize nil :noerror))
-          (message "MJR: INIT: PKG SETUP: htmlize: WARNING: Could not load package in init."))
+          (MJR-quiet-message "MJR: INIT: PKG SETUP: htmlize: WARNING: Could not load package in init."))
 
       (org-babel-do-load-languages
        'org-babel-load-languages
@@ -1065,8 +1159,7 @@ The 'MJR' comments come in one of two forms:
       (setq org-babel-min-lines-for-block-output 0)             ;; Always put babel results in blocks
       (add-hook 'org-mode-hook                                  ;; Get my favorite keys back
                 (lambda ()
-                  (message "MJR: POST-INIT(%s): HOOK: org-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                  ;;(local-set-key (kbd "C-c C-d")   'MJR-date)
+                  (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: org-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                   (local-set-key  (kbd "C-c a")      'org-agenda)
                   ))
       ;; Setup orgtbl in other modes
@@ -1087,63 +1180,64 @@ The 'MJR' comments come in one of two forms:
                        html-mode-hook
                        c-mode-hook))
             (add-hook m (lambda ()
-                          (message "MJR: POST-INIT(%s): HOOK: +orgtbl-mode" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                          (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: +orgtbl-mode" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                           (turn-on-orgtbl))))))
-    (message "MJR: INIT: PKG SETUP: org-mode setup... ABORT! (no org-mode on windows)"))
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: org-mode setup... ABORT! (no org-mode on windows)"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: calender (solar stuff)")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: calender (solar stuff)")
 (eval-after-load "solar"
-  '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: solar!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: solar!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
           (if (version<= "23.1" emacs-version) (calendar-set-date-style 'iso))
           (setq calendar-location-name "Dallas, TX")
           (setq calendar-latitude 32.00)
           (setq calendar-longitude -96.00)))
 (eval-after-load "cal-dst"
-  '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: cal-dst!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: cal-dst!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
           (setq calendar-time-zone -360)
           (setq calendar-standard-time-zone-name "CST")
           (setq calendar-daylight-time-zone-name "CDT")))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: root-help setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: root-help setup...")
 (if (file-exists-p "/usr/share/emacs/site-lisp/root-help.el")
     (progn (autoload 'root-shell "root-help" "Run ROOT (the C++ Data Analysis Framework) shell" t)
            ;; Put any pre-load root config stuff here...
            (eval-after-load "root-help"
-             '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: root-help!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+             '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: root-help!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                      ;; Put any post-load root config stuff here...
                      ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: gdb-mode (GUD) setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: gdb-mode (GUD) setup...")
 (add-hook 'gdb-mode-hook
           (function (lambda ()
-                      (message "MJR: POST-INIT(%s): HOOK: gdb-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: gdb-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                       (setq gdb-many-windows           't)   ;; Use lots of windows for gdb
                       (setq gdb-use-separate-io-buffer nil)  ;; No I/O window
                       (tool-bar-mode 1)                      ;; Start up the tool-bar when we start up gdb
                       (add-hook 'kill-buffer-hook            ;; Set a kill-buffer-hook to get rid of the tool-bar when we leave.
                                 (function (lambda ()
-                                            (message "MJR: POST-INIT(%s): HOOK: kill-buffer-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                            (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: kill-buffer-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                                             (tool-bar-mode -1)))
                                 't 't))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: tramp-mode setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: tramp-mode setup...")
 (if (require 'tramp nil :noerror)
     (progn (setq tramp-default-user   MJR-uname
                  tramp-default-method "sshx")
-           ;;                                         host              user         method
+           ;;                                         host                    user         method
            (add-to-list 'tramp-default-method-alist '("\\`localhost\\'"       "\\`root\\'" "sudo"))
            ;;                                     FROM RE         TO VALUE
            (add-to-list 'directory-abbrev-alist '("^/rut"       . "/root@localhost:/"))
            (if (file-exists-p (concat MJR-home-dot "/.tramp.el"))
                (load-file (concat MJR-home-dot "/.tramp.el"))))
-    (message "MJR: INIT: PKG SETUP: tramp: WARNING: Could not load package"))
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: tramp: WARNING: Could not load package"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: aspell setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: aspell setup...")
 (let ((aspell-path (find-if #'file-exists-p
                             (list "/usr/bin/hunspell"
                                   "/bin/hunspell"
@@ -1156,20 +1250,20 @@ The 'MJR' comments come in one of two forms:
       (setq-default ispell-program-name "ispell")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: emacs-lisp-mode setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: emacs-lisp-mode setup...")
 ;; Don't indent the third argument if the if form differently...
 (put 'if 'lisp-indent-function nil)
 (add-hook 'emacs-lisp-mode-hook
           (function (lambda ()
-                      (message "MJR: POST-INIT(%s): HOOK: emacs-lisp-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: emacs-lisp-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                       (local-set-key "\C-c\C-c" 'byte-recompile-directory)
                       (local-set-key "\C-c\C-b" 'byte-compile-file))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: c-mode setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: c-mode setup...")
 (add-hook 'c-mode-common-hook
           (function (lambda ()
-                      (message "MJR: POST-INIT(%s): HOOK: c-mode-common-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: c-mode-common-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                       (setq c-inhibit-startup-warnings-p   t)
                       (setq c-echo-syntactic-information-p nil)
                       (setq c-progress-interval            1)
@@ -1184,29 +1278,27 @@ The 'MJR' comments come in one of two forms:
                                       (inclass . ++)
                                       (access-label . -))))
                       (c-set-style "MJR")
-                      (local-set-key (kbd "C-c C-d")   'MJR-date)  ;; This one is wacked, restore it
                       (local-set-key "\C-c\C-c" 'compile))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: fortran-mode setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: fortran-mode setup...")
 (add-hook 'fortran-mode-hook
           (function (lambda ()
-                      (message "MJR: POST-INIT(%s): HOOK: fortran-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: fortran-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                       (setq comment-start               "c")
                       (setq fortran-comment-indent-char " ")
                       (setq fortran-blink-matching-if   t)
-                      (setq fortran-comment-region      "c     ")
-                      (local-set-key (kbd "C-c C-d")   'MJR-date)))) ;; This one is wacked, restore it
+                      (setq fortran-comment-region      "c     "))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: perl-mode setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: perl-mode setup...")
 (add-hook 'perl-mode-hook
           (function (lambda ()
-                      (message "MJR: POST-INIT(%s): HOOK: perl-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: perl-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                       (setq perl-indent-level 2))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: auctex setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: auctex setup...")
 (let ((atex-path (find-if (lambda (p) (file-exists-p (concat p "/auctex.el")))
                           (list "/usr/local/share/emacs/site-lisp/"
                                 (concat MJR-home-cor "/elisp/auctex/share/site-lisp/")))))
@@ -1215,7 +1307,7 @@ The 'MJR' comments come in one of two forms:
              (load "auctex.el" nil t t))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: PoV-mode setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: PoV-mode setup...")
 (let ((pov-path (find-if #'file-exists-p 
                          (list (concat MJR-home-cor "/elisp/pov-mode")))))
   (if pov-path
@@ -1224,32 +1316,33 @@ The 'MJR' comments come in one of two forms:
         (autoload 'pov-mode "pov-mode" "PoVray scene file mode" t)
         (add-to-list 'auto-mode-alist '("\\.pov\\'" . pov-mode))
         (add-to-list 'auto-mode-alist '("\\.inc\\'" . pov-mode)))
-      (message "MJR: INIT: PKG SETUP: PoV-mode not found...")))
+      (MJR-quiet-message "MJR: INIT: PKG SETUP: PoV-mode not found...")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: latex-mode setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: latex-mode setup...")
 (add-hook 'latex-mode-hook
           (function (lambda ()
-                      (message "MJR: POST-INIT(%s): HOOK: latex-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: latex-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                       (setq tex-font-script-display 0))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: Macaulay 2 setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: Macaulay 2 setup...")
 (let ((mac-path (find-if #'file-exists-p
                          (list "/usr/local/big/Macaulay2/1.7/share/emacs/site-lisp"
                                "/Applications/Macaulay2-1.2/share/emacs/site-lisp/"
                                "/Applications/Macaulay2-1.1/share/emacs/site-lisp/"
                                "/usr/local/share/emacs/site-lisp"
                                "/usr/share/emacs/site-lisp"))))
-  (if (file-exists-p (concat mac-path "/M2-init.el"))
+  (if (and mac-path (file-exists-p (concat mac-path "/M2-init.el")))
       (progn (add-to-list 'load-path mac-path)
              (load "M2-init" t)) ;; M2-init is a list of autoloads
-      (message "MJR: INIT: PKG SETUP: Macaulay 2 not found...")))
+      (MJR-quiet-message "MJR: INIT: PKG SETUP: Macaulay 2 not found...")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: Maxima setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: Maxima setup...")
 (let ((max-path (find-if (lambda (p) (file-exists-p (concat p "/maxima.el")))
-                         (list "/usr/local/big/maxima/5.38.0_sbcl-1.3.4/share/maxima/5.36.0/emacs"  ;; Custom build on Debian 8
+                         (list "/usr/local/big/maxima/5.38.1_sbcl-1.3.11/share/maxima/5.38.1/emacs" ;; Custom build on Debian 8
+                               "/usr/local/big/maxima/5.38.0_sbcl-1.3.4/share/maxima/5.36.0/emacs"  ;; Custom build on Debian 8
                                "/usr/local/big/maxima/5.36.0_sbcl-1.2.11/share/maxima/5.36.0/emacs" ;; Custom build on Debian 8
                                "/usr/local/big/maxima/5.37.0_sbcl-1.2.14/share/maxima/5.37.0/emacs" ;; Custom build on Debian 8
                                "/home/richmit/s/linux/local/share/maxima/5.29.1/emacs"              ;; Custom biuld on linux
@@ -1257,13 +1350,14 @@ The 'MJR' comments come in one of two forms:
                                "/usr/share/maxima/5.34.1/emacs/"                                    ;; Standard location for Debian 8
                                "/usr/share/maxima/5.21.1/emacs"))))                                 ;; Standard location for Ubuntu 11.04
   (if max-path
-      (progn (message "MJR: INIT: PKG SETUP: Specific version of maxima.el found...")
+      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: Specific version of maxima.el found...")
              (add-to-list 'load-path max-path)
              (autoload 'maxima "maxima" "Run Maxima in a window" t)
              (eval-after-load "maxima"
-               '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: maxima!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+               '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: maxima!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                        (let ((max-cmd  (find-if #'file-exists-p 
-                                                (list "/usr/local/big/maxima/5.38.0_sbcl-1.3.4/bin/maxima"  ;; Custom build on Debian 8 @ home
+                                                (list "/usr/local/big/maxima/5.38.1_sbcl-1.3.11/bin/maxima" ;; Custom build on Debian 8 @ home
+                                                      "/usr/local/big/maxima/5.38.0_sbcl-1.3.4/bin/maxima"  ;; Custom build on Debian 8 @ home
                                                       "/usr/local/big/maxima/5.37.0_sbcl-1.2.14/bin/maxima" ;; Custom build on Debian 8 @ home
                                                       "/usr/local/big/maxima/5.36.0_sbcl-1.2.11/bin/maxima" ;; Custom build on Debian 8 @ home
                                                       "/home/richmit/s/linux/local/bin/maxima"              ;; Custom biuld on linux @ TI
@@ -1272,40 +1366,44 @@ The 'MJR' comments come in one of two forms:
                                                       "/usr/bin/maxima"))))                                 ;; Standard place for Debian & Ubuntu
                          (if max-cmd
                              (progn
-                               (message "MJR: INIT: PKG SETUP: Specific Maxima binary found...")
+                               (MJR-quiet-message "MJR: INIT: PKG SETUP: Specific Maxima binary found...")
                                (setq maxima-command (or max-cmd "maxima"))))
                          (cond ((file-exists-p "/usr/lib/maxima/5.21.1/binary-gcl")  (setq maxima-args "-l gcl")) ;; old format for ubuntu 10.xx
                                ((file-exists-p "/usr/lib/maxima/5.27.0/binary-gcl")  nil)
                                ('t                                                   (setq maxima-args '("-l" "sbcl"))))
                          (add-hook 'inferior-maxima-mode-hook
                                    (lambda ()
-                                     (message "MJR: POST-INIT(%s): HOOK: inferior-maxima-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                     (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-maxima-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                                      (font-lock-mode 1)
                                      (local-set-key (kbd "TAB") 'inferior-maxima-complete)))))))
-      (message "MJR: INIT: PKG SETUP: Maxima not found...")))
+      (MJR-quiet-message "MJR: INIT: PKG SETUP: Maxima not found...")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: bookmarks setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: bookmarks setup...")
+;; Why?  I normally have a system specific bookmark list managed by emacs, but I always want to make sure I have a core set of
+;; bookmarks defined for really common stuff.
 (eval-after-load "bookmark"
-  '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: bookmarks!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-          (dolist (bp (list (cons "computer_notes" "~/world/stuff/notes/computer/")
-                            (cons "tex_templates"  (concat MJR-home-cor "/texinputs/"))    ;; Place for TeX input files and templtes
-                            (cons "org_templates"  (concat MJR-home-cor "/org-mode/"))     ;; Place for org-mode input files and templtes
-                            (cons "lispy_prod"     (concat MJR-home-cor "/lispy/"))        ;; Place for production copy of *mjrcalc*
-                            (cons "lispy_dev"      "/home/richmit/world/my_prog/lispStuff/lispy/")
-                            (cons "my_refrences"   "/home/richmit/world/stuff/my_ref/")
-                            (cons "doc1"           "/Users/Shared/Doc1/")
-                            (cons "doc2"           "/Users/Shared/Doc2/index.org")
-                            (cons "doc3"           "/Users/Shared/Doc3/index.org")))
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: bookmarks!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+          (dolist (bp (list (cons "templates_tex"      (concat MJR-home-cor "/texinputs/"))                 ;; Place for TeX input files and templtes
+                            (cons "templates_org"      (concat MJR-home-cor "/org-mode/"))                  ;; Place for org-mode input files and templtes
+                            (cons "lispy_prod"         (concat MJR-home-cor "/lispy/"))                     ;; Place for production copy of *mjrcalc*
+                            (cons "lispy_dev"          (concat MJR-home "/world/my_prog/lispStuff/lispy/")) ;; Development copy of *mjrcalc*
+                            (cons "ref_cheatsheet"     (concat MJR-home "/world/stuff/my_ref/"))            ;; Cheat sheets
+                            (cons "ref_note_computer"  "~/world/stuff/notes/computer/")
+                            (cons "refcode_R"          (concat MJR-home "/world/my_prog/learn/R"))          ;; Refrence code: R
+                            (cons "refcode_ruby"       (concat MJR-home "/world/my_prog/learn/ruby"))       ;; Refrence code: Ruby                            
+                            (cons "doc1"               "/Users/Shared/Doc1/")                               ;; ebook repo #1
+                            (cons "doc2"               "/Users/Shared/Doc2/index.org")                      ;; ebook repo #1 (cs, science, etc..)
+                            (cons "doc3"               "/Users/Shared/Doc3/index.org")))                    ;; ebook repo #3 (math books)
             (let ((bt (car bp))
                   (bf (cdr bp)))
-              (if (and (file-exists-p bf) (not (assoc bf bookmark-alist)))
+              (if (and bf (file-exists-p bf) (not (assoc bf bookmark-alist)))
                   (add-to-list 'bookmark-alist (list bt (list (cons 'filename bf)))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: iMaxima setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: iMaxima setup...")
 (eval-after-load "imaxima"
-  '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: imaxima!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: imaxima!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
           ;; The type size used in LaTeX. Options: 9, 10, 11, 12
           (setq imaxima-pt-size 9)
           ;; Default size of font. Options: "small", "normalsize", "large", "Large", "LARGE", "huge", "Huge"
@@ -1314,61 +1412,63 @@ The 'MJR' comments come in one of two forms:
           (setq imaxima-scale-factor 2.0)
           ;; Use maxima mode 
           (setq imaxima-use-maxima-mode-flag 't)))
+(autoload 'imaxima "imaxima" "Maxima mode with typeset results" t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: MapleV")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: MapleV")
 (let ((maplev-path (concat MJR-home-cor "/elisp/maplev/lisp/")))
   (if (file-exists-p (concat maplev-path "maplev.el"))
-      (progn (message "MJR: INIT: PKG SETUP: MAPLEV found... %s" maplev-path)
+      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: MAPLEV found... %s" maplev-path)
              (add-to-list 'load-path maplev-path)
              (autoload 'maplev "maplev" "Maple editing mode" t)
              (add-to-list 'auto-mode-alist '("\\.mpl$" . maplev-mode)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: OCTAVE setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: OCTAVE setup...")
 (if (and (file-exists-p (concat MJR-home-cor "/elisp/octave")))
-    (progn (message "MJR: INIT: PKG SETUP: OCTAVE found...")
+    (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: OCTAVE found...")
            (add-to-list 'load-path (concat MJR-home-cor "/elisp/octave"))
            (autoload 'octave-mode  "octave-mod" "Octave editing mode" t)
            (setq auto-mode-alist 
                  (cons '("\\.m$" . octave-mode) auto-mode-alist))
            (add-hook 'octave-mode-hook 
                      (lambda () 
-                       (message "MJR: POST-INIT(%s): HOOK: octave-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                       (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: octave-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                        (abbrev-mode 1) 
                        (auto-fill-mode 1) 
                        (font-lock-mode 1)))
            (autoload 'run-octave   "octave-inf" "Interactive Octave" t)
            (add-hook 'inferior-octave-mode-hook
                      (lambda () 
-                       (message "MJR: POST-INIT(%s): HOOK: inferior-octave-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                       (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-octave-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                        (font-lock-mode 1))))
-    (message "MJR: INIT: PKG SETUP: OCTAVE Not Found..."))
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: OCTAVE Not Found..."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: procesing mode setup...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: procesing mode setup...")
 (let ((processing-loc (find-if #'file-exists-p
                                (list (concat MJR-home-cor "/elisp/processing")))))
   (if processing-loc
-      (progn (message "MJR: INIT: PKG SETUP: Processing Mode found in CORE.")
+      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: Processing Mode found in CORE.")
              (add-to-list 'load-path processing-loc)
              (add-to-list 'auto-mode-alist '("\\.pde$" . processing-mode))
              (autoload 'processing-mode "processing-mode" "Processing mode" t))
-      (message "MJR: INIT: PKG SETUP: Processing Mode Not Found...")))
+      (MJR-quiet-message "MJR: INIT: PKG SETUP: Processing Mode Not Found...")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: SLIME...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME...")
 (let ((slime-loc (find-if #'file-exists-p
                           (list (concat MJR-home-cor "/elisp/slime")
                                 (concat MJR-home-cor "/elisp/slime-2011-05-19")))))
   (if slime-loc
-      (progn (message "MJR: INIT: PKG SETUP: SLIME found...")
+      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME found...")
              (add-to-list 'load-path slime-loc)
              (require 'slime-autoloads)
              (eval-after-load "slime"
-               '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: slime!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+               '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: slime!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                        (let ((slime-lisp-bin (find-if #'file-exists-p
-                                                      (list "/usr/local/big/sbcl/1.3.4/bin/sbcl"
+                                                      (list "/usr/local/big/sbcl/1.3.11/bin/sbcl"
+                                                            "/usr/local/big/sbcl/1.3.4/bin/sbcl"
                                                             "/usr/local/big/sbcl/1.2.14/bin/sbcl"
                                                             "/usr/local/big/sbcl/1.2.11/bin/sbcl"
                                                             "/home/richmit/s/linux/local/bin/sbcl"
@@ -1383,10 +1483,10 @@ The 'MJR' comments come in one of two forms:
                                                          "/opt/local/share/doc/lisp/HyperSpec-7-0/HyperSpec/"))))                    
                          (if slime-lisp-bin
                              (setq inferior-lisp-program slime-lisp-bin)
-                             (message "MJR INIT: WARNING: No working lisp found"))
+                             (MJR-quiet-message "MJR INIT: WARNING: No working lisp found"))
                          (if spec-to-use
                              (setq common-lisp-hyperspec-root (concat "file:" spec-to-use))
-                             (message "MJR INIT: WARNING: Using remote hyperspec: %s"
+                             (MJR-quiet-message "MJR INIT: WARNING: Using remote hyperspec: %s"
                                       (setq common-lisp-hyperspec-root "http://www.lispworks.com/reference/HyperSpec/")))
                          (slime-setup '(slime-repl)) ; Setup (use SLIME-REPL)
                          (setq lisp-simple-loop-indentation  1
@@ -1395,7 +1495,7 @@ The 'MJR' comments come in one of two forms:
                          (setq slime-net-coding-system 'utf-8-unix)
                          (add-hook 'lisp-mode-hook
                                    (lambda ()
-                                     (message "MJR: POST-INIT(%s): HOOK: lisp-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                     (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: lisp-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                                      (setq slime-net-coding-system 'utf-8-unix)))
                          ;; REPL bindings
                          (define-key slime-repl-mode-map "\M-." 'slime-edit-definition-with-etags)           ;; A somewhat slimey version of find-tag
@@ -1410,12 +1510,11 @@ The 'MJR' comments come in one of two forms:
                          ;;(define-key slime-mode-map "\M-." 'find-tag)
                          ;; M-x slime-who-calls       Show function callers.
                          ;; M-x slime-who-references  Show references to global variable.
-                         (global-set-key (kbd "C-c s")   'slime-selector) ; Switch back to slime REPL
-                         (global-set-key (kbd "C-c C-s") 'slime-selector)))))
-      (message "MJR: INIT: PKG SETUP: SLIME Not Found...")))
+                         (global-set-key (kbd "C-c s")   'slime-selector)))))  ; Switch back to slime REPL
+      (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME Not Found...")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: ido...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: ido...")
 (if (not MJR-pookie-mode)
     (if (require 'ido nil :noerror)
         (progn (setq ido-use-filename-at-point 'guess)
@@ -1457,17 +1556,17 @@ The 'MJR' comments come in one of two forms:
                                                                              (ep (progn (search-backward "/") (forward-char) (point))))
                                                                          (if (not (= sp ep))
                                                                              (kill-region sp ep))))))
-        (message "MJR: INIT: PKG SETUP: ido: WARNING: Could not load ido package"))
-    (message "MJR: INIT: PKG SETUP: ido: SKIP: Pookie mode"))
+        (MJR-quiet-message "MJR: INIT: PKG SETUP: ido: WARNING: Could not load ido package"))
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: ido: SKIP: Pookie mode"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: package...")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: package...")
 (if (require 'package nil :noerror)
     (progn
       (and 't  (add-to-list 'package-archives '("melpa"        . "http://melpa.org/packages/")        t))
       (and nil (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/") t))
       (package-initialize))
-    (message "MJR: INIT: PKG SETUP: package: WARNING: Could not load package package"))
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: package: WARNING: Could not load package package"))
 
 ;; * To refresh package contents: M-x package-refresh-contents
 ;; * To install a package:        M-x package-install
@@ -1476,16 +1575,92 @@ The 'MJR' comments come in one of two forms:
 ;;      (progn (package-refresh-contents)
 ;;             (package-install "magit"))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: PKG SETUP: ESS")
+(MJR-quiet-message "MJR: INIT: PKG SETUP: sunrise-commander")
+(let ((sunrise-commander-path (find-if (lambda (path) (file-exists-p (concat path "/sunrise-commander.el")))
+                                       (list (concat MJR-home-cor "/elisp/sunrise-commander")))))
+  (if (not (null sunrise-commander-path))
+      (progn
+        (eval-after-load "sunrise-commander"
+          '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: sunrise-commander!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                  ))
+        (add-to-list 'load-path sunrise-commander-path)
+        (autoload 'sunrise "sunrise-commander" "Sunrise Commander" t)
+        (require 'sunrise-x-tree))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: PKG SETUP: hs-minor-mode")
+(progn
+  (eval-after-load "hideshow"
+    '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: hs-minor-mode!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+            (add-hook 'c-mode-common-hook   'hs-minor-mode)
+            (add-hook 'emacs-lisp-mode-hook 'hs-minor-mode)
+            (add-hook 'fortran-mode-hook    'hs-minor-mode)
+            (add-hook 'java-mode-hook       'hs-minor-mode)
+            (add-hook 'lisp-mode-hook       'hs-minor-mode)
+            (add-hook 'perl-mode-hook       'hs-minor-mode)
+            (defun MJR-hs-toggle ()
+              "Prefix arg determines action: No prefix => toggle hide for current block; otherwise, hide everything if arg is 4, else show everything."
+              (interactive)
+              (if current-prefix-arg
+                  (if (= (prefix-numeric-value current-prefix-arg) 4)
+                      (hs-hide-all)
+                      (hs-show-all))
+                  (hs-toggle-hiding)))
+            (global-set-key (kbd "C-c v") 'MJR-hs-toggle)))
+  (require 'hideshow))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet")
+(let ((yasnippet-path (find-if (lambda (path) (file-exists-p (concat path "/yasnippet.el")))
+                               (list (concat MJR-home-cor "/elisp/yasnippet")))))
+  (if (not (null yasnippet-path))
+      (progn
+        (eval-after-load "yasnippet"
+          '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: yasnippet!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                  (setq yas-snippet-dirs (remove-if-not #'file-exists-p
+                                                        (list (concat MJR-home-cor   "/yasnippets")
+                                                              ;;(concat yasnippet-path "/snippets")
+                                                              )))
+                  ;; Nix the default tab binding..
+                  (define-key yas-minor-mode-map (kbd "<tab>") nil)
+                  (define-key yas-minor-mode-map (kbd "TAB")   nil)
+                  ;; Add in-key-map binding for my own expand
+                  (define-key yas-minor-mode-map (kbd "ESC ESC TAB") 'MJR-expand)
+                  ;; Nix yas-fallback behaviour so C-c e won't complain when expand fails
+                  (setq yas-fallback-behavior nil)
+                  ;; How we get some global templates
+                  (add-hook 'yas-minor-mode-hook
+                            (lambda ()
+                              (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: yas-minor-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                              (yas-activate-extra-mode 'fundamental-mode)))
+                  ;; Make yas work everyplace
+                  (yas-global-mode 1)
+                  ;; Call yas-expand or yas-insert-snippet depending on if region is active
+                  (defun MJR-expand ()
+                    "If no region is active, use yas-expand to attempt yasnippet expantion; otherwise call yas-insert-snippet."
+                    (interactive)
+                    ;; (if (not (find 'fundamental-mode minor-mode-list))
+                    ;;     (yas-activate-extra-mode 'fundamental-mode))
+                    (if (and transient-mark-mode (region-active-p))
+                        (funcall-interactively #'yas-insert-snippet)
+                        (if (not (funcall-interactively #'yas-expand))
+                            (funcall-interactively #'yas-insert-snippet))))
+                  (global-set-key (kbd "C-c e") 'MJR-expand)))
+        (add-to-list 'load-path yasnippet-path)
+        (require 'yasnippet))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: PKG SETUP: ESS")
 (let ((ess-path (concat MJR-home-cor "/elisp/ess/lisp/")))
   (if (file-exists-p (concat ess-path "ess-site.el"))
-      (progn (message "MJR: INIT: PKG SETUP: ESS found... %s" ess-path)
+      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: ESS found... %s" ess-path)
              (add-to-list 'load-path ess-path)
              (autoload 'R "ess-site" "Call 'R', the 'GNU S' system from the R Foundation." t)
              (autoload 'R-mode "ess-site" "Call 'R', the 'GNU S' system from the R Foundation." t)
              (eval-after-load "ess-site"
-               '(progn (message "MJR: POST-INIT(%s): EVAL-AFTER: ess!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+               '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: ess!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                        (setq ess-fancy-comments nil)
                        (progn (ess-toggle-underscore 't)
                               (ess-toggle-underscore nil))
@@ -1493,7 +1668,7 @@ The 'MJR' comments come in one of two forms:
                                     '(mjr-ess-style
                                       (ess-indent-level . 2)                       ;; * (ess-indent-level . 4) 
                                       (ess-first-continued-statement-offset . 2)   ;; * (ess-first-continued-statement-offset . 0) 
-                                      (ess-continued-statement-offset . 0)         ;; * (ess-continued-statement-offset . 4) 
+                                      (ess-continued-statement-offset . 2)         ;; * (ess-continued-statement-offset . 4) 
                                       (ess-brace-offset . -2)                      ;; * (ess-brace-offset .  0) 
                                       (ess-expression-offset . 2)                  ;; * (ess-expression-offset . 4) 
                                       (ess-else-offset . 0)                        ;; = (ess-else-offset . 0) 
@@ -1506,19 +1681,19 @@ The 'MJR' comments come in one of two forms:
                        (setq ess-default-style 'mjr-ess-style)
                        (add-hook 'ess-mode-hook
                                  (lambda ()
-                                   (message "MJR: POST-INIT(%s): HOOK: ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                   (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                                    (progn (ess-toggle-underscore 't)
                                           (ess-toggle-underscore nil))
                                    (ess-set-style 'mjr-ess-style)))
                        (add-hook 'inferior-ess-mode-hook
                                  (lambda ()
-                                   (message "MJR: POST-INIT(%s): HOOK: inferior-ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                   (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                                    (progn (ess-toggle-underscore 't)
                                           (ess-toggle-underscore nil))
                                    (ess-set-style 'mjr-ess-style))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Theme....")
+(MJR-quiet-message "MJR: INIT: STAGE: Theme....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1527,15 +1702,15 @@ The 'MJR' comments come in one of two forms:
   (if MJR-pookie-mode
       nil
       (if (load-theme 'mjr-dark 't  )
-          (message "MJR: INIT: THEME: Loaded mjr-dark!")
-          (progn (message "MJR: INIT: THEME: Failed to load mjr-dark!  Trying manjo-dark")
+          (MJR-quiet-message "MJR: INIT: THEME: Loaded mjr-dark!")
+          (progn (MJR-quiet-message "MJR: INIT: THEME: Failed to load mjr-dark!  Trying manjo-dark")
                  (if (load-theme 'manjo-dark 't)
-                     (message "MJR: INIT: THEME: manjo-dark!")
-                     (message "MJR: INIT: THEME: Failed to load mjr-dark!"))))))
+                     (MJR-quiet-message "MJR: INIT: THEME: manjo-dark!")
+                     (MJR-quiet-message "MJR: INIT: THEME: Failed to load mjr-dark!"))))))
 (MJR-try-theme)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Setup global aliases....")
+(MJR-quiet-message "MJR: INIT: STAGE: Setup global aliases....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defalias 'sipell                      'ispell)                         ;; typo optimization
 (defalias 'sipell-comments-and-strings 'ispell-comments-and-strings)    ;; typo optimization
@@ -1544,12 +1719,14 @@ The 'MJR' comments come in one of two forms:
 (defalias 'code-indent                 'indent-region)                  ;; better name
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Setup global keys....")
+(MJR-quiet-message "MJR: INIT: STAGE: Setup global keys....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; Git rid of the suspend
 (global-set-key (kbd "C-z")       nil)
 (global-set-key (kbd "C-x C-z")   nil)
-;; 'island' keys
+
+;; Island keys
 (global-set-key (kbd "C-<right>") 'forward-word)
 (global-set-key (kbd "C-<left>")  'backward-word)
 (global-set-key (kbd "M-<right>") 'forward-sexp)
@@ -1560,27 +1737,31 @@ The 'MJR' comments come in one of two forms:
 (global-set-key (kbd "<mouse-6>") 'scroll-right)
 (global-set-key (kbd "<mouse-7>") 'scroll-left)
 
-(global-set-key (kbd "s-l") 'scroll-down-command) ; Super+l -- filco emulation on mbp
-(global-set-key (kbd "s-.") 'scroll-up-command)   ; Super+. -- filco emulation on mbp
+;; filco emulation on mbp
+(global-set-key (kbd "s-l")       'scroll-down-command) ; Super+l
+(global-set-key (kbd "s-.")       'scroll-up-command)   ; Super+.
+
+;; Override C-x C-b
+(global-set-key (kbd "C-x C-b")   'buffer-menu)
 
 ;; Random key bindings
-(global-set-key (kbd "ESC ESC y") '(lambda () (interactive) (popup-menu 'yank-menu)))
-(global-set-key (kbd "ESC ESC ;") 'MJR-quick-code-comment)
-(global-set-key (kbd "ESC ESC g") 'goto-line)
-(global-set-key (kbd "C-c C-d")   'MJR-date)
-(global-set-key (kbd "C-c C-f")   'ffap)
-(global-set-key (kbd "C-c C-c")   'compile)
 (global-set-key (kbd "C-x r a")   'append-to-register)
-(global-set-key (kbd "C-x C-b")   'buffer-menu)
-(global-set-key  (kbd "C-c a")      'org-agenda)
-
+(global-set-key (kbd "ESC ESC y") '(lambda () (interactive) (popup-menu 'yank-menu)))
+(global-set-key (kbd "ESC ESC g") 'goto-line)
+(global-set-key (kbd "C-c f")     'ffap)
+(global-set-key (kbd "C-c c")     'compile)
+(global-set-key (kbd "C-c a")     'org-agenda)
+(global-set-key (kbd "C-c t")     'MJR-term)
+(global-set-key (kbd "C-c d")     'MJR-date)
+(global-set-key (kbd "C-c u")     'MJR-user-lookup)
+(global-set-key (kbd "ESC ESC ;") 'MJR-quick-code-comment)
 
 ;; Not global, but the mini-buffer is kinda everyplace...
 (define-key minibuffer-local-map (kbd "C-p") 'previous-history-element)
 (define-key minibuffer-local-map (kbd "C-n") 'next-history-element)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Emacs Customization System....")
+(MJR-quiet-message "MJR: INIT: STAGE: Emacs Customization System....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (custom-set-variables
@@ -1599,7 +1780,6 @@ The 'MJR' comments come in one of two forms:
  '(ansi-color-names-vector
    ["#212526" "#ff4b4b" "#b4fa70" "#fce94f" "#729fcf" "#e090d7" "#8cc4ff" "#eeeeec"]) 
  '(delete-selection-mode t)
- '(fringe-mode (quote (0)) nil (fringe))
  '(indicate-buffer-boundaries (quote right))
  '(indicate-empty-lines t)
  '(safe-local-variable-values (quote ((Syntax . ANSI-Common-LISP)))))
@@ -1608,55 +1788,8 @@ The 'MJR' comments come in one of two forms:
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(linum ((t (:inherit (shadow default) :foreground "deep pink"))))
- '(subscript ((t (:inherit (font-lock-string-face)))))
- '(superscript ((t (:inherit (font-lock-string-face)))))
- '(Info-title-1-face                      ((t (:height 1.0))))
- '(Info-title-2-face                      ((t (:height 1.0))))
- '(Info-title-3-face                      ((t (:height 1.0))))
- '(change-log-file-face                   ((t (:height 1.0))))
- '(custom-face-tag-face                   ((t (:height 1.0))))
- '(custom-group-tag-face                  ((t (:height 1.0))))
- '(custom-group-tag-face-1                ((t (:height 1.0))))
- '(custom-variable-tag-face               ((t (:height 1.0))))
- '(font-lock-function-name-face           ((t (:height 1.0))))
- '(widget                                 ((t (:height 1.0))))
- '(font-lock-preprocessor-face            ((t (:italic n :slant normal))))
- '(font-lock-comment-face                 ((t (:italic n :slant normal))))
- '(font-lock-doc-face                     ((t (:italic n :slant normal))))
- '(cperl-hash-face                        ((t (:italic n :slant normal))))
- '(gnus-cite-attribution-face             ((t (:italic n :slant normal))))
- '(gnus-emphasis-bold-italic              ((t (:italic n :slant normal))))
- '(gnus-emphasis-italic                   ((t (:italic n :slant normal))))
- '(gnus-emphasis-underline-bold-italic    ((t (:italic n :slant normal))))
- '(gnus-emphasis-underline-italic         ((t (:italic n :slant normal))))
- '(gnus-header-content                    ((t (:italic n :slant normal))))
- '(gnus-header-content-face               ((t (:italic n :slant normal))))
- '(gnus-header-newsgroups                 ((t (:italic n :slant normal))))
- '(gnus-header-newsgroups-face            ((t (:italic n :slant normal))))
- '(gnus-signature                         ((t (:italic n :slant normal))))
- '(gnus-signature-face                    ((t (:italic n :slant normal))))
- '(gnus-summary-low-ancient               ((t (:italic n :slant normal))))
- '(gnus-summary-low-ancien-facet          ((t (:italic n :slant normal))))
- '(gnus-summary-low-read                  ((t (:italic n :slant normal))))
- '(gnus-summary-low-read-face             ((t (:italic n :slant normal))))
- '(gnus-summary-low-ticked                ((t (:italic n :slant normal))))
- '(gnus-summary-low-ticked-face           ((t (:italic n :slant normal))))
- '(gnus-summary-low-undownloaded          ((t (:italic n :slant normal))))
- '(gnus-summary-low-unread                ((t (:italic n :slant normal))))
- '(gnus-summary-low-unread-face           ((t (:italic n :slant normal))))
- '(message-header-newsgroups              ((t (:italic n :slant normal))))
- '(message-header-newsgroups-face         ((t (:italic n :slant normal))))
- '(bbdb-company                           ((t (:italic n :slant normal))))
- '(change-log-acknowledgement-face        ((t (:italic n :slant normal))))
- '(change-log-date-face                   ((t (:italic n :slant normal))))
- '(epa-field-body                         ((t (:italic n :slant normal))))
- '(epa-validity-disabled                  ((t (:italic n :slant normal))))
- '(epa-validity-low                       ((t (:italic n :slant normal))))
- '(epa-validity-medium                    ((t (:italic n :slant normal))))
- '(excerpt                                ((t (:italic n :slant normal))))
- '(vm-highlight-url-face                  ((t (:italic n :slant normal)))))
+ '(linum ((t (:inherit (shadow default) :foreground "deep pink")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(message "MJR: INIT: STAGE: Done Customizing Emacs....")
+(MJR-quiet-message "MJR: INIT: STAGE: Done Customizing Emacs....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
