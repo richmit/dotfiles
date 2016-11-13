@@ -471,6 +471,7 @@
  '(eshell-ls-product-face                     ((t (                                                 :inherit 'default))))
  '(eshell-ls-readonly-face                    ((t (                                                 :inherit 'default))))
 ;; '(eshell-prompt-face                         ((t (                                                 :inherit 'comint-highlight-prompt))))
+
  '(eshell-prompt-face                         ((t (:foreground "Green" :bold t :weight bold))))
 
  '(eshell-test-failed-face                    ((t (:foreground "OrangeRed"            :bold t :weight bold))))
@@ -483,7 +484,6 @@
  '(file-name-shadow                           ((t (:foreground "grey70"))))
  '(fixed                                      ((t (:bold t))))
  
-
  '(flyspell-duplicate-face                    ((t (:foreground "IndianRed" :bold t :underline t))))
  '(flyspell-incorrect-face                    ((t (:foreground "Pink" :bold t :underline t))))
 
@@ -563,12 +563,14 @@
  '(match                                      ((t (:background "RoyalBlue3"))))
  '(minibuffer-prompt                          ((t (:foreground "cyan"))))
 
- '(mode-line                                  ((t (:foreground "Blue4"  :background "grey80" :box '(:line-width -1 :style released-button)))))
- '(mode-line-buffer-id                        ((t (:foreground "Red3"   :background "grey60" :bold t :weight bold :height 0.85 :width condensed))))
- '(mode-line-inactive                         ((t (:foreground "grey80" :background "grey20" :box '(:line-width -1 :color "grey70") :weight light))))
+ '(mode-line                                  ((t (:foreground "Blue4"  :background "grey80" ))))
+ '(mode-line-inactive                         ((t (:foreground "grey80" :background "grey20"))))
+ '(mode-line-buffer-id                        ((t (:foreground "Red1" :bold t :weight bold :width condensed))))
  '(mode-line-emphasis                         ((t (:bold t :weight bold))))
- '(mode-line-highlight                        ((t (:box (:line-width 2 :color "grey40" :style released-button)))))
+ '(mode-line-highlight                        ((t (:foreground  "Red4"))))
 
+ '(display-time-mail-face                     ((t (:inherit 'mode-line-emphasis :foreground "Red"))))
+ 
  '(mouse                                      ((t (:background "OrangeRed"))))
 
  '(next-error                                 ((t (:background "blue3"))))
