@@ -31,16 +31,31 @@
 ;; @warning   You will need to fix the stuff under "Manual-Meta-Config".@EOL@EOL
 ;; @filedetails
 ;;
-;; This config makes use of some external tools without which some functionality will be missing.  Note MJR-* functions requiring missing components will
-;; simply not be defined, while functions simply using them will have reduced functionality.
+;; This config makes use of some external tools without which some functionality will be missing:
 ;;
-;;     * MJR-home-bin/mjrpdfview -- Required by MJR-view-pdf-at-point
-;;     * MJR-home-bin/browser    -- Required by MJR-dict & MJR-google.  Used to set browse-url-firefox-program
-;;     * MJR-home-bin/latexit.rb -- Required by MJR-latexit
-;;     * MJR-home-bin/curl       -- Required by MJR-insert-from-web
-;;     * MJR-home-bin/s          -- Used by MJR-term
-;;     * MJR-home-bin/sn         -- Used by MJR-term
-;;     * Several paths are checked for Macaulay & Maxima.
+;;     * MJR-thingy-lookeruper
+;;       - MJR-home-bin/browser
+;;       - /usr/bin/ldapsearch
+;;       - /usr/bin/getent
+;;       - /usr/local/bin/de
+;;       - /home/sysadmin/bin/pde
+;;       - /usr/bin/finger
+;;       - /usr/bin/dig
+;;       - /usr/bin/nslookup
+;;     * MJR-view-pdf-at-point
+;;       - MJR-home-bin/mjrpdfview
+;;     * MJR-latexit
+;;       - MJR-home-bin/latexit.rb
+;;     * MJR-insert-from-web
+;;       - MJR-home-bin/curl
+;;     * MJR-term
+;;       - MJR-home-bin/s
+;;       - MJR-home-bin/sn
+;;       - MJR-home-bin/t
+;;       - MJR-home-bin/tn
+;;       - MJR-home-bin/td
+;;       - /bin/bash
+;;     * Several paths are checked for Macaulay, Maxima, and common lisp.
 ;;
 ;; I keep common stuff in a "core" directory I take with me.  Some stuff this config looks for:
 ;;     * MJR-home-cor/codeBits/  -- A directory of source code templates and headers used by MJR-PrependHeader
@@ -53,9 +68,11 @@
 ;;        * MJR-home-cor/elisp/processing/
 ;;        * MJR-home-cor/elisp/slime/
 ;;        * MJR-home-cor/elisp/ess/
+;;        * MJR-home-cor/elisp/yasnippet
 ;;     * MJR-home-cor/texinputs   Used for bookmarks  (TeX input files and templtes)
 ;;     * MJR-home-cor/org-mode    Used for bookmarks  (org-mode input files and templtes)
 ;;     * MJR-home-cor/lispy       Used for bookmarks  (production copy of *mjrcalc*)
+;;     * MJR-home-cor/yasnippets  Used for yasnippets
 ;;
 ;; Stuff to play with later:
 ;;  * htmlfontify.el - (v23.2) 
@@ -70,7 +87,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'cl)
-(require 'thingatpt)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-quiet-message (&rest rest)
@@ -172,6 +188,12 @@
 
 (require 'compile)
 (require 'paren)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: STAGE: Autoloads for things in init file...")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(autoload 'thing-at-point-looking-at "thingatpt" "Return non-nil if point is in or just after a match for REGEXP." t)
+(autoload 'thing-at-point            "thingatpt" "Return string for thing at point."                               t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions..")
@@ -279,39 +301,6 @@ Prefix arg = 16: 5 vertical windows  (C-u C-u)"
       (split-window-horizontally))
     (balance-windows)
     (follow-mode t)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(if (file-exists-p (concat MJR-home-bin "/browser"))
-    (progn
-      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-dict: DEFINED!")
-      (defun MJR-dict ()
-        "Lookup current word via dictionary.reference.com in a browser window."
-        (interactive)
-        (save-restriction
-          (let* ((cur-word (if (and transient-mark-mode (region-active-p) (mark))
-                               (buffer-substring-no-properties (min (point) (mark)) (max (point) (mark)))
-                               (if (thing-at-point-looking-at "[A-Za-z][A-Za-z]*" 50) (match-string 0))))
-                 (look-url (if cur-word (concat "http://dictionary.reference.com/browse/" cur-word "?s=t"))))
-            (message "URL: %s" look-url)
-            (if 't
-                (call-process-shell-command (concat MJR-home-bin "/browser -foreground 100 -new-window '" look-url "'"))
-                (eww look-url))))))
-    (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-dict: NOT defined!  We could not find the browser command"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(if (file-exists-p (concat MJR-home-bin "/browser"))
-    (progn
-      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-google: DEFINED!")
-      (defun MJR-google ()
-        "Lookup current region via google.com in a browser window."
-        (interactive)
-        (let* ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
-               (reg-max  (if (mark) (max (point) (mark)) (point-max)))
-               (query    (if (< reg-min reg-max) (buffer-substring-no-properties reg-min reg-max))))
-          (if query
-              (call-process-shell-command (concat MJR-home-bin "/browser -foreground 100 -new-window 'https://www.google.com/#q=" (url-encode-url query) "'"))
-              (message "MJR-google: Region undefined. Nothing to query.")))))
-    (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-google: NOT defined!  We could not find the browser command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-unfill: DEFINED!")
@@ -494,7 +483,7 @@ The 'MJR' comments come in one of two forms:
 (if (file-exists-p (concat MJR-home-bin "/latexit.rb"))
     (progn
       (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-latexit: DEFINED!")
-      (defun MJR-latexit()
+      (defun MJR-latexit ()
         "This function runs latex on the highlighted region, and displays the result with xpdf.
 
         Use the latexit.rb script in my home directory -- handy to have inside of Emacs..."
@@ -565,38 +554,161 @@ The 'MJR' comments come in one of two forms:
     (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-de: ERROR: Not defined!  Not at TI"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-user-lookup: DEFINED!")
-(defvar MJR-user-lookup-uname-commands     '("/usr/local/bin/pde"  "/usr/bin/getent passwd" "/usr/bin/finger")
-  "Command to use to look-up unames -- first one found is used.")
-(defvar MJR-user-lookup-non-uname-commands '("/usr/local/bin/de")
-  "Command to use to look-up unames -- first one found is used.")
-(defvar MJR-user-lookup-non-uname-regex    "^\\(a[0-9]\\{7\\}\\|x[a-zA-Z0-9]\\{7\\}\\)$" ;; This value matches employee IDs at my day job
-  "Non-unames that match this regex will be looked up.  If nil, then all non-unames are looked up")
-(defun MJR-user-lookup ()
-  "Lookup user name at point or in active region (requires transient-mark-mode)"
-  (interactive)
-  (save-restriction
-    (let* ((fnd-thingy (if (and transient-mark-mode (region-active-p) (mark))
-                           (buffer-substring-no-properties (min (point) (mark)) (max (point) (mark)))
-                           (if (thing-at-point-looking-at "[a-zA-Z][a-zA-Z0-9_-]+" 30) (match-string 0))))
-           (fnd-uname (and fnd-thingy (find fnd-thingy (system-users) :test #'string-equal))))
-      (if (null fnd-thingy)
-          (message "MJR-user-lookup: Unable to find user name-like thing at point")
-          (if fnd-uname
-              (let ((lookup-cmd (find-if (lambda (f) (file-exists-p (first (split-string f))))
-                                         MJR-user-lookup-uname-commands)))
-                (if (null lookup-cmd)
-                    (message "MJR-user-lookup: Unable to find working uname lookup command")
-                    (shell-command (concat lookup-cmd " " fnd-thingy))))
-              (let ((lookup-cmd (find-if (lambda (f) (file-exists-p (first (split-string f))))
-                                         MJR-user-lookup-non-uname-commands)))
-                (if (null lookup-cmd)
-                    (message "MJR-user-lookup: Unable to find working non-uname lookup command")
-                    (if (null MJR-user-lookup-non-uname-regex)
-                        (message "MJR-user-lookup: Not looking non-uname because of empty regex.")
-                        (if (null (string-match MJR-user-lookup-non-uname-regex fnd-thingy))
-                            (message "MJR-user-lookup: Non-uname failed to match non-uname regex.")
-                            (shell-command (concat lookup-cmd " " fnd-thingy)))))))))))
+(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-thingy-lookeruper: DEFINED!")
+
+(defvar MJR-thingy-lookeruper-methods nil
+  "A list of lists that define various things that may be looked up.  Each sub list contains three values:
+   * name of lookup
+   * Function used to pull string from buffer.  
+     This should be as specific as possible.
+   * List of methods to use to do the lookups.  List contains strings with a shell command and/or lisp functions
+     The first word of a string is expected to be a shell command, and will only be considered if the file exists.
+     In strings, %U will be replaced with the URL hexified search string, and %Q will be replaced with the search string")
+;; Use 'de' to search the TI directory
+(if (string-equal MJR-location "WORK:TI")
+    (push (list "TI-LDAP-de"
+                (lambda () (and (thing-at-point-looking-at ".+" 20) (match-string 0)))
+                '("/usr/local/bin/de '%Q'"))
+          MJR-thingy-lookeruper-methods))
+;; Use ldapsearch to search For a TI Site Code
+(if (string-equal MJR-location "WORK:TI")
+    (push (list "SiteCode"
+                (lambda () (and (thing-at-point-looking-at "\\b\\([A-Z][A-Z0-9]\\{3\\}\\)\\b" 20) (match-string 1)))
+                '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=tiSiteCodes,ou=applications,o=ti,c=us' '(&(objectClass=tiSite)(siteName=%Q))'"))
+          MJR-thingy-lookeruper-methods))
+;; Use ldapsearch to search For a TI Org3 (SBE)
+(if (string-equal MJR-location "WORK:TI")
+    (push (list "Org3"
+                (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{3\\}\\)\\b" 20) (match-string 1)))
+                '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=grpStructure,ou=data,ou=applications,o=ti,c=us' '(o=%Q)'"))
+          MJR-thingy-lookeruper-methods))
+;; Use ldapsearch to search For a TI Org6 (SBE-1)
+(if (string-equal MJR-location "WORK:TI")
+    (push (list "Org6"
+                (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{6\\}\\)\\b" 20) (match-string 1)))
+                '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=divStructure,ou=data,ou=applications,o=ti,c=us' '(o=%Q)'"))
+          MJR-thingy-lookeruper-methods))
+;; Use ldapsearch to search For a TI Org9 (SBE-2)
+(if (string-equal MJR-location "WORK:TI")
+    (push (list "Org9"
+                (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{9\\}\\)\\b" 20) (match-string 1)))
+                '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=deptStructure,ou=data,ou=applications,o=ti,c=us' '(o=%Q)'"))
+          MJR-thingy-lookeruper-methods))
+;; Use ldapsearch to search For a TI Cost Center (SBE-3)
+(if (string-equal MJR-location "WORK:TI")
+    (push (list "CostCenter"
+                (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{8\\}\\)\\b" 20) (match-string 1)))
+                '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=finStructure,ou=data,ou=applications,o=ti,c=US' '(o=%Q)'"))
+          MJR-thingy-lookeruper-methods))
+;; Use ldapsearch to search For a TI Division 003 Cost Center (SBE-3)
+(if (string-equal MJR-location "WORK:TI")
+    (push (list "CostCenterUS5"
+                (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{5\\}\\)\\b" 20) (match-string 1)))
+                '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=finStructure,ou=data,ou=applications,o=ti,c=US' '(o=003%Q)'"))
+          MJR-thingy-lookeruper-methods))
+;; Lookup a local group ID (Numeric group ID)
+(push (list "gid" 
+            (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]+\\)\\b" 20) (match-string 1)))
+            '("/usr/bin/getent group %Q"))
+      MJR-thingy-lookeruper-methods)
+;; Lookup a local group name
+(push (list  "gname"
+             (lambda () (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1)))
+             '("/usr/bin/getent group %Q"))
+      MJR-thingy-lookeruper-methods)
+;; Lookup a local user ID (Numeric user ID)
+(push (list "uid"
+            (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]+\\)\\b" 20) (match-string 1)))
+            '("/usr/bin/getent passwd %Q"))
+      MJR-thingy-lookeruper-methods)
+;; Use 'de' to search for a TI Employee ID
+(if (string-equal MJR-location "WORK:TI")
+    (push (list "Employee-ID"
+                (lambda () (and (thing-at-point-looking-at "\\(a[0-9]\\{7\\}\\|x[a-zA-Z0-9]\\{7\\}\\)" 10) (match-string 0)))
+                '("/usr/local/bin/de '%Q'"))	  
+          MJR-thingy-lookeruper-methods))
+;; Look up a user name (uname)
+(push (list "uname-long" 
+            (lambda () (let ((tmp (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1))))
+                         (and tmp (find tmp (system-users) :test #'string-equal))))
+            '("/home/sysadmin/bin/pde %Q" "/usr/bin/finger -s %Q" "/usr/bin/getent passwd %Q"))
+      MJR-thingy-lookeruper-methods)
+;; Look up a word via dictionary.reference.com
+(push (list "dictionary" 
+            (lambda () (and (thing-at-point-looking-at "\\b\\([a-zA-Z'-]+\\)\\b" 20) (match-string 1)))
+            (list (concat MJR-home-bin "/browser -foreground 100 -new-window 'http://dictionary.reference.com/browse/%U?s=t' &")))
+      MJR-thingy-lookeruper-methods)
+;; Look via google
+(push (list "google" 
+            (lambda () (and (thing-at-point-looking-at ".+" 20) (match-string 0)))
+            (list (concat MJR-home-bin "/browser -foreground 100 -new-window 'http://google.com/#q=%U' &")))
+      MJR-thingy-lookeruper-methods)
+;; Look up a user name (uname)
+(push (list "uname-short" 
+            (lambda () (let ((tmp (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1))))
+			 (and tmp (find tmp (system-users) :test #'string-equal))))
+            '("/usr/bin/getent passwd %Q"))
+      MJR-thingy-lookeruper-methods)
+;; Just toss it into a browser
+(push (list "URL" 
+            (lambda () (thing-at-point 'url))
+            (list (concat MJR-home-bin "/browser -foreground 100 -new-window '%U' &")))
+      MJR-thingy-lookeruper-methods)
+(push (list "DNS" 
+            (lambda () (and (thing-at-point-looking-at "\\([.a-zA-Z0-9_-]+\\.\\(com\\|edu\\|org\\|gov\\)\\)\\b" 20) (match-string 1)))
+            '("/usr/bin/nslookup %Q" "/usr/bin/dig %Q"))
+      MJR-thingy-lookeruper-methods)
+
+(defun MJR-thingy-lookeruper (string-to-lookup lookup-method)
+  "Extensible looker upper of thingys at the point or in the active region (active region support requires transient-mark-mode).  
+
+Interactive use:
+  * If the region is not active, each search method will be used to find various things at the point, and the user will be queried 
+    as to which kind of lookup to perform based on what was found.
+  * If the region is active, then the entire region is used as the search string and the user can select ANY lookup method.
+
+The list MJR-thingy-lookeruper-methods describes the kinds of things that can be looked up. Examples include uname, gname, uid, 
+gid, host name, dictionary word, and Google search."
+  (interactive
+   (let ((have-region    (and transient-mark-mode (region-active-p) (mark) (buffer-substring-no-properties (min (point) (mark)) (max (point) (mark)))))
+         (search-strings nil)
+         (search-methods nil))
+     (dolist (cur-method MJR-thingy-lookeruper-methods)
+       (let ((fnd-thingy (or have-region (and (nth 1 cur-method) (funcall (nth 1 cur-method))))))
+         ;;(message "TRY: %s %s" (car cur-method) fnd-thingy)
+         (if fnd-thingy
+             (let ((search-command (find-if (lambda (f) (if (stringp f)
+                                                            (file-exists-p (first (split-string f)))
+                                                            f))
+                                            (nth 2 cur-method))))
+               (if search-command 
+                   (setq search-strings (append search-strings (list fnd-thingy))
+                         search-methods (append search-methods (list (nth 0 cur-method)))))))))     
+     (cond ((= 1 (length search-strings)) (list (car search-strings) (car search-methods)))
+           ((not (null search-strings))   (let ((i-lookup-method (if (require 'ido nil :noerror)
+                                                                   (ido-completing-read "Lookup Method: " search-methods)
+                                                                   (read-string "Lookup Method: " ""))))
+                                            (let ((idx (position i-lookup-method search-methods :test #'string-equal)))
+                                              (if idx
+                                                  (list (nth idx search-strings) (nth idx search-methods))
+                                                  (error "MJR-thingy-lookeruper: Method is invalid")))))
+           ('t                            (error "MJR-thingy-lookeruper: Could not find a string to lookup")))))
+  (message "MJR-thingy-lookeruper: '%s' via '%s'" string-to-lookup lookup-method)
+  (let ((the-command (find-if (lambda (f) (if (stringp f)
+                                              (file-exists-p (first (split-string f)))
+                                              f))
+                              (nth 2 (find-if (lambda (c) (string-equal lookup-method (car c))) MJR-thingy-lookeruper-methods)))))
+    (if the-command
+        (if (stringp the-command)
+            (let ((the-command-x (replace-regexp-in-string "%U"
+                                                           (url-hexify-string string-to-lookup)
+                                                           (replace-regexp-in-string "%Q" string-to-lookup the-command 't) 't)))
+              (message "CMD: %s" the-command-x)
+              (if (string-match "&$" the-command)
+                  (call-process-shell-command the-command-x)
+                  (shell-command the-command-x)))
+              (funcall the-command string-to-lookup))
+            (message "MJR-thingy-lookeruper: Unable to find working lookup command for %s!" lookup-method))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-stats-numbers-in-column: DEFINED!")
@@ -788,6 +900,15 @@ The 'MJR' comments come in one of two forms:
 ;; (require 'semantic/sb)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: PKG SETUP: rmail")
+(eval-after-load "rmail"
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: rmail!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+          (let ((sepath (find-if #'file-exists-p '("/Users/Shared/mail/"))))
+            (if sepath
+                (setq rmail-secondary-file-directory sepath)))
+          (setq rmail-secondary-file-regexp "\\.")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: time")
 (if (require 'time nil :noerror)
     (progn
@@ -858,6 +979,24 @@ The 'MJR' comments come in one of two forms:
                                (linum-mode 1)))))
         (MJR-quiet-message "MJR: INIT: PKG SETUP: linum: WARNING: Could not load package"))
     (MJR-quiet-message "MJR: INIT: PKG SETUP: linum: WARNING: SKIP: pookie mode!"))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: PKG SETUP: cmake")
+(let ((cmake-path (find-if (lambda (p) (file-exists-p (concat p "/cmake-mode.el")))
+                           (list "/usr/local/big/cmake/3.6.2/share/cmake-3.6/editors/emacs"
+                                 "/usr/local/big/cmake/3.3.2/share/cmake-3.3/editors/emacs"
+                                 "/usr/share/cmake-3.0/editors/emacs"))))
+  (if cmake-path
+      (progn
+        (add-to-list 'load-path cmake-path)
+        (add-to-list 'auto-mode-alist '("\\.cmake\\'" . cmake-mode))
+        (add-to-list 'auto-mode-alist '("CMakeLists.txt\\'" . cmake-mode))
+        (autoload 'cmake-mode "cmake-mode" "CMake mode" t)
+        (eval-after-load "cmake-mode"
+          '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: cmake!" (MJR-date "%Y-%m-%d_%H:%M:%S"))))
+        ;;(require 'cmake-mode)
+        )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: dired")
@@ -985,17 +1124,6 @@ The 'MJR' comments come in one of two forms:
     (ansi-term PROGRAM-TO-RUN (dotimes (i 99)
                                 (if (not (get-buffer (format "*%s<%02d>*" bbn (1+ i))))
                                     (return (format "%s<%02d>" bbn (1+ i))))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun MJR-bash ()
-  (interactive)
-  (MJR-term "/bin/bash"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(if (file-exists-p (concat MJR-home-bin "/sn"))
-    (defun MJR-sn ()
-      (interactive)
-      (MJR-term (concat MJR-home-bin "/sn"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-emerge-git-conflict (file-name)
@@ -1518,6 +1646,9 @@ The 'MJR' comments come in one of two forms:
 (if (not MJR-pookie-mode)
     (if (require 'ido nil :noerror)
         (progn (setq ido-use-filename-at-point 'guess)
+               ;; Don't swtich to other directories if file not found
+               (setq ido-auto-merge-work-directories-length -1)
+               ;; Don't look for URLs at point
                (setq ido-use-url-at-point nil)
                ;; Set ignore directory list
                (dolist (directory-re '("\\`RCS/" "\\`auto/" "\\`\\.git/"))
@@ -1753,7 +1884,7 @@ The 'MJR' comments come in one of two forms:
 (global-set-key (kbd "C-c a")     'org-agenda)
 (global-set-key (kbd "C-c t")     'MJR-term)
 (global-set-key (kbd "C-c d")     'MJR-date)
-(global-set-key (kbd "C-c u")     'MJR-user-lookup)
+(global-set-key (kbd "C-c l")     'MJR-thingy-lookeruper)
 (global-set-key (kbd "ESC ESC ;") 'MJR-quick-code-comment)
 
 ;; Not global, but the mini-buffer is kinda everyplace...
