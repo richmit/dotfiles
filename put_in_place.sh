@@ -14,11 +14,11 @@ if [ -e README.md ] ; then
     fi
   done
 
-  if [ -e "~/.emacs" ] ; then
-    rm "~/.emacs"
+  if [ -e ~/.emacs ] ; then
+    rm ~/.emacs
   fi
 
-  if [ ! -e "~/.emacs.d" ] ; then
+  if [ ! -e ~/.emacs.d ] ; then
    echo "MAKE DIR: ~/.emacs.d"
    mkdir ~/.emacs.d
    fi
