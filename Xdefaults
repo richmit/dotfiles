@@ -80,7 +80,8 @@ emacs24.fontBackend:             xft
 xterm.*.background:       black
 xterm.*.cersorColor:      white
 xterm.*.cursesemul:       True
-xterm*faceName:           TERM_FONT
+xterm.*.renderFont:       True
+xterm.*.faceName:         TERM_FONT
 xterm.*.foreground:       white
 xterm.*.fullCursor:	      True
 xterm.*.geometry:         TERM_GEOM

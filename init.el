@@ -201,6 +201,27 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MJR-find-newest-core-package (package-name)
+  "Find the preferred package version in my 'core' elisp repository.
+
+Packages are named: FOO-SOMETHING or FOO=SOMETHING
+  * FOO is generally the name of the package as provided by the author
+  * SOMETHING is generally the date I downloaded it, the version, etc...
+
+The preferred version is the LAST one sorted in ASCII order.
+Normally all versions have the - form above, so you get the one
+with the highest version number or most recent date.  TO
+override this behavior, use the = name form -- = sorts after -,
+so it gets picked up."
+  (let ((elisp-path (concat MJR-home-cor "/elisp")))
+    (if (file-exists-p elisp-path)
+        (let ((candidate-path-names (directory-files elisp-path 't (concat "^" package-name "[=-]"))))
+          (if candidate-path-names
+              (let ((best-directory-path (find-if #'file-directory-p (sort candidate-path-names #'string-greaterp))))
+                (if best-directory-path
+                    (file-name-as-directory best-directory-path))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-eval-region (eval-how)
         "Evaluate the region as calc, elisp, or lisp (via slime), put the result in the kill ring.  With prefix arg, insert result into buffer.
 
@@ -863,7 +884,6 @@ gid, host name, dictionary word, and Google search."
 (add-to-list 'auto-mode-alist '("emacs--SS-X-X-X-X$"        . emacs-lisp-mode))   ;; My GNU Emacs dot file. :)
 (add-to-list 'auto-mode-alist '("^/tmp/pico\\.[0-9][0-9]*$" . mail-mode))         ;; alpine tmp files -- use mail-mode
 (add-to-list 'auto-mode-alist '("tmp/mutt/\\.*mutt"         . mail-mode))         ;; mutt tmp files -- use mail-mode
-(add-to-list 'auto-mode-alist '("\\.R$"                     . R-mode))            ;; Use R mode
 ;; Fringe on the right only
 (fringe-mode '(0 . 8))
 ;; prettify-symbols in prog-mode.el
@@ -1024,14 +1044,21 @@ gid, host name, dictionary word, and Google search."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: git")
-(if (not (string-equal MJR-platform "WINDOWS"))
-    (let ((git-el-files (list (concat MJR-home-cor "/elisp/git/git.el")
-                              (concat MJR-home-cor "/elisp/git/git-blame.el"))))
-      (if (every #'file-exists-p git-el-files)
+(let ((git-base-path (MJR-find-newest-core-package "git")))
+  (let ((git-el-files (list (concat git-base-path "git.el")
+                            (concat git-base-path "git-blame.el"))))
+    (if (every #'file-exists-p git-el-files)
+        (progn
           (dolist (git-el-file git-el-files)
             (load git-el-file))
-          (MJR-quiet-message "MJR: INIT: PKG SETUP: git: WARNING: Could not find custom git package")))
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: git: WARNING: Setup suppressed on windows"))
+          (if (string-equal MJR-platform "WINDOWS")
+              (progn 
+                (setq git-shell-path       "c:/Program Files/Git/bin/")
+                (setq git-shell-executable "c:/Program Files/Git/bin/bash.exe")
+                ;;(add-to-list 'exec-path git-shell-path)
+                ;;(setenv "PATH" (concat git-shell-path ";" (getenv "PATH")))
+                )))
+        (MJR-quiet-message "MJR: INIT: PKG SETUP: git: WARNING: Could not find custom git package"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: sh-mode")
@@ -1208,9 +1235,9 @@ gid, host name, dictionary word, and Google search."
 (MJR-quiet-message "MJR: INIT: PKG SETUP: org-mode setup...")
 (if (not (string-equal MJR-platform "WINDOWS"))
     (progn
-      (let ((org-path (concat MJR-home-cor "/elisp/org/lisp")))
-        (if (file-exists-p org-path)
-            (add-to-list 'load-path org-path)))
+      (let ((org-path (MJR-find-newest-core-package "org")))
+        (if org-path
+            (add-to-list 'load-path (concat org-path "lisp"))))
       
       (require 'org-install)
       ;;(require 'org-habit)
@@ -1368,16 +1395,23 @@ gid, host name, dictionary word, and Google search."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: aspell setup...")
-(let ((aspell-path (find-if #'file-exists-p
-                            (list "/usr/bin/hunspell"
-                                  "/bin/hunspell"
-                                  "/usr/local/bin/aspell"
-                                  "/opt/local/bin/aspell"
-                                  "/bin/aspell"
-                                  "/usr/bin/aspell"))))
-  (if aspell-path
-      (setq-default ispell-program-name aspell-path)
-      (setq-default ispell-program-name "ispell")))
+(eval-after-load "ispell"
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: ispell!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+          (if (file-exists-p "c:/Program Files (x86)/hunspell-1.3.2-3/bin/hunspell.exe")
+              (progn ;; Windows with hunspell
+                (setq ispell-program-name "c:/Program Files (x86)/hunspell-1.3.2-3/bin/hunspell.exe")
+                (setq ispell-local-dictionary "en_US")
+                (setq ispell-local-dictionary-alist '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8))))
+              (let ((aspell-path (find-if #'file-exists-p
+                                          (list "/usr/bin/hunspell"
+                                                "/bin/hunspell"
+                                                "/usr/local/bin/aspell"
+                                                "/opt/local/bin/aspell"
+                                                "/bin/aspell"
+                                                "/usr/bin/aspell"))))
+                (if aspell-path
+                    (setq-default ispell-program-name aspell-path)
+                    (setq-default ispell-program-name "ispell"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: emacs-lisp-mode setup...")
@@ -1439,14 +1473,13 @@ gid, host name, dictionary word, and Google search."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: PoV-mode setup...")
 (if (not (string-equal MJR-platform "WINDOWS"))
-    (let ((pov-path (find-if #'file-exists-p 
-                             (list (concat MJR-home-cor "/elisp/pov-mode")))))
+    (let ((pov-path (MJR-find-newest-core-package "pov-mode")))
       (if pov-path
-          (progn
-            (add-to-list 'load-path pov-path)
-            (autoload 'pov-mode "pov-mode" "PoVray scene file mode" t)
-            (add-to-list 'auto-mode-alist '("\\.pov\\'" . pov-mode))
-            (add-to-list 'auto-mode-alist '("\\.inc\\'" . pov-mode)))
+          (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: pov-mode found... %s" pov-path)
+                 (add-to-list 'load-path pov-path)
+                 (autoload 'pov-mode "pov-mode" "PoVray scene file mode" t)
+                 (add-to-list 'auto-mode-alist '("\\.pov\\'" . pov-mode))
+                 (add-to-list 'auto-mode-alist '("\\.inc\\'" . pov-mode)))
           (MJR-quiet-message "MJR: INIT: PKG SETUP: PoV-mode not found...")))
     (MJR-quiet-message "MJR: INIT: PKG SETUP: PoV-mode: WARNING: Setup suppressed on windows"))
 
@@ -1480,11 +1513,14 @@ gid, host name, dictionary word, and Google search."
                                "/home/richmit/s/linux/local/share/maxima/5.29.1/emacs"              ;; Custom biuld on linux
                                "/opt/local/share/maxima/5.16.3/emacs"                               ;; Typical MacOS X with macports
                                "/usr/share/maxima/5.34.1/emacs/"                                    ;; Standard location for Debian 8
-                               "/usr/share/maxima/5.21.1/emacs"))))                                 ;; Standard location for Ubuntu 11.04
+                               "/usr/share/maxima/5.21.1/emacs"                                     ;; Standard location for Ubuntu 11.04
+                               "C:/maxima-5.39.0/share/maxima/5.39.0_2_g5a49f11_dirty/emacs"))))    ;; Standard location on Windows 10
   (if max-path
       (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: Specific version of maxima.el found...")
              (add-to-list 'load-path max-path)
-             (autoload 'maxima "maxima" "Run Maxima in a window" t)
+             (autoload 'maxima      "maxima" "Run Maxima in a window" t)
+             (autoload 'maxima-mode "maxima" "Edit Maxima code" t)
+             (add-to-list 'auto-mode-alist '("\\.mac$" . maxima-mode))
              (eval-after-load "maxima"
                '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: maxima!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                        (let ((max-cmd  (find-if #'file-exists-p 
@@ -1495,7 +1531,8 @@ gid, host name, dictionary word, and Google search."
                                                       "/home/richmit/s/linux/local/bin/maxima"              ;; Custom biuld on linux @ TI
                                                       "/opt/local/bin/maxima"                               ;; Typical MacOS X with macports
                                                       "/usr/local/bin/maxima"                               ;; Typical place
-                                                      "/usr/bin/maxima"))))                                 ;; Standard place for Debian & Ubuntu
+                                                      "/usr/bin/maxima"                                     ;; Standard place for Debian & Ubuntu
+                                                      "C:/maxima-5.39.0/bin/maxima.bat"))))                 ;; Standard location on Windows 10
                          (if max-cmd
                              (progn
                                (MJR-quiet-message "MJR: INIT: PKG SETUP: Specific Maxima binary found...")
@@ -1512,25 +1549,46 @@ gid, host name, dictionary word, and Google search."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: bookmarks setup...")
-;; Why?  I normally have a system specific bookmark list managed by emacs, but I always want to make sure I have a core set of
-;; bookmarks defined for really common stuff.
+;; Why?  I normally have a system specific bookmark list managed by Emacs, but I have a core set of book marks I always want on that list and they may
+;; have different targets depending upon where I'm running Emacs.
 (eval-after-load "bookmark"
   '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: bookmarks!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-          (dolist (bp (list (cons "templates_tex"      (concat MJR-home-cor "/texinputs/"))                 ;; Place for TeX input files and templtes
-                            (cons "templates_org"      (concat MJR-home-cor "/org-mode/"))                  ;; Place for org-mode input files and templtes
-                            (cons "lispy_prod"         (concat MJR-home-cor "/lispy/"))                     ;; Place for production copy of *mjrcalc*
-                            (cons "lispy_dev"          (concat MJR-home "/world/my_prog/lispStuff/lispy/")) ;; Development copy of *mjrcalc*
-                            (cons "ref_cheatsheet"     (concat MJR-home "/world/stuff/my_ref/"))            ;; Cheat sheets
-                            (cons "ref_note_computer"  "~/world/stuff/notes/computer/")
+          (dolist (bp (list (cons "templates_tex"      (concat MJR-home-cor "/texinputs/"))                 ;; Templates and input files: TeX/LaTeX
+                            (cons "templates_org"      (concat MJR-home-cor "/org-mode/"))                  ;; Templates and input files: org-mode
+                            (cons "lispy_prod"         (concat MJR-home-cor "/lispy/"))                     ;; *mjrcalc*: Production copy
+                            (cons "lispy_dev"          (concat MJR-home "/world/my_prog/lispStuff/lispy/")) ;; *mjrcalc*: Development copy
+                            (cons "ref_cheatsheet"     (concat MJR-home "/world/stuff/my_ref/"))            ;; Notes: Cheat sheets
+                            (cons "ref_note_computer"  (concat MJR-home "/world/stuff/notes/computer/"))    ;; Notes: Computer stuff
                             (cons "refcode_R"          (concat MJR-home "/world/my_prog/learn/R"))          ;; Refrence code: R
                             (cons "refcode_ruby"       (concat MJR-home "/world/my_prog/learn/ruby"))       ;; Refrence code: Ruby                            
-                            (cons "doc1"               "/Users/Shared/Doc1/")                               ;; ebook repo #1
-                            (cons "doc2"               "/Users/Shared/Doc2/index.org")                      ;; ebook repo #1 (cs, science, etc..)
-                            (cons "doc3"               "/Users/Shared/Doc3/index.org")))                    ;; ebook repo #3 (math books)
-            (let ((bt (car bp))
-                  (bf (cdr bp)))
-              (if (and bf (file-exists-p bf) (not (assoc bf bookmark-alist)))
-                  (add-to-list 'bookmark-alist (list bt (list (cons 'filename bf)))))))))
+                            (cons "dotfiles"           (concat MJR-home "/world/dotfiles/"))                ;; dot fiel repo
+                            (cons "world"              (concat MJR-home "/world/"))                         ;; All my stuff. ;)
+                            (cons "doc1"               '("/Users/Shared/Doc1/"                              ;; ebook repo #1
+                                                         "D:/Doc1/"                                         ;; ..
+                                                         "/media/sf_D_DRIVE/Doc1"))                         ;; ..
+                            (cons "doc2"               '("/Users/Shared/Doc2/index.org"                     ;; ebook repo #1 (cs, science, etc..)
+                                                         "D:/Doc2/index.org"                                ;; ..
+                                                         "/media/sf_D_DRIVE/Doc2/index.org"))               ;; ..
+                            (cons "doc3"               '("/Users/Shared/Doc3/index.org"                     ;; ebook repo #3 (math books)
+                                                         "D:/Doc3/index.org"                                ;; ..
+                                                         "/media/sf_D_DRIVE/Doc3/index.org"))))             ;; ..
+            (let* ((bt (car bp))
+                   (bo (cdr bp))
+                   (bf (if (stringp bo)
+                           (if (file-exists-p bo) bo)
+                           (find-if #'file-exists-p bo))))
+              (if (and bt bf)
+                  (let ((oe (assoc bt bookmark-alist))
+                        (ne (list bt (list (cons 'filename bf)))))
+                    (if oe
+                        (setq bookmark-alist (subst ne oe bookmark-alist))
+                        (add-to-list 'bookmark-alist ne))))))))
+
+;; (defun MJR-eww-browse-url-in-bookmark (url)
+;;   "Load up a bookmark (think bookmark-alist) with eww"
+;;   (eww-browse-url (cdr (assoc 'filename (car (cdr url))))))
+
+;; (setq bookmark-alist '(("ruby"  ((filename . "http://127.0.0.1:8080/SS/exampleCode/ruby/") (handler . MJR-eww-browse-url-in-bookmark)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: iMaxima setup...")
@@ -1548,43 +1606,57 @@ gid, host name, dictionary word, and Google search."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: MapleV")
-(let ((maplev-path (concat MJR-home-cor "/elisp/maplev/lisp/")))
-  (if (file-exists-p (concat maplev-path "maplev.el"))
-      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: MAPLEV found... %s" maplev-path)
-             (add-to-list 'load-path maplev-path)
-             (autoload 'maplev "maplev" "Maple editing mode" t)
-             (add-to-list 'auto-mode-alist '("\\.mpl$" . maplev-mode)))))
+(let ((maplev-base-path (MJR-find-newest-core-package "maplev")))
+  (if maplev-base-path
+      (let ((maplev-path (concat maplev-base-path "lisp/")))
+        (if (file-exists-p (concat maplev-path "maplev.el"))
+            (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: MAPLEV found... %s" maplev-path)
+                   (add-to-list 'load-path maplev-path)
+                   (autoload 'maplev "maplev" "Maple editing mode" t)
+                   (autoload 'cmaple "maplev" "Interactive Maple session" t)
+                   (add-to-list 'auto-mode-alist '("\\.mpl$" . maplev-mode))
+                   (eval-after-load "maplev"
+                     `(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: maplev!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                             (setq maplev-include-path (list ,maplev-base-path ,(concat maplev-base-path "/maple")))
+                             (setq maplev-copyright-owner "Mitch J. Richling")
+                             (setq maplev-default-release "2016")
+                             (setq maplev-release "2016")
+                             (setq maplev-executable-alist '(("2016" . ("c:/Program Files/Maple 2016/bin.X86_64_WINDOWS/cmaple.exe"
+                                                                        nil
+                                                                        "c:/Program Files/Maple 2016/bin.X86_64_WINDOWS/mint.exe"))))
+                             (setq maplev-mint-query nil)
+                             (setq maplev-description-quote-char ?\"))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: OCTAVE setup...")
 (if (not (string-equal MJR-platform "WINDOWS"))
-    (if (and (file-exists-p (concat MJR-home-cor "/elisp/octave")))
-        (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: OCTAVE found...")
-               (add-to-list 'load-path (concat MJR-home-cor "/elisp/octave"))
-               (autoload 'octave-mode  "octave-mod" "Octave editing mode" t)
-               (setq auto-mode-alist 
-                     (cons '("\\.m$" . octave-mode) auto-mode-alist))
-               (add-hook 'octave-mode-hook 
-                         (lambda () 
-                           (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: octave-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                           (abbrev-mode 1) 
-                           (auto-fill-mode 1) 
-                           (font-lock-mode 1)))
-               (autoload 'run-octave   "octave-inf" "Interactive Octave" t)
-               (add-hook 'inferior-octave-mode-hook
-                         (lambda () 
-                           (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-octave-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                           (font-lock-mode 1))))
-        (MJR-quiet-message "MJR: INIT: PKG SETUP: OCTAVE Not Found..."))
+    (let ((octave-base-path (MJR-find-newest-core-package "octave")))
+      (if octave-base-path
+          (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: OCTAVE found... %s" octave-base-path)
+                 (add-to-list 'load-path (concat MJR-home-cor octave-base-path))
+                 (autoload 'octave-mode  "octave-mod" "Octave editing mode" t)
+                 (setq auto-mode-alist 
+                       (cons '("\\.m$" . octave-mode) auto-mode-alist))
+                 (add-hook 'octave-mode-hook 
+                           (lambda () 
+                             (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: octave-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                             (abbrev-mode 1) 
+                             (auto-fill-mode 1) 
+                             (font-lock-mode 1)))
+                 (autoload 'run-octave   "octave-inf" "Interactive Octave" t)
+                 (add-hook 'inferior-octave-mode-hook
+                           (lambda () 
+                             (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-octave-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                             (font-lock-mode 1))))
+          (MJR-quiet-message "MJR: INIT: PKG SETUP: OCTAVE Not Found...")))
     (MJR-quiet-message "MJR: INIT: PKG SETUP: octave: WARNING: Setup suppressed on windows"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: procesing mode setup...")
-(let ((processing-loc (find-if #'file-exists-p
-                               (list (concat MJR-home-cor "/elisp/processing")))))
-  (if processing-loc
-      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: Processing Mode found in CORE.")
-             (add-to-list 'load-path processing-loc)
+(let ((processing-path (MJR-find-newest-core-package "processing")))
+  (if processing-path
+      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: processing found... %s" processing-path)
+             (add-to-list 'load-path processing-path)
              (add-to-list 'auto-mode-alist '("\\.pde$" . processing-mode))
              (autoload 'processing-mode "processing-mode" "Processing mode" t))
       (MJR-quiet-message "MJR: INIT: PKG SETUP: Processing Mode Not Found...")))
@@ -1593,63 +1665,60 @@ gid, host name, dictionary word, and Google search."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME...")
-(if (not (string-equal MJR-platform "WINDOWS"))
-    (let ((slime-loc (find-if #'file-exists-p
-                              (list (concat MJR-home-cor "/elisp/slime")
-                                    (concat MJR-home-cor "/elisp/slime-2011-05-19")))))
-      (if slime-loc
-          (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME found...")
-                 (add-to-list 'load-path slime-loc)
-                 (require 'slime-autoloads)
-                 (eval-after-load "slime"
-                   '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: slime!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                           (let ((slime-lisp-bin (find-if #'file-exists-p
-                                                          (list "/usr/local/big/sbcl/1.3.11/bin/sbcl"
-                                                                "/usr/local/big/sbcl/1.3.4/bin/sbcl"
-                                                                "/usr/local/big/sbcl/1.2.14/bin/sbcl"
-                                                                "/usr/local/big/sbcl/1.2.11/bin/sbcl"
-                                                                "/home/richmit/s/linux/local/bin/sbcl"
-                                                                "/usr/local/bin/sbcl-run"
-                                                                "/usr/local/bin/sbcl"
-                                                                "/opt/local/bin/sbcl"
-                                                                "/usr/bin/sbcl"
-                                                                "C:\\PROGRA~1\\STEELB~1\\1.0.51\\SBCL.EXE")))
-                                 (spec-to-use (find-if #'file-exists-p
-                                                       (list "/usr/share/doc/hyperspec/"
-                                                             "/Users/Shared/Doc2/software-dev/LISP/hyperspec/"
-                                                             "/opt/local/share/doc/lisp/HyperSpec-7-0/HyperSpec/"))))                    
-                             (if slime-lisp-bin
-                                 (setq inferior-lisp-program slime-lisp-bin)
-                                 (MJR-quiet-message "MJR INIT: WARNING: No working lisp found"))
-                             (if spec-to-use
-                                 (setq common-lisp-hyperspec-root (concat "file:" spec-to-use))
-                                 (MJR-quiet-message "MJR INIT: WARNING: Using remote hyperspec: %s"
-                                                    (setq common-lisp-hyperspec-root "http://www.lispworks.com/reference/HyperSpec/")))
-                             (slime-setup '(slime-repl)) ; Setup (use SLIME-REPL)
-                             (setq lisp-simple-loop-indentation  1
-                                   lisp-loop-keyword-indentation 6
-                                   lisp-loop-forms-indentation   6)
-                             (setq slime-net-coding-system 'utf-8-unix)
-                             (add-hook 'lisp-mode-hook
-                                       (lambda ()
-                                         (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: lisp-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                                         (setq slime-net-coding-system 'utf-8-unix)))
-                             ;; REPL bindings
-                             (define-key slime-repl-mode-map "\M-." 'slime-edit-definition-with-etags)           ;; A somewhat slimey version of find-tag
-                             (define-key slime-repl-mode-map "\M-," 'tags-loop-continue)                         ;; Use  tags contineu for M,
-                             (define-key slime-repl-mode-map (kbd "ESC ESC .") 'slime-edit-definition)           ;; Put SLIMEy M. on MM.
-                             (define-key slime-repl-mode-map (kbd "ESC ESC ,") 'slime-pop-find-definition-stack) ;; Put SLIMEy M, on MM,
-                             ;; CODE bindings
-                             (define-key slime-mode-map "\M-." 'slime-edit-definition-with-etags)           ;; A somewhat slimey version of find-tag
-                             (define-key slime-mode-map "\M-," 'tags-loop-continue)                         ;; Use  tags contineu for M,
-                             (define-key slime-mode-map (kbd "ESC ESC .") 'slime-edit-definition)           ;; Put SLIMEy M. on MM.
-                             (define-key slime-mode-map (kbd "ESC ESC ,") 'slime-pop-find-definition-stack) ;; Put SLIMEy M, on MM,
-                             ;;(define-key slime-mode-map "\M-." 'find-tag)
-                             ;; M-x slime-who-calls       Show function callers.
-                             ;; M-x slime-who-references  Show references to global variable.
-                             (global-set-key (kbd "C-c s")   'slime-selector)))))  ; Switch back to slime REPL
-          (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME Not Found...")))
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: slime: WARNING: Setup suppressed on windows"))
+(let ((slime-path (MJR-find-newest-core-package "slime")))
+  (if slime-path
+      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: slime found... %s" slime-path)
+             (add-to-list 'load-path slime-path)
+             (require 'slime-autoloads)
+             (eval-after-load "slime"
+               '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: slime!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                       (let ((slime-lisp-bin (find-if #'file-exists-p
+                                                      (list "/usr/local/big/sbcl/1.3.11/bin/sbcl"
+                                                            "/usr/local/big/sbcl/1.3.4/bin/sbcl"
+                                                            "/usr/local/big/sbcl/1.2.14/bin/sbcl"
+                                                            "/usr/local/big/sbcl/1.2.11/bin/sbcl"
+                                                            "/home/richmit/s/linux/local/bin/sbcl"
+                                                            "/usr/local/bin/sbcl-run"
+                                                            "/usr/local/bin/sbcl"
+                                                            "/opt/local/bin/sbcl"
+                                                            "/usr/bin/sbcl"
+                                                            "C:\\PROGRA~1\\STEELB~1\\1.3.12\\SBCL.EXE"
+                                                            "C:\\PROGRA~1\\STEELB~1\\1.0.51\\SBCL.EXE")))
+                             (spec-to-use (find-if #'file-exists-p
+                                                   (list "/usr/share/doc/hyperspec/"
+                                                         "/Users/Shared/Doc2/software-dev/LISP/hyperspec/"
+                                                         "/opt/local/share/doc/lisp/HyperSpec-7-0/HyperSpec/"))))                    
+                         (if slime-lisp-bin
+                             (setq inferior-lisp-program slime-lisp-bin)
+                             (MJR-quiet-message "MJR INIT: WARNING: No working lisp found"))
+                         (if spec-to-use
+                             (setq common-lisp-hyperspec-root (concat "file:" spec-to-use))
+                             (MJR-quiet-message "MJR INIT: WARNING: Using remote hyperspec: %s"
+                                                (setq common-lisp-hyperspec-root "http://www.lispworks.com/reference/HyperSpec/")))
+                         (slime-setup '(slime-repl)) ; Setup (use SLIME-REPL)
+                         (setq lisp-simple-loop-indentation  1
+                               lisp-loop-keyword-indentation 6
+                               lisp-loop-forms-indentation   6)
+                         (setq slime-net-coding-system 'utf-8-unix)
+                         (add-hook 'lisp-mode-hook
+                                   (lambda ()
+                                     (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: lisp-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                     (setq slime-net-coding-system 'utf-8-unix)))
+                         ;; REPL bindings
+                         (define-key slime-repl-mode-map "\M-." 'slime-edit-definition-with-etags)           ;; A somewhat slimey version of find-tag
+                         (define-key slime-repl-mode-map "\M-," 'tags-loop-continue)                         ;; Use  tags contineu for M,
+                         (define-key slime-repl-mode-map (kbd "ESC ESC .") 'slime-edit-definition)           ;; Put SLIMEy M. on MM.
+                         (define-key slime-repl-mode-map (kbd "ESC ESC ,") 'slime-pop-find-definition-stack) ;; Put SLIMEy M, on MM,
+                         ;; CODE bindings
+                         (define-key slime-mode-map "\M-." 'slime-edit-definition-with-etags)           ;; A somewhat slimey version of find-tag
+                         (define-key slime-mode-map "\M-," 'tags-loop-continue)                         ;; Use  tags contineu for M,
+                         (define-key slime-mode-map (kbd "ESC ESC .") 'slime-edit-definition)           ;; Put SLIMEy M. on MM.
+                         (define-key slime-mode-map (kbd "ESC ESC ,") 'slime-pop-find-definition-stack) ;; Put SLIMEy M, on MM,
+                         ;;(define-key slime-mode-map "\M-." 'find-tag)
+                         ;; M-x slime-who-calls       Show function callers.
+                         ;; M-x slime-who-references  Show references to global variable.
+                         (global-set-key (kbd "C-c s")   'slime-selector)))))  ; Switch back to slime REPL
+      (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME Not Found...")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: ido...")
@@ -1716,19 +1785,17 @@ gid, host name, dictionary word, and Google search."
 ;;      (progn (package-refresh-contents)
 ;;             (package-install "magit"))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: sunrise-commander")
-(let ((sunrise-commander-path (find-if (lambda (path) (file-exists-p (concat path "/sunrise-commander.el")))
-                                       (list (concat MJR-home-cor "/elisp/sunrise-commander")))))
-  (if (not (null sunrise-commander-path))
-      (progn
-        (eval-after-load "sunrise-commander"
-          '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: sunrise-commander!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                  ))
-        (add-to-list 'load-path sunrise-commander-path)
-        (autoload 'sunrise "sunrise-commander" "Sunrise Commander" t)
-        (require 'sunrise-x-tree))))
+(let ((sunrise-commander-path (MJR-find-newest-core-package "sunrise-commander")))
+  (if sunrise-commander-path
+      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: sunrise-commander found... %s" sunrise-commander-path)
+             (eval-after-load "sunrise-commander"
+               '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: sunrise-commander!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                       ))
+             (add-to-list 'load-path sunrise-commander-path)
+             (autoload 'sunrise "sunrise-commander" "Sunrise Commander" t)
+             (require 'sunrise-x-tree))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: hs-minor-mode")
@@ -1754,84 +1821,95 @@ gid, host name, dictionary word, and Google search."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet")
-(let ((yasnippet-code-path (find-if (lambda (path) (file-exists-p (concat path "/yasnippet.el")))
-                               (list (concat MJR-home-cor "/elisp/yasnippet"))))
-      (yasnippet-snip-path (remove-if-not #'file-exists-p
-                                          (list (concat MJR-home-cor   "/yasnippets")))))
-  (if (and (not (null yasnippet-code-path))
-           (not (null yasnippet-snip-path)))
-      (progn
-        (eval-after-load "yasnippet"
-          '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: yasnippet!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                  (setq yas-snippet-dirs yasnippet-snip-path)
-                  ;; Nix the default tab binding..
-                  (define-key yas-minor-mode-map (kbd "<tab>") nil)
-                  (define-key yas-minor-mode-map (kbd "TAB")   nil)
-                  ;; Add in-key-map binding for my own expand
-                  (define-key yas-minor-mode-map (kbd "ESC ESC TAB") 'MJR-expand)
-                  ;; Nix yas-fallback behaviour so C-c e won't complain when expand fails
-                  (setq yas-fallback-behavior nil)
-                  ;; How we get some global templates
-                  (add-hook 'yas-minor-mode-hook
-                            (lambda ()
-                              (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: yas-minor-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                              (yas-activate-extra-mode 'fundamental-mode)))
-                  ;; Make yas work everyplace
-                  (yas-global-mode 1)
-                  ;; Call yas-expand or yas-insert-snippet depending on if region is active
-                  (defun MJR-expand ()
-                    "If no region is active, use yas-expand to attempt yasnippet expantion; otherwise call yas-insert-snippet."
-                    (interactive)
-                    ;; (if (not (find 'fundamental-mode minor-mode-list))
-                    ;;     (yas-activate-extra-mode 'fundamental-mode))
-                    (if (and transient-mark-mode (region-active-p))
-                        (funcall-interactively #'yas-insert-snippet)
-                        (if (not (funcall-interactively #'yas-expand))
-                            (funcall-interactively #'yas-insert-snippet))))
-                  (global-set-key (kbd "C-c e") 'MJR-expand)))
-        (add-to-list 'load-path yasnippet-code-path)
-        (require 'yasnippet))))
+(let ((yasnippet-code-path (MJR-find-newest-core-package "yasnippet")))
+  (if yasnippet-code-path
+      (let ((yasnippet-snip-path (remove-if-not #'file-exists-p (list (concat MJR-home-cor   "/yasnippets")
+                                                                      (concat MJR-home-cor   "/yasnippet")))))
+        (MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet found... %s" yasnippet-code-path)
+        (if yasnippet-snip-path
+            (progn
+              (MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet snippet directory found... %s" yasnippet-snip-path)
+              (eval-after-load "yasnippet"
+                '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: yasnippet!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                        (setq yas-snippet-dirs yasnippet-snip-path)
+                        ;; Nix the default tab binding..
+                        (define-key yas-minor-mode-map (kbd "<tab>") nil)
+                        (define-key yas-minor-mode-map (kbd "TAB")   nil)
+                        ;; Add in-key-map binding for my own expand
+                        (define-key yas-minor-mode-map (kbd "ESC ESC TAB") 'MJR-expand)
+                        ;; Nix yas-fallback behaviour so C-c e won't complain when expand fails
+                        (setq yas-fallback-behavior nil)
+                        ;; How we get some global templates
+                        (add-hook 'yas-minor-mode-hook
+                                  (lambda ()
+                                    (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: yas-minor-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                    (yas-activate-extra-mode 'fundamental-mode)))
+                        ;; Make yas work everyplace
+                        (yas-global-mode 1)
+                        ;; Call yas-expand or yas-insert-snippet depending on if region is active
+                        (defun MJR-expand ()
+                          "If no region is active, use yas-expand to attempt yasnippet expantion; otherwise call yas-insert-snippet."
+                          (interactive)
+                          ;; (if (not (find 'fundamental-mode minor-mode-list))
+                          ;;     (yas-activate-extra-mode 'fundamental-mode))
+                          (if (and transient-mark-mode (region-active-p))
+                              (funcall-interactively #'yas-insert-snippet)
+                              (if (not (funcall-interactively #'yas-expand))
+                                  (funcall-interactively #'yas-insert-snippet))))
+                        (global-set-key (kbd "C-c e") 'MJR-expand)))
+              (add-to-list 'load-path yasnippet-code-path)
+              (require 'yasnippet))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: ESS")
-(let ((ess-path (concat MJR-home-cor "/elisp/ess/lisp/")))
-  (if (file-exists-p (concat ess-path "ess-site.el"))
-      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: ESS found... %s" ess-path)
-             (add-to-list 'load-path ess-path)
-             (autoload 'R "ess-site" "Call 'R', the 'GNU S' system from the R Foundation." t)
-             (autoload 'R-mode "ess-site" "Call 'R', the 'GNU S' system from the R Foundation." t)
-             (eval-after-load "ess-site"
-               '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: ess!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                       (setq ess-fancy-comments nil)
-                       (progn (ess-toggle-underscore 't)
-                              (ess-toggle-underscore nil))
-                       (add-to-list 'ess-style-alist
-                                    '(mjr-ess-style
-                                      (ess-indent-level . 2)                       ;; * (ess-indent-level . 4) 
-                                      (ess-first-continued-statement-offset . 2)   ;; * (ess-first-continued-statement-offset . 0) 
-                                      (ess-continued-statement-offset . 2)         ;; * (ess-continued-statement-offset . 4) 
-                                      (ess-brace-offset . -2)                      ;; * (ess-brace-offset .  0) 
-                                      (ess-expression-offset . 2)                  ;; * (ess-expression-offset . 4) 
-                                      (ess-else-offset . 0)                        ;; = (ess-else-offset . 0) 
-                                      (ess-close-brace-offset . 0)                 ;; = (ess-close-brace-offset . 0))
-                                      (ess-brace-imaginary-offset . 0)             ;; ?
-                                      (ess-continued-brace-offset . 0)             ;; ?
-                                      (ess-arg-function-offset . nil)              ;; * (ess-arg-function-offset . 4) 
-                                      (ess-arg-function-offset-new-line . nil)     ;; * (ess-arg-function-offset-new-line '(4)) 
-                                      ))
-                       (setq ess-default-style 'mjr-ess-style)
-                       (add-hook 'ess-mode-hook
-                                 (lambda ()
-                                   (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                                   (progn (ess-toggle-underscore 't)
-                                          (ess-toggle-underscore nil))
-                                   (ess-set-style 'mjr-ess-style)))
-                       (add-hook 'inferior-ess-mode-hook
-                                 (lambda ()
-                                   (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                                   (progn (ess-toggle-underscore 't)
-                                          (ess-toggle-underscore nil))
-                                   (ess-set-style 'mjr-ess-style))))))))
+(let ((ess-base-path (MJR-find-newest-core-package "ess")))
+  (if ess-base-path
+      (let ((ess-path (concat ess-base-path "lisp/")))
+        (if (file-exists-p (concat ess-path "ess-site.el"))
+            (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: ESS found... %s" ess-path)
+                   (add-to-list 'load-path ess-path)
+                   (autoload 'R          "ess-site" "Run interactive 'R' session"        t)
+                   (autoload 'R-mode     "ess-site" "Mode for editing 'R' code"          t)
+                   (autoload 'julia      "ess-site" "Run interactive 'julia' session"    t)
+                   (autoload 'julia-mode "ess-site" "Mode for editing 'julia-mode' code" t)
+                   (add-to-list 'auto-mode-alist '("\\.R$"   . R-mode))        
+                   (add-to-list 'auto-mode-alist '("\\.jl$"  . julia-mode))    
+                   (eval-after-load "ess-site"
+                     '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: ess!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                             (setq ess-fancy-comments nil)
+                             (progn (ess-toggle-underscore 't)
+                                    (ess-toggle-underscore nil))
+                             ;; (setenv "PATH" "C:\\Program Files\\Microsoft\\MRO-3.3.2\\bin\\x64;C:\\Program Files\\LLNL\\VisIt 2.12.0;C:\\Program Files\\Microsoft HPC Pack 2008 R2\\Bin\\;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\system32\\config\\systemprofile\\.dnx\\bin;C:\\Program Files\\Microsoft DNX\\Dnvm\\;C:\\Program Files\\Microsoft SQL Server\\130\\Tools\\Binn\\;C:\\Program Files (x86)\\Windows Kits\\10\\Windows Performance Toolkit\\;C:\\Program Files\\Git\\cmd;C:\\Program Files (x86)\\nodejs\\;C:\\Users\\richmit\\AppData\\Local\\Microsoft\\WindowsApps;")
+                             ;; On windows, we must set the path to R
+                             (if (file-exists-p "C:\\Program Files\\Microsoft\\MRO-3.3.2\\bin\\x64\\Rterm.exe")
+                                 (setq inferior-R-program-name "C:\\Program Files\\Microsoft\\MRO-3.3.2\\bin\\x64\\Rterm.exe"))
+                             (add-to-list 'ess-style-alist
+                                          '(mjr-ess-style
+                                            (ess-indent-level . 2)                       ;; * (ess-indent-level . 4) 
+                                            (ess-first-continued-statement-offset . 2)   ;; * (ess-first-continued-statement-offset . 0) 
+                                            (ess-continued-statement-offset . 2)         ;; * (ess-continued-statement-offset . 4) 
+                                            (ess-brace-offset . -2)                      ;; * (ess-brace-offset .  0) 
+                                            (ess-expression-offset . 2)                  ;; * (ess-expression-offset . 4) 
+                                            (ess-else-offset . 0)                        ;; = (ess-else-offset . 0) 
+                                            (ess-close-brace-offset . 0)                 ;; = (ess-close-brace-offset . 0))
+                                            (ess-brace-imaginary-offset . 0)             ;; ?
+                                            (ess-continued-brace-offset . 0)             ;; ?
+                                            (ess-arg-function-offset . nil)              ;; * (ess-arg-function-offset . 4) 
+                                            (ess-arg-function-offset-new-line . nil)     ;; * (ess-arg-function-offset-new-line '(4)) 
+                                            ))
+                             (setq ess-default-style 'mjr-ess-style)
+                             (add-hook 'ess-mode-hook
+                                       (lambda ()
+                                         (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                         (progn (ess-toggle-underscore 't)
+                                                (ess-toggle-underscore nil))
+                                         (ess-set-style 'mjr-ess-style)))
+                             (add-hook 'inferior-ess-mode-hook
+                                       (lambda ()
+                                         (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                         (progn (ess-toggle-underscore 't)
+                                                (ess-toggle-underscore nil))
+                                         (ess-set-style 'mjr-ess-style))))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Theme....")
