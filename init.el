@@ -162,10 +162,11 @@
   ;; Set MJR-location
   (set-if-auto-config 'MJR-location (cond ((or (file-exists-p "/apps/")
                                                (file-exists-p "/apps/flames/data")
-                                               (file-exists-p "/home/flames/data"))    "WORK:TI")
+                                               (file-exists-p "/home/flames/data"))      "WORK:TI")
                                           ((or (file-exists-p "/home/Shared/core/")
-                                               (file-exists-p "/Users/Shared/core/"))  "HOME")
-                                          ('t                                          "UNKNOWN")))
+                                               (file-exists-p "/media/sf_richmit/core/")
+                                               (file-exists-p "/Users/Shared/core/"))    "HOME")
+                                          ('t                                            "UNKNOWN")))
   ;; Set MJR-platform
   (set-if-auto-config 'MJR-platform (cond ((string-match "mingw-nt"  system-configuration) "WINDOWS")
                                           ((string-match "mingw32"   system-configuration) "WINDOWS")                                          
@@ -734,23 +735,30 @@ gid, host name, dictionary word, and Google search."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-stats-numbers-in-column: DEFINED!")
-(defun MJR-stats-numbers-in-column ()
-  "Compute various statistics on the the numbers highlighted by a rectangle, and put a summary in the kill ring."
-  (interactive)
-  (cl-flet ((MJR-get-numbers-in-column () (let* 
-                                              ((saved-point (point))
-                                               (saved-mark  (if (mark) (mark) saved-point))
-                                               (min-col     (min (progn (goto-char saved-point) (current-column)) (progn (goto-char saved-mark) (current-column))))
-                                               (min-line    (min (line-number-at-pos saved-point) (line-number-at-pos saved-mark)))
-                                               (max-line    (max (line-number-at-pos saved-point) (line-number-at-pos saved-mark)))
-                                               (list-o-numb nil))
+(defun MJR-stats-numbers-in-column (stats-to-compute)
+  "Compute various statistics on the the numbers highlighted by a rectangle, and put a summary in the kill ring.
+
+With prefix arg you can pick the statistics to compute."
+  (interactive (let ((stat-names  '("sum" "mean"  "min" "max" "sd" "n" "sumsq" "sum,mean,min,max,sd,n,sumsq" )))
+                 (list (split-string (if current-prefix-arg
+                                         (if (require 'ido nil :noerror)
+                                             (ido-completing-read "Stats to compute: " stat-names)
+                                             (read-string "Stats to compute: " "sum" 'stat-names))
+                                         "sum,mean,min,max,sd,n,sumsq")
+                                     "[^a-zA-Z]"))))
+  (cl-flet ((MJR-get-numbers-in-column () (save-excursion
+                                            (let* ((saved-point (point))
+                                                 (saved-mark  (if (mark) (mark) saved-point))
+                                                 (min-col     (min (progn (goto-char saved-point) (current-column)) (progn (goto-char saved-mark) (current-column))))
+                                                 (min-line    (min (line-number-at-pos saved-point) (line-number-at-pos saved-mark)))
+                                                 (max-line    (max (line-number-at-pos saved-point) (line-number-at-pos saved-mark)))
+                                                 (list-o-numb nil))
                                             (loop for cur-line from min-line upto max-line do
-                                                  (let*
-                                                      ((min-pt (progn (goto-line cur-line) (move-to-column min-col) (point)))
-                                                       (max-pt (point-at-eol)))
+                                                  (let* ((min-pt (progn (goto-line cur-line) (move-to-column min-col) (point)))
+                                                         (max-pt (point-at-eol)))
                                                     (setq list-o-numb (append list-o-numb (list (string-to-number (buffer-substring min-pt max-pt)))))))
-                                            (kill-new (format "%s" list-o-numb))
-                                            list-o-numb))
+                                            ;(kill-new (format "%s" list-o-numb))
+                                            list-o-numb)))
             (MJR-stats-cmp     (the-list) (if (listp the-list)
                                               (let* ((the-flist (mapcar (lambda (x) (if (numberp x) (float x))) the-list))
                                                      (the-n     (length the-flist))
@@ -761,14 +769,14 @@ gid, host name, dictionary word, and Google search."
                                                      (the-sumsq (if allfp (apply '+ (mapcar (lambda (x) (* x x)) the-flist))))
                                                      (the-var   (if allfp (if (< 0 the-n) (- (/ the-sumsq the-n) (* the-mean the-mean)))))
                                                      (the-sd    (if allfp (if (< 0 the-var) (sqrt the-var))))
-                                                     (the-max   (if allfp (apply 'max the-flist)))
-                                                     )
-                                                (list the-min the-max the-sum the-sumsq the-mean the-sd the-n)))))  
-    (let ((the-sumary (apply 'format 
-                             "STATS: min: %s, max: %s, sum: %s, sumsq: %s, mean: %s, sd: %s, n: %s" 
-                             (MJR-stats-cmp (MJR-get-numbers-in-column)))))
-      (kill-new the-sumary)
-      (message the-sumary))))
+                                                     (the-max   (if allfp (apply 'max the-flist))))
+                                                (list (cons "min"   the-min)  (cons "max"   the-max) (cons "sum"   the-sum)  (cons "sumsq" the-sumsq)
+                                                      (cons "mean"  the-mean) (cons "sd"    the-sd)  (cons "n"     the-n))))))
+    (let* ((da-stats  (MJR-stats-cmp (MJR-get-numbers-in-column)))
+           (da-string (apply #'concat (mapcar (lambda (da-stat) (format " %s: %s" da-stat (cdr (assoc da-stat da-stats))))
+                                              stats-to-compute))))
+      (kill-new da-string)
+      (message da-string))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Generic Global Emacs Config Stuff...")
@@ -1070,6 +1078,12 @@ gid, host name, dictionary word, and Google search."
                                           sh-indentation 2)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: PKG SETUP: term/ansi-term")
+(eval-after-load "term"
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: term!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+          (advice-add 'term-handle-exit :after (lambda (&rest rest) (kill-buffer)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: eshell")
 (eval-after-load "em-term"
   '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: em-term!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
@@ -1137,16 +1151,16 @@ gid, host name, dictionary word, and Google search."
                                                                                                       (concat MJR-home-bin "/t")
                                                                                                       (concat MJR-home-bin "/tn")
                                                                                                       (concat MJR-home-bin "/td")
-                                                                                                      (concat MJR-home-bin "/tn")
+                                                                                                      (concat MJR-home-bin "/tnn")
                                                                                                       (concat MJR-home-bin "/sn"))))
                          (read-string "Program to run: " "bash"))))
   (let* ((cns (file-name-nondirectory PROGRAM-TO-RUN))
-         (bbn (upcase (or (second (assoc cns '(("s"  "screen")
-                                               ("sn" "screen")
-                                               ("tn" "tmux")
+         (bbn (upcase (or (second (assoc cns '(("s"   "screen")
+                                               ("sn"  "screen")
+                                               ("tn"  "tmux")
                                                ("tnn" "tmux")
-                                               ("td" "tmux")
-                                               ("t"  "tmux")))) cns))))
+                                               ("td"  "tmux")
+                                               ("t"   "tmux")))) cns))))
     (if (not (server-running-p))
         (server-start))
     (setenv "EDITOR" (format "emacsclient -s %s" server-name))
