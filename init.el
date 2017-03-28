@@ -5,7 +5,7 @@
 ;; @author    Mitch Richling <https://www.mitchr.me>
 ;; @brief     My Emacs dot file.@EOL
 ;; @std       Emacs Lisp
-;; @copyright 
+;; @copyright
 ;;  @parblock
 ;;  Copyright (c) 1989-2015, Mitchell Jay Richling <http://www.mitchr.me> All rights reserved.
 ;;
@@ -75,7 +75,7 @@
 ;;     * MJR-home-cor/yasnippets  Used for yasnippets
 ;;
 ;; Stuff to play with later:
-;;  * htmlfontify.el - (v23.2) 
+;;  * htmlfontify.el - (v23.2)
 ;;  * bubbles - like SameGame.
 ;;  * display-time-world
 ;;
@@ -143,7 +143,7 @@
     (set-if-auto-config 'MJR-uname       urln)
     (set-if-auto-config 'MJR-expert-mode 't)
     (set-if-auto-config 'MJR-pookie-mode nil))
-  
+
   ;; Check some hardwired fixed paths first, then use the magical ~ path if we fail.
   (set-if-auto-config 'MJR-home (or (find-if #'file-exists-p (mapcar (lambda (p) (concat p MJR-uname)) '("/Users/"  ;; OSX & Windows
                                                                                                          "/home/"
@@ -169,7 +169,7 @@
                                           ('t                                            "UNKNOWN")))
   ;; Set MJR-platform
   (set-if-auto-config 'MJR-platform (cond ((string-match "mingw-nt"  system-configuration) "WINDOWS")
-                                          ((string-match "mingw32"   system-configuration) "WINDOWS")                                          
+                                          ((string-match "mingw32"   system-configuration) "WINDOWS")
                                           ((string-match "linux"     system-configuration) "LINUX")
                                           ((string-match "darwin"    system-configuration) "DARWIN")
                                           ('t                                              "UNKNOWN"))))
@@ -194,8 +194,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Autoloads for things in init file...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(autoload 'thing-at-point-looking-at "thingatpt" "Return non-nil if point is in or just after a match for REGEXP." t)
-(autoload 'thing-at-point            "thingatpt" "Return string for thing at point."                               t)
+(autoload 'thing-at-point-looking-at "thingatpt"  "Return non-nil if point is in or just after a match for REGEXP." t)
+(autoload 'thing-at-point            "thingatpt"  "Return string for thing at point."                               t)
+(autoload 'image-mode-as-text        "image-mode" "Load image as text")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions..")
@@ -241,7 +242,7 @@ Interaction with options:
             (let* ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
                    (reg-max  (if (mark) (max (point) (mark)) (point-max)))
                    (val      (if (< reg-min reg-max)
-                                 (cond 
+                                 (cond
                                   ((string-equal eval-how "calc")  (kill-new (calc-eval (buffer-substring-no-properties reg-min reg-max))))
                                   ((string-equal eval-how "elisp") (kill-new (format "%s" (eval (car (read-from-string (buffer-substring-no-properties reg-min reg-max)))))))
                                   ((string-equal eval-how "lisp")  (slime-eval-save (buffer-substring-no-properties reg-min reg-max)))))))
@@ -253,7 +254,7 @@ Interaction with options:
                       (message "MJR-eval-region: Value: %s" val))
                   (message "MJR-eval-region: Something went wrong")))
 
-            (cond 
+            (cond
              ((string-equal eval-how "calc")  (call-interactively #'quick-calc))
              ((string-equal eval-how "elisp") (call-interactively #'eval-expression))
              ((string-equal eval-how "lisp")  (call-interactively #'slime-interactive-eval)))))
@@ -285,7 +286,7 @@ Interaction with options:
       (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-insert-from-web: DEFINED!")
       (defun MJR-insert-from-web (url)
         "Insert snippet from web."
-        (interactive (list (read-string "URL: " "https://www.mitchr.me/")))  
+        (interactive (list (read-string "URL: " "https://www.mitchr.me/")))
         (call-process-shell-command (concat MJR-home-bin "/curl") nil 't nil "-s" url)))
     (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-insert-from-web: NOT defined!  We could not find the curl command"))
 
@@ -373,7 +374,7 @@ When not called interactively, this function returns the time as a string.  The 
                                          ((= date-stamp-format -3) "%Y-%m-%d %H:%M #Z"    )
                                          ((= date-stamp-format -2) "%Y-%m-%d %H:%M"       )
                                          ((= date-stamp-format -1) "%Y-%m-%d"             ))))))
-    (if date-stamp-format 
+    (if date-stamp-format
         (let* ((curtime   (if (minusp (prefix-numeric-value current-prefix-arg))
                               (let ((current-prefix-arg nil)) (org-read-date 't 't))
                               (current-time))) ;; Must protect org-read-date from prefix argument
@@ -401,7 +402,7 @@ The 'MJR' comments come in one of two forms:
       * Ending comment: 'MJR TYPE END ------------------------- DATE'
   * Line: A formatted comment line is added after the current line (cursor placed ready for content)
     The CONTEXT will be the name of the current function or buffer name.
-    The format will be (note <DATE> and/or CONTEXT might be missing): 
+    The format will be (note <DATE> and/or CONTEXT might be missing):
      * 'MJR TYPE NOTE <DATE> CONTEXT: '"
   (interactive (let ((lab-tags  '("TODO"   ;; TODO Marker
                                   "MOD"    ;; Modification
@@ -562,9 +563,9 @@ The 'MJR' comments come in one of two forms:
         (if srch-str
             (if (and (> (length srch-str) 2) (< (length srch-str) 100))
                 (if (file-exists-p "/usr/local/bin/de")
-                    (progn 
+                    (progn
                       (if (and (mark) (not (= pfx-arg 1))) (kill-region (point) (mark)))
-                      (let ((fnd-str (shell-command-to-string 
+                      (let ((fnd-str (shell-command-to-string
                                       (concat "/usr/local/bin/de -r -attr '"  at-2-get "' "
                                               srch-str " | grep '" at-2-get
                                               "' | sed 's/^.*: //' | sed 's/,//g' | tr '\\012' ','"))))
@@ -582,7 +583,7 @@ The 'MJR' comments come in one of two forms:
 (defvar MJR-thingy-lookeruper-methods nil
   "A list of lists that define various things that may be looked up.  Each sub list contains three values:
    * name of lookup
-   * Function used to pull string from buffer.  
+   * Function used to pull string from buffer.
      This should be as specific as possible.
    * List of methods to use to do the lookups.  List contains strings with a shell command and/or lisp functions
      The first word of a string is expected to be a shell command, and will only be considered if the file exists.
@@ -630,7 +631,7 @@ The 'MJR' comments come in one of two forms:
                 '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=finStructure,ou=data,ou=applications,o=ti,c=US' '(o=003%Q)'"))
           MJR-thingy-lookeruper-methods))
 ;; Lookup a local group ID (Numeric group ID)
-(push (list "gid" 
+(push (list "gid"
             (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]+\\)\\b" 20) (match-string 1)))
             '("/usr/bin/getent group %Q"))
       MJR-thingy-lookeruper-methods)
@@ -648,49 +649,49 @@ The 'MJR' comments come in one of two forms:
 (if (string-equal MJR-location "WORK:TI")
     (push (list "Employee-ID"
                 (lambda () (and (thing-at-point-looking-at "\\(a[0-9]\\{7\\}\\|x[a-zA-Z0-9]\\{7\\}\\)" 10) (match-string 0)))
-                '("/usr/local/bin/de '%Q'"))	  
+                '("/usr/local/bin/de '%Q'"))	
           MJR-thingy-lookeruper-methods))
 ;; Look up a user name (uname)
-(push (list "uname-long" 
+(push (list "uname-long"
             (lambda () (let ((tmp (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1))))
                          (and tmp (find tmp (system-users) :test #'string-equal))))
             '("/home/sysadmin/bin/pde %Q" "/usr/bin/finger -s %Q" "/usr/bin/getent passwd %Q"))
       MJR-thingy-lookeruper-methods)
 ;; Look up a word via dictionary.reference.com
-(push (list "dictionary" 
+(push (list "dictionary"
             (lambda () (and (thing-at-point-looking-at "\\b\\([a-zA-Z'-]+\\)\\b" 20) (match-string 1)))
             (list (concat MJR-home-bin "/browser -foreground 100 -new-window 'http://dictionary.reference.com/browse/%U?s=t' &")))
       MJR-thingy-lookeruper-methods)
 ;; Look via google
-(push (list "google" 
+(push (list "google"
             (lambda () (and (thing-at-point-looking-at ".+" 20) (match-string 0)))
             (list (concat MJR-home-bin "/browser -foreground 100 -new-window 'http://google.com/#q=%U' &")))
       MJR-thingy-lookeruper-methods)
 ;; Look up a user name (uname)
-(push (list "uname-short" 
+(push (list "uname-short"
             (lambda () (let ((tmp (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1))))
 			 (and tmp (find tmp (system-users) :test #'string-equal))))
             '("/usr/bin/getent passwd %Q"))
       MJR-thingy-lookeruper-methods)
 ;; Just toss it into a browser
-(push (list "URL" 
+(push (list "URL"
             (lambda () (thing-at-point 'url))
             (list (concat MJR-home-bin "/browser -foreground 100 -new-window '%U' &")))
       MJR-thingy-lookeruper-methods)
-(push (list "DNS" 
+(push (list "DNS"
             (lambda () (and (thing-at-point-looking-at "\\([.a-zA-Z0-9_-]+\\.\\(com\\|edu\\|org\\|gov\\)\\)\\b" 20) (match-string 1)))
             '("/usr/bin/nslookup %Q" "/usr/bin/dig %Q"))
       MJR-thingy-lookeruper-methods)
 
 (defun MJR-thingy-lookeruper (string-to-lookup lookup-method)
-  "Extensible looker upper of thingys at the point or in the active region (active region support requires transient-mark-mode).  
+  "Extensible looker upper of thingys at the point or in the active region (active region support requires transient-mark-mode).
 
 Interactive use:
-  * If the region is not active, each search method will be used to find various things at the point, and the user will be queried 
+  * If the region is not active, each search method will be used to find various things at the point, and the user will be queried
     as to which kind of lookup to perform based on what was found.
   * If the region is active, then the entire region is used as the search string and the user can select ANY lookup method.
 
-The list MJR-thingy-lookeruper-methods describes the kinds of things that can be looked up. Examples include uname, gname, uid, 
+The list MJR-thingy-lookeruper-methods describes the kinds of things that can be looked up. Examples include uname, gname, uid,
 gid, host name, dictionary word, and Google search."
   (interactive
    (let ((have-region    (and transient-mark-mode (region-active-p) (mark) (buffer-substring-no-properties (min (point) (mark)) (max (point) (mark)))))
@@ -704,9 +705,9 @@ gid, host name, dictionary word, and Google search."
                                                             (file-exists-p (first (split-string f)))
                                                             f))
                                             (nth 2 cur-method))))
-               (if search-command 
+               (if search-command
                    (setq search-strings (append search-strings (list fnd-thingy))
-                         search-methods (append search-methods (list (nth 0 cur-method)))))))))     
+                         search-methods (append search-methods (list (nth 0 cur-method)))))))))
      (cond ((= 1 (length search-strings)) (list (car search-strings) (car search-methods)))
            ((not (null search-strings))   (let ((i-lookup-method (if (require 'ido nil :noerror)
                                                                    (ido-completing-read "Lookup Method: " search-methods)
@@ -789,9 +790,9 @@ With prefix arg you can pick the statistics to compute."
     ;; Don't scroll jump when you hit edges of the window
     (setq scroll-conservatively 10000))
 (if MJR-pookie-mode
-    ;; Don't wrap long lines.  
+    ;; Don't wrap long lines.
     (setq-default truncate-lines nil)
-    ;; Wrap long lines.  
+    ;; Wrap long lines.
     (setq-default truncate-lines 'true))
 ;; Make the buffer name column width wider (default is 19)
 (setq Buffer-menu-name-width 40)
@@ -799,7 +800,7 @@ With prefix arg you can pick the statistics to compute."
 (windmove-default-keybindings)
 ;; kill stuff in a read only buffer
 (setq kill-read-only-ok t)
-;; Want local variables to work;; 
+;; Want local variables to work;;
 (setq enable-local-eval t)
 ;; No startup message
 (setq inhibit-startup-message t)
@@ -879,19 +880,20 @@ With prefix arg you can pick the statistics to compute."
 (if (file-exists-p (concat MJR-home-bin "/browser"))
     (setq browse-url-firefox-program (concat MJR-home-bin "/browser")))
 ;; Setup various handy auto-mode-alist items
-(add-to-list 'auto-mode-alist '("\\.sql.m4$"                . sql-mode))          ;; SQL with m4
-(add-to-list 'auto-mode-alist '("\\.txt.m4$"                . text-mode))         ;; Text with m4
-(add-to-list 'auto-mode-alist '("\\.elisp$"                 . emacs-lisp-mode))   ;; Emacs lisp code
-(add-to-list 'auto-mode-alist '("\\.clisp$"                 . lisp-mode))         ;; SLIME-lisp-mode
-(add-to-list 'auto-mode-alist '("\\.[fF]95$"                . f90-mode))          ;; Use f90 mode with fortran 1995
-(add-to-list 'auto-mode-alist '("\\.[fF]0[38]$"             . f90-mode))          ;; Use f90 mode with fortran 2003 and 2008
-(add-to-list 'auto-mode-alist '("\\.[mM][oO][dD]$"          . f90-mode))          ;; Use f90 mode with fortran modules
-(add-to-list 'auto-mode-alist '("\\.[fF]200[38]$"           . f90-mode))          ;; Use f90 mode with fortran 2003 and 2008
-(add-to-list 'auto-mode-alist '("\\.[fF]77$"                . fortran-mode))      ;; Use fortran mode for f77
-(add-to-list 'auto-mode-alist '("\\.[fF][oO][rR]$"          . fortran-mode))      ;; Use fortran mode for f77
-(add-to-list 'auto-mode-alist '("emacs--SS-X-X-X-X$"        . emacs-lisp-mode))   ;; My GNU Emacs dot file. :)
-(add-to-list 'auto-mode-alist '("^/tmp/pico\\.[0-9][0-9]*$" . mail-mode))         ;; alpine tmp files -- use mail-mode
-(add-to-list 'auto-mode-alist '("tmp/mutt/\\.*mutt"         . mail-mode))         ;; mutt tmp files -- use mail-mode
+(add-to-list 'auto-mode-alist '("\\.sql.m4$"                . sql-mode))            ;; SQL with m4
+(add-to-list 'auto-mode-alist '("\\.txt.m4$"                . text-mode))           ;; Text with m4
+(add-to-list 'auto-mode-alist '("\\.elisp$"                 . emacs-lisp-mode))     ;; Emacs lisp code
+(add-to-list 'auto-mode-alist '("\\.clisp$"                 . lisp-mode))           ;; SLIME-lisp-mode
+(add-to-list 'auto-mode-alist '("\\.[fF]95$"                . f90-mode))            ;; Use f90 mode with fortran 1995
+(add-to-list 'auto-mode-alist '("\\.[fF]0[38]$"             . f90-mode))            ;; Use f90 mode with fortran 2003 and 2008
+(add-to-list 'auto-mode-alist '("\\.[mM][oO][dD]$"          . f90-mode))            ;; Use f90 mode with fortran modules
+(add-to-list 'auto-mode-alist '("\\.[fF]200[38]$"           . f90-mode))            ;; Use f90 mode with fortran 2003 and 2008
+(add-to-list 'auto-mode-alist '("\\.[fF]77$"                . fortran-mode))        ;; Use fortran mode for f77
+(add-to-list 'auto-mode-alist '("\\.[fF][oO][rR]$"          . fortran-mode))        ;; Use fortran mode for f77
+(add-to-list 'auto-mode-alist '("emacs--SS-X-X-X-X$"        . emacs-lisp-mode))     ;; My GNU Emacs dot file. :)
+(add-to-list 'auto-mode-alist '("^/tmp/pico\\.[0-9][0-9]*$" . mail-mode))           ;; alpine tmp files -- use mail-mode
+(add-to-list 'auto-mode-alist '("tmp/mutt/\\.*mutt"         . mail-mode))           ;; mutt tmp files -- use mail-mode
+(add-to-list 'auto-mode-alist '("\\.svg$"                   . image-mode-as-text))  ;; Prevent SVG rendering on load
 ;; Fringe on the right only
 (fringe-mode '(0 . 8))
 ;; prettify-symbols in prog-mode.el
@@ -1060,7 +1062,7 @@ With prefix arg you can pick the statistics to compute."
           (dolist (git-el-file git-el-files)
             (load git-el-file))
           (if (string-equal MJR-platform "WINDOWS")
-              (progn 
+              (progn
                 (setq git-shell-path       "c:/Program Files/Git/bin/")
                 (setq git-shell-executable "c:/Program Files/Git/bin/bash.exe")
                 ;;(add-to-list 'exec-path git-shell-path)
@@ -1081,15 +1083,28 @@ With prefix arg you can pick the statistics to compute."
 (MJR-quiet-message "MJR: INIT: PKG SETUP: term/ansi-term")
 (eval-after-load "term"
   '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: term!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-          (advice-add 'term-handle-exit :after (lambda (&rest rest) (kill-buffer)))))
+          ;; Note eshell-destroy-buffer-when-process-dies set to non-NIL will kill term sessions wehn over, but we want more.  What we do here is pause before
+          ;; we destroy a term buffer if it has existed for 1 second or less.
+          (advice-add 'term-handle-exit :after (lambda (&rest rest) (let ((dt buffer-display-time)
+                                                                          (ct (current-time)))
+                                                                      (if (or (null dt) (and (= (first ct) (first dt))
+                                                                                             (<= (abs (- (second ct) (second dt))) 1)))
+                                                                          (read-char "Press any key to exit terminal buffer."))
+                                                                      (kill-buffer))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: eshell")
 (eval-after-load "em-term"
   '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: em-term!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-      (add-to-list 'eshell-visual-commands "s")
-      (add-to-list 'eshell-visual-commands "sn")
-      (add-to-list 'eshell-visual-subcommands '("git" "log" "l" "ll" "diff" "show"))))
+          (mapcar (lambda (i) (add-to-list 'eshell-visual-commands i)) '("s" "sn" "sscreen" "sscreen.sh"
+                                                                         "t" "tn" "td" "tnn" "stmux" "stmux.sh"
+                                                                         "hexDump.rb" "hexDump"
+                                                                         ;"byteAnalysis.rb" "byteAnalysis"
+                                                                         "getSecret.sh" "getSecret"
+                                                                         "hlflt.rb" "hlflt"
+                                                                         "logTail.rb" "logTail"
+                                                                         ))
+          (mapcar (lambda (i) (add-to-list 'eshell-visual-subcommands i)) '(("git" "log" "l" "ll" "diff" "show")))))
 (eval-after-load "esh-mode"
   '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: esh-mode!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
           (defun MJR-eshell-insert-last-word (n)
@@ -1138,6 +1153,8 @@ With prefix arg you can pick the statistics to compute."
                                 (MJR-try-theme)  ;; Duno why, but eshell needs to have the theme reapplied after it starts...
                                 (setq pcomplete-cycle-completions nil)
                                 (local-set-key "\M-."  'MJR-eshell-insert-last-word)
+                                (local-set-key (kbd "<up>")    'previous-line)
+                                (local-set-key (kbd "<down>")  'next-line)
                                 (if (not (server-running-p))
                                     (server-start))
                                 (setenv "PAGER" "cat")
@@ -1222,7 +1239,7 @@ With prefix arg you can pick the statistics to compute."
           (add-hook 'mail-mode-hook
                     (lambda ()
                       (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: mail-mode-hook (2)" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                      (font-lock-add-keywords nil 
+                      (font-lock-add-keywords nil
                                               '(("^[ \t]*>[^>\n].*$"          (0 'message-odd-quoted-text-face))
                                                 ("^[ \t]*>$"                  (0 'message-odd-quoted-text-face))
                                                 ("^[ \t]*>>[^>\n].*$"         (0 'message-even-quoted-text-face))
@@ -1252,11 +1269,11 @@ With prefix arg you can pick the statistics to compute."
       (let ((org-path (MJR-find-newest-core-package "org")))
         (if org-path
             (add-to-list 'load-path (concat org-path "lisp"))))
-      
+
       (require 'org-install)
       ;;(require 'org-habit)
 
-      (setq org-replace-disputed-keys t)  ;; Don't override S-<arrow> keys       
+      (setq org-replace-disputed-keys t)  ;; Don't override S-<arrow> keys
 
       (if (not (require 'htmlize nil :noerror))
           (MJR-quiet-message "MJR: INIT: PKG SETUP: htmlize: WARNING: Could not load package in init."))
@@ -1537,7 +1554,7 @@ With prefix arg you can pick the statistics to compute."
              (add-to-list 'auto-mode-alist '("\\.mac$" . maxima-mode))
              (eval-after-load "maxima"
                '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: maxima!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                       (let ((max-cmd  (find-if #'file-exists-p 
+                       (let ((max-cmd  (find-if #'file-exists-p
                                                 (list "/usr/local/big/maxima/5.38.1_sbcl-1.3.11/bin/maxima" ;; Custom build on Debian 8 @ home
                                                       "/usr/local/big/maxima/5.38.0_sbcl-1.3.4/bin/maxima"  ;; Custom build on Debian 8 @ home
                                                       "/usr/local/big/maxima/5.37.0_sbcl-1.2.14/bin/maxima" ;; Custom build on Debian 8 @ home
@@ -1574,7 +1591,7 @@ With prefix arg you can pick the statistics to compute."
                             (cons "ref_cheatsheet"     (concat MJR-home "/world/stuff/my_ref/"))            ;; Notes: Cheat sheets
                             (cons "ref_note_computer"  (concat MJR-home "/world/stuff/notes/computer/"))    ;; Notes: Computer stuff
                             (cons "refcode_R"          (concat MJR-home "/world/my_prog/learn/R"))          ;; Refrence code: R
-                            (cons "refcode_ruby"       (concat MJR-home "/world/my_prog/learn/ruby"))       ;; Refrence code: Ruby                            
+                            (cons "refcode_ruby"       (concat MJR-home "/world/my_prog/learn/ruby"))       ;; Refrence code: Ruby
                             (cons "dotfiles"           (concat MJR-home "/world/dotfiles/"))                ;; dot fiel repo
                             (cons "world"              (concat MJR-home "/world/"))                         ;; All my stuff. ;)
                             (cons "doc1"               '("/Users/Shared/Doc1/"                              ;; ebook repo #1
@@ -1614,7 +1631,7 @@ With prefix arg you can pick the statistics to compute."
           (setq imaxima-fnt-size "small")
           ;; Scale all images by this factor. Default: 1.0
           (setq imaxima-scale-factor 2.0)
-          ;; Use maxima mode 
+          ;; Use maxima mode
           (setq imaxima-use-maxima-mode-flag 't)))
 (autoload 'imaxima "imaxima" "Maxima mode with typeset results" t)
 
@@ -1649,17 +1666,17 @@ With prefix arg you can pick the statistics to compute."
           (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: OCTAVE found... %s" octave-base-path)
                  (add-to-list 'load-path (concat MJR-home-cor octave-base-path))
                  (autoload 'octave-mode  "octave-mod" "Octave editing mode" t)
-                 (setq auto-mode-alist 
+                 (setq auto-mode-alist
                        (cons '("\\.m$" . octave-mode) auto-mode-alist))
-                 (add-hook 'octave-mode-hook 
-                           (lambda () 
+                 (add-hook 'octave-mode-hook
+                           (lambda ()
                              (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: octave-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                             (abbrev-mode 1) 
-                             (auto-fill-mode 1) 
+                             (abbrev-mode 1)
+                             (auto-fill-mode 1)
                              (font-lock-mode 1)))
                  (autoload 'run-octave   "octave-inf" "Interactive Octave" t)
                  (add-hook 'inferior-octave-mode-hook
-                           (lambda () 
+                           (lambda ()
                              (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-octave-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                              (font-lock-mode 1))))
           (MJR-quiet-message "MJR: INIT: PKG SETUP: OCTAVE Not Found...")))
@@ -1676,6 +1693,21 @@ With prefix arg you can pick the statistics to compute."
       (MJR-quiet-message "MJR: INIT: PKG SETUP: Processing Mode Not Found...")))
 
 ;;slime-eval-save slime-interactive-eval
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: PKG SETUP: HYPERSPEC...")
+(eval-after-load "hyperspec"
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: hyperspec!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+          (let ((spec-to-use (find-if #'file-exists-p
+                                      (list "/usr/share/doc/hyperspec/"
+                                            "/Users/Shared/Doc2/software-dev/LISP/hyperspec/"
+                                            "/media/sf_D_DRIVE/Doc2/software-dev/LISP/hyperspec/"
+                                            "/opt/local/share/doc/lisp/HyperSpec-7-0/HyperSpec/"))))
+            (if spec-to-use
+                (setq common-lisp-hyperspec-root (concat "file:" spec-to-use))
+                (MJR-quiet-message "MJR INIT: WARNING: Using remote hyperspec: %s"
+                                   (setq common-lisp-hyperspec-root "http://www.lispworks.com/reference/HyperSpec/"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME...")
@@ -1697,18 +1729,11 @@ With prefix arg you can pick the statistics to compute."
                                                             "/opt/local/bin/sbcl"
                                                             "/usr/bin/sbcl"
                                                             "C:\\PROGRA~1\\STEELB~1\\1.3.12\\SBCL.EXE"
-                                                            "C:\\PROGRA~1\\STEELB~1\\1.0.51\\SBCL.EXE")))
-                             (spec-to-use (find-if #'file-exists-p
-                                                   (list "/usr/share/doc/hyperspec/"
-                                                         "/Users/Shared/Doc2/software-dev/LISP/hyperspec/"
-                                                         "/opt/local/share/doc/lisp/HyperSpec-7-0/HyperSpec/"))))                    
+                                                            "C:\\PROGRA~1\\STEELB~1\\1.0.51\\SBCL.EXE"))))
                          (if slime-lisp-bin
                              (setq inferior-lisp-program slime-lisp-bin)
                              (MJR-quiet-message "MJR INIT: WARNING: No working lisp found"))
-                         (if spec-to-use
-                             (setq common-lisp-hyperspec-root (concat "file:" spec-to-use))
-                             (MJR-quiet-message "MJR INIT: WARNING: Using remote hyperspec: %s"
-                                                (setq common-lisp-hyperspec-root "http://www.lispworks.com/reference/HyperSpec/")))
+
                          (slime-setup '(slime-repl)) ; Setup (use SLIME-REPL)
                          (setq lisp-simple-loop-indentation  1
                                lisp-loop-keyword-indentation 6
@@ -1748,8 +1773,8 @@ With prefix arg you can pick the statistics to compute."
                  (add-to-list 'ido-ignore-directories directory-re))
                ;; I can't get ido-ignore-extensions to work
                (dolist (ext '("fasl" "ufasl" "fas" "lib" "o" "dvi" "asd" "so"
-                              "aux" "bbl" "bcf" "blg" "log" "out" "run.xml")) 
-                 (add-to-list 'ido-ignore-files (concat "\\." ext "$"))) 
+                              "aux" "bbl" "bcf" "blg" "log" "out" "run.xml"))
+                 (add-to-list 'ido-ignore-files (concat "\\." ext "$")))
                ;; Set ignore file list
                (dolist (file-re '("\\`RCS/" "\\`\\.git/" "\\`\\.DS_Store" "\\`a\\.out"))
                  (add-to-list 'ido-ignore-files file-re))
@@ -1886,8 +1911,8 @@ With prefix arg you can pick the statistics to compute."
                    (autoload 'R-mode     "ess-site" "Mode for editing 'R' code"          t)
                    (autoload 'julia      "ess-site" "Run interactive 'julia' session"    t)
                    (autoload 'julia-mode "ess-site" "Mode for editing 'julia-mode' code" t)
-                   (add-to-list 'auto-mode-alist '("\\.R$"   . R-mode))        
-                   (add-to-list 'auto-mode-alist '("\\.jl$"  . julia-mode))    
+                   (add-to-list 'auto-mode-alist '("\\.R$"   . R-mode))
+                   (add-to-list 'auto-mode-alist '("\\.jl$"  . julia-mode))
                    (eval-after-load "ess-site"
                      '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: ess!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                              (setq ess-fancy-comments nil)
@@ -1899,17 +1924,17 @@ With prefix arg you can pick the statistics to compute."
                                  (setq inferior-R-program-name "C:\\Program Files\\Microsoft\\MRO-3.3.2\\bin\\x64\\Rterm.exe"))
                              (add-to-list 'ess-style-alist
                                           '(mjr-ess-style
-                                            (ess-indent-level . 2)                       ;; * (ess-indent-level . 4) 
-                                            (ess-first-continued-statement-offset . 2)   ;; * (ess-first-continued-statement-offset . 0) 
-                                            (ess-continued-statement-offset . 2)         ;; * (ess-continued-statement-offset . 4) 
-                                            (ess-brace-offset . -2)                      ;; * (ess-brace-offset .  0) 
-                                            (ess-expression-offset . 2)                  ;; * (ess-expression-offset . 4) 
-                                            (ess-else-offset . 0)                        ;; = (ess-else-offset . 0) 
+                                            (ess-indent-level . 2)                       ;; * (ess-indent-level . 4)
+                                            (ess-first-continued-statement-offset . 2)   ;; * (ess-first-continued-statement-offset . 0)
+                                            (ess-continued-statement-offset . 2)         ;; * (ess-continued-statement-offset . 4)
+                                            (ess-brace-offset . -2)                      ;; * (ess-brace-offset .  0)
+                                            (ess-expression-offset . 2)                  ;; * (ess-expression-offset . 4)
+                                            (ess-else-offset . 0)                        ;; = (ess-else-offset . 0)
                                             (ess-close-brace-offset . 0)                 ;; = (ess-close-brace-offset . 0))
                                             (ess-brace-imaginary-offset . 0)             ;; ?
                                             (ess-continued-brace-offset . 0)             ;; ?
-                                            (ess-arg-function-offset . nil)              ;; * (ess-arg-function-offset . 4) 
-                                            (ess-arg-function-offset-new-line . nil)     ;; * (ess-arg-function-offset-new-line '(4)) 
+                                            (ess-arg-function-offset . nil)              ;; * (ess-arg-function-offset . 4)
+                                            (ess-arg-function-offset-new-line . nil)     ;; * (ess-arg-function-offset-new-line '(4))
                                             ))
                              (setq ess-default-style 'mjr-ess-style)
                              (add-hook 'ess-mode-hook
@@ -2011,7 +2036,7 @@ With prefix arg you can pick the statistics to compute."
  '(ansi-color-faces-vector
    [default default default italic underline success warning error])
  '(ansi-color-names-vector
-   ["#212526" "#ff4b4b" "#b4fa70" "#fce94f" "#729fcf" "#e090d7" "#8cc4ff" "#eeeeec"]) 
+   ["#212526" "#ff4b4b" "#b4fa70" "#fce94f" "#729fcf" "#e090d7" "#8cc4ff" "#eeeeec"])
  '(delete-selection-mode t)
  '(indicate-buffer-boundaries (quote right))
  '(indicate-empty-lines t)
