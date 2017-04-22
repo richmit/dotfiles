@@ -210,10 +210,8 @@ Packages are named: FOO-SOMETHING or FOO=SOMETHING
   * FOO is generally the name of the package as provided by the author
   * SOMETHING is generally the date I downloaded it, the version, etc...
 
-The preferred version is the LAST one sorted in ASCII order.
-Normally all versions have the - form above, so you get the one
-with the highest version number or most recent date.  TO
-override this behavior, use the = name form -- = sorts after -,
+The preferred version is the LAST one sorted in ASCII order. Normally all versions have the - form above, so you get
+the one with the highest version number or most recent date.  To override this behavior, use the = name form -- = sorts after -,
 so it gets picked up."
   (let ((elisp-path (concat MJR-home-cor "/elisp")))
     (if (file-exists-p elisp-path)
@@ -287,7 +285,7 @@ Interaction with options:
       (defun MJR-insert-from-web (url)
         "Insert snippet from web."
         (interactive (list (read-string "URL: " "https://www.mitchr.me/")))
-        (call-process-shell-command (concat MJR-home-bin "/curl") nil 't nil "-s" url)))
+        (call-process-shell-command (concat MJR-home-bin "/curl -s" url) nil 't nil)))
     (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-insert-from-web: NOT defined!  We could not find the curl command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -301,7 +299,7 @@ Interaction with options:
           (if fap
               (if (string-match "\\.pdf$" fap)
                   (if (file-exists-p fap)
-                      (start-process-shell-command "mjrpdfview" "mjrpdfview" (concat MJR-home-bin "/mjrpdfview")  fap)
+                      (start-process-shell-command "mjrpdfview" "mjrpdfview" (concat MJR-home-bin "/mjrpdfview " fap))
                       ;; We don't use "start-process" as we may need shell expansion for the file name
                       (message "MJR: MJR-view-pdf-at-point: ERROR: File a name at point, but it did not exist in the filesystem: %s" fap))
                   (message "MJR: MJR-view-pdf-at-point: ERROR: Found a file name at piont, but it was not a PDF: %s" fap))
@@ -387,7 +385,7 @@ When not called interactively, this function returns the time as a string.  The 
                                                              (format "%+02d" zhr)
                                                              (format "%+02d:%02d" zhr zmn)) dstrtmp1 't 't))
                (dstr      (replace-regexp-in-string "UTC" "Z" dstrtmp2 't 't)))
-          (if (called-interactively-p) (insert dstr) dstr))
+          (if (called-interactively-p 'interactive) (insert dstr) dstr))
         "")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -501,7 +499,7 @@ The 'MJR' comments come in one of two forms:
                           (message "MJR: MJR-PrependHeader: ERROR: Could not find TOP file for this file type")))
                     (message "MJR: MJR-PrependHeader: ERROR: Could not figure out file type")))
               (message "MJR: MJR-PrependHeader: ERROR: Could not figure out the file name for buffer")))))
-    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-PrependHeader: NOT defined!  We could not find the browser command"))
+    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-PrependHeader: NOT defined!  We could not find the codeBits directory!"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-bin "/latexit.rb"))
@@ -535,9 +533,9 @@ The 'MJR' comments come in one of two forms:
          Note that this uses quite a bit of shell magic and not regex replacement in Emacs.  This is because older Emacs versions have no
          such functions, and newer versions GNU Emacs and XEmacs have different (incompatible) functions for the same thing.  So, more
          shell and less Emacs is the hack of the day..."
-        (interactive (let ((com-attrs  '("commonName"               ;; Common name
+        (interactive (let ((com-attrs  '("mail"                     ;; Email address
+                                         "commonName"               ;; Common name
                                          "telephoneNumber"          ;; Telephone number
-                                         "mail"                     ;; Email address
                                          "alphaPagerNumber"         ;; Alpha pager number
                                          "buildingCode"             ;; Building name
                                          "cellularTelephoneNumber"  ;; Cellular phone number
@@ -557,7 +555,9 @@ The 'MJR' comments come in one of two forms:
                                          "siteName"                 ;; Site
                                          "sn"                       ;; Last name
                                          "supervisor")))            ;; Supervisor
-                       (list (read-string "Attribute: " "mail"  'com-attrs)
+                       (list (if (require 'ido nil :noerror)
+                                 (ido-completing-read "Attribute: " com-attrs)
+                                 (read-string "Attribute: " "mail" 'com-attrs))
                              (prefix-numeric-value current-prefix-arg)
                              (if (mark) (buffer-substring (point) (mark)) (current-word 't)))))
         (if srch-str
@@ -589,64 +589,67 @@ The 'MJR' comments come in one of two forms:
      The first word of a string is expected to be a shell command, and will only be considered if the file exists.
      In strings, %U will be replaced with the URL hexified search string, and %Q will be replaced with the search string")
 ;; Use 'de' to search the TI directory
-(if (string-equal MJR-location "WORK:TI")
+(if (and (string-equal MJR-location "WORK:TI") (file-exists-p "/usr/local/bin/de"))
     (push (list "TI-LDAP-de"
                 (lambda () (and (thing-at-point-looking-at ".+" 20) (match-string 0)))
                 '("/usr/local/bin/de '%Q'"))
           MJR-thingy-lookeruper-methods))
 ;; Use ldapsearch to search For a TI Site Code
-(if (string-equal MJR-location "WORK:TI")
+(if (and (string-equal MJR-location "WORK:TI") (file-exists-p "/usr/bin/ldapsearch"))
     (push (list "SiteCode"
                 (lambda () (and (thing-at-point-looking-at "\\b\\([A-Z][A-Z0-9]\\{3\\}\\)\\b" 20) (match-string 1)))
                 '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=tiSiteCodes,ou=applications,o=ti,c=us' '(&(objectClass=tiSite)(siteName=%Q))'"))
           MJR-thingy-lookeruper-methods))
 ;; Use ldapsearch to search For a TI Org3 (SBE)
-(if (string-equal MJR-location "WORK:TI")
+(if (and (string-equal MJR-location "WORK:TI") (file-exists-p "/usr/bin/ldapsearch"))
     (push (list "Org3"
                 (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{3\\}\\)\\b" 20) (match-string 1)))
                 '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=grpStructure,ou=data,ou=applications,o=ti,c=us' '(o=%Q)'"))
           MJR-thingy-lookeruper-methods))
 ;; Use ldapsearch to search For a TI Org6 (SBE-1)
-(if (string-equal MJR-location "WORK:TI")
+(if (and (string-equal MJR-location "WORK:TI") (file-exists-p "/usr/bin/ldapsearch"))
     (push (list "Org6"
                 (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{6\\}\\)\\b" 20) (match-string 1)))
                 '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=divStructure,ou=data,ou=applications,o=ti,c=us' '(o=%Q)'"))
           MJR-thingy-lookeruper-methods))
 ;; Use ldapsearch to search For a TI Org9 (SBE-2)
-(if (string-equal MJR-location "WORK:TI")
+(if (and (string-equal MJR-location "WORK:TI") (file-exists-p "/usr/bin/ldapsearch"))
     (push (list "Org9"
                 (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{9\\}\\)\\b" 20) (match-string 1)))
                 '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=deptStructure,ou=data,ou=applications,o=ti,c=us' '(o=%Q)'"))
           MJR-thingy-lookeruper-methods))
 ;; Use ldapsearch to search For a TI Cost Center (SBE-3)
-(if (string-equal MJR-location "WORK:TI")
+(if (and (string-equal MJR-location "WORK:TI") (file-exists-p "/usr/bin/ldapsearch"))
     (push (list "CostCenter"
                 (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{8\\}\\)\\b" 20) (match-string 1)))
                 '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=finStructure,ou=data,ou=applications,o=ti,c=US' '(o=%Q)'"))
           MJR-thingy-lookeruper-methods))
 ;; Use ldapsearch to search For a TI Division 003 Cost Center (SBE-3)
-(if (string-equal MJR-location "WORK:TI")
+(if (and (string-equal MJR-location "WORK:TI") (file-exists-p "/usr/bin/ldapsearch"))
     (push (list "CostCenterUS5"
                 (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{5\\}\\)\\b" 20) (match-string 1)))
                 '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=finStructure,ou=data,ou=applications,o=ti,c=US' '(o=003%Q)'"))
           MJR-thingy-lookeruper-methods))
 ;; Lookup a local group ID (Numeric group ID)
-(push (list "gid"
-            (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]+\\)\\b" 20) (match-string 1)))
-            '("/usr/bin/getent group %Q"))
-      MJR-thingy-lookeruper-methods)
+(if (file-exists-p "/usr/bin/getent")
+    (push (list "gid"
+                (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]+\\)\\b" 20) (match-string 1)))
+                '("/usr/bin/getent group %Q"))
+          MJR-thingy-lookeruper-methods))
 ;; Lookup a local group name
-(push (list  "gname"
-             (lambda () (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1)))
-             '("/usr/bin/getent group %Q"))
-      MJR-thingy-lookeruper-methods)
+(if (file-exists-p "/usr/bin/getent")
+    (push (list  "gname"
+                 (lambda () (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1)))
+                 '("/usr/bin/getent group %Q"))
+          MJR-thingy-lookeruper-methods))
 ;; Lookup a local user ID (Numeric user ID)
-(push (list "uid"
-            (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]+\\)\\b" 20) (match-string 1)))
-            '("/usr/bin/getent passwd %Q"))
-      MJR-thingy-lookeruper-methods)
+(if (file-exists-p "/usr/bin/getent")
+    (push (list "uid"
+                (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]+\\)\\b" 20) (match-string 1)))
+                '("/usr/bin/getent passwd %Q"))
+          MJR-thingy-lookeruper-methods))
 ;; Use 'de' to search for a TI Employee ID
-(if (string-equal MJR-location "WORK:TI")
+(if (and (string-equal MJR-location "WORK:TI") (file-exists-p "/usr/local/bin/de"))
     (push (list "Employee-ID"
                 (lambda () (and (thing-at-point-looking-at "\\(a[0-9]\\{7\\}\\|x[a-zA-Z0-9]\\{7\\}\\)" 10) (match-string 0)))
                 '("/usr/local/bin/de '%Q'"))	
@@ -658,25 +661,28 @@ The 'MJR' comments come in one of two forms:
             '("/home/sysadmin/bin/pde %Q" "/usr/bin/finger -s %Q" "/usr/bin/getent passwd %Q"))
       MJR-thingy-lookeruper-methods)
 ;; Look up a word via dictionary.reference.com
-(push (list "dictionary"
-            (lambda () (and (thing-at-point-looking-at "\\b\\([a-zA-Z'-]+\\)\\b" 20) (match-string 1)))
-            (list (concat MJR-home-bin "/browser -foreground 100 -new-window 'http://dictionary.reference.com/browse/%U?s=t' &")))
-      MJR-thingy-lookeruper-methods)
+(if (file-exists-p (concat MJR-home-bin "/browser"))
+    (push (list "dictionary"
+                (lambda () (and (thing-at-point-looking-at "\\b\\([a-zA-Z'-]+\\)\\b" 20) (match-string 1)))
+                (list (concat MJR-home-bin "/browser -foreground 100 -new-window 'http://dictionary.reference.com/browse/%U?s=t' &")))
+          MJR-thingy-lookeruper-methods))
 ;; Look via google
-(push (list "google"
-            (lambda () (and (thing-at-point-looking-at ".+" 20) (match-string 0)))
-            (list (concat MJR-home-bin "/browser -foreground 100 -new-window 'http://google.com/#q=%U' &")))
-      MJR-thingy-lookeruper-methods)
+(if (file-exists-p (concat MJR-home-bin "/browser"))
+    (push (list "google"
+                (lambda () (and (thing-at-point-looking-at ".+" 20) (match-string 0)))
+                (list (concat MJR-home-bin "/browser -foreground 100 -new-window 'http://google.com/#q=%U' &")))
+          MJR-thingy-lookeruper-methods))
 ;; Look up a user name (uname)
-(push (list "uname-short"
-            (lambda () (let ((tmp (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1))))
-			 (and tmp (find tmp (system-users) :test #'string-equal))))
-            '("/usr/bin/getent passwd %Q"))
-      MJR-thingy-lookeruper-methods)
+(if (file-exists-p "/usr/bin/getent")
+    (push (list "uname-short"
+                (lambda () (let ((tmp (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1))))
+                             (and tmp (find tmp (system-users) :test #'string-equal))))
+                '("/usr/bin/getent passwd %Q"))
+          MJR-thingy-lookeruper-methods))
 ;; Just toss it into a browser
 (push (list "URL"
             (lambda () (thing-at-point 'url))
-            (list (concat MJR-home-bin "/browser -foreground 100 -new-window '%U' &")))
+            (list #'browse-url))
       MJR-thingy-lookeruper-methods)
 (push (list "DNS"
             (lambda () (and (thing-at-point-looking-at "\\([.a-zA-Z0-9_-]+\\.\\(com\\|edu\\|org\\|gov\\)\\)\\b" 20) (match-string 1)))
@@ -724,17 +730,20 @@ gid, host name, dictionary word, and Google search."
                               (nth 2 (find-if (lambda (c) (string-equal lookup-method (car c))) MJR-thingy-lookeruper-methods)))))
     (if the-command
         (if (stringp the-command)
-            (let ((the-command-x (replace-regexp-in-string "%U"
-                                                           (url-hexify-string string-to-lookup)
-                                                           (replace-regexp-in-string "%Q" string-to-lookup the-command 't) 't)))
+            (let ((the-command-x the-command))
+              (mapcar (lambda (subs-vals) (setq the-command-x (replace-regexp-in-string (car subs-vals) (cadr subs-vals) the-command-x 't 't)))
+                      (list (list "%U" (url-hexify-string string-to-lookup))
+                            ;If you uncomment the next line, then uncomment the autoload for browse-url-encode-url
+                            ;(list "%B" (browse-url-encode-url string-to-lookup))
+                            (list "%Q" string-to-lookup)))
               (message "CMD: %s" the-command-x)
               (if (string-match "&$" the-command)
                   (call-process-shell-command the-command-x)
                   (shell-command the-command-x)))
               (funcall the-command string-to-lookup))
-            (message "MJR-thingy-lookeruper: Unable to find working lookup command for %s!" lookup-method))))
+        (message "MJR-thingy-lookeruper: Unable to find working lookup command for %s!" lookup-method))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;g
 (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-stats-numbers-in-column: DEFINED!")
 (defun MJR-stats-numbers-in-column (stats-to-compute)
   "Compute various statistics on the the numbers highlighted by a rectangle, and put a summary in the kill ring.
@@ -816,7 +825,8 @@ With prefix arg you can pick the statistics to compute."
 (delete-selection-mode t)
 ;; Make mouse select, clipboard, and yank buffer sane
 (setq select-active-regions   'only)
-(setq x-select-enable-primary 't)
+;;(setq x-select-enable-primary 't) ;; See next line
+(setq select-enable-primary 't)
 ;; Highlight the search strings
 (setq search-highlight t)
 ;; Highlight query replace
@@ -876,9 +886,6 @@ With prefix arg you can pick the statistics to compute."
 (setq explicit-shell-file-name "/bin/bash")
 ;; Keep SQL buffers in the current window
 (add-to-list 'same-window-buffer-names "*SQL*")
-;; Set the browser approprately
-(if (file-exists-p (concat MJR-home-bin "/browser"))
-    (setq browse-url-firefox-program (concat MJR-home-bin "/browser")))
 ;; Setup various handy auto-mode-alist items
 (add-to-list 'auto-mode-alist '("\\.sql.m4$"                . sql-mode))            ;; SQL with m4
 (add-to-list 'auto-mode-alist '("\\.txt.m4$"                . text-mode))           ;; Text with m4
@@ -937,6 +944,49 @@ With prefix arg you can pick the statistics to compute."
             (if sepath
                 (setq rmail-secondary-file-directory sepath)))
           (setq rmail-secondary-file-regexp "\\.")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: PKG SETUP: browse-url")
+;; Need this if we support %B in MJR-thingy-lookeruper
+;(autoload 'browse-url-encode-url "browse-url" "Escape annoying characters in URL that will confuse a web browser." t)
+(eval-after-load "browse-url"
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: browse-url!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+          ;; Use firefox
+          (setq browse-url-browser-function
+                '(("hyperspec"                  . eww-browse-url)
+                  ("/SS/exampleCode/ruby"       . eww-browse-url)
+                  ("/SS/exampleCode/AUPG"       . eww-browse-url)
+                  ("/SS/exampleCode/blas"       . eww-browse-url)
+                  ("/SS/exampleCode/boost"      . eww-browse-url)
+                  ("/SS/exampleCode/cfitsio"    . eww-browse-url)
+                  ("/SS/exampleCode/cpp"        . eww-browse-url)
+                  ("/SS/exampleCode/curl"       . eww-browse-url)
+                  ("/SS/exampleCode/DB"         . eww-browse-url)
+                  ("/SS/exampleCode/F77"        . eww-browse-url)
+                  ("/SS/exampleCode/fltk"       . eww-browse-url)
+                  ("/SS/exampleCode/Fortran"    . eww-browse-url)
+                  ("/SS/exampleCode/glut"       . eww-browse-url)
+                  ("/SS/exampleCode/GMP"        . eww-browse-url)
+                  ("/SS/exampleCode/GSL"        . eww-browse-url)
+                  ("/SS/exampleCode/HDF5"       . eww-browse-url)
+                  ("/SS/exampleCode/mpi"        . eww-browse-url)
+                  ("/SS/exampleCode/NetCDF"     . eww-browse-url)
+                  ("/SS/exampleCode/openssl"    . eww-browse-url)
+                  ("/SS/exampleCode/postscript" . eww-browse-url)
+                  ("/SS/exampleCode/R"          . eww-browse-url)
+                  ("/SS/exampleCode/random"     . eww-browse-url)
+                  ("/SS/exampleCode/ruby"       . eww-browse-url)
+                  ("/SS/exampleCode/sqlite"     . eww-browse-url)
+                  ("/SS/exampleCode/vtk"        . eww-browse-url)                  
+                  ("."                          . browse-url-firefox)
+                  ))
+          ;; Put stuff in a new window
+          (setq browse-url-new-window-flag 't)
+          ;; Really don't put things in new tabs!!
+          (setq browse-url-firefox-new-window-is-tab nil)
+          ;; Set the browser approprately
+          (if (file-exists-p (concat MJR-home-bin "/browser"))
+              (setq browse-url-firefox-program (concat MJR-home-bin "/browser")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: time")
@@ -1096,15 +1146,15 @@ With prefix arg you can pick the statistics to compute."
 (MJR-quiet-message "MJR: INIT: PKG SETUP: eshell")
 (eval-after-load "em-term"
   '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: em-term!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-          (mapcar (lambda (i) (add-to-list 'eshell-visual-commands i)) '("s" "sn" "sscreen" "sscreen.sh"
+          (mapc (lambda (i) (add-to-list 'eshell-visual-commands i)) '("s" "sn" "sscreen" "sscreen.sh"
                                                                          "t" "tn" "td" "tnn" "stmux" "stmux.sh"
                                                                          "hexDump.rb" "hexDump"
-                                                                         ;"byteAnalysis.rb" "byteAnalysis"
+                                                                         "byteAnalysis.rb" "byteAnalysis"
                                                                          "getSecret.sh" "getSecret"
                                                                          "hlflt.rb" "hlflt"
                                                                          "logTail.rb" "logTail"
                                                                          ))
-          (mapcar (lambda (i) (add-to-list 'eshell-visual-subcommands i)) '(("git" "log" "l" "ll" "diff" "show")))))
+          (mapcar (lambda (i) (add-to-list 'eshell-visual-subcommands i)) '(("git" "help" "log" "l" "ll" "diff" "show")))))
 (eval-after-load "esh-mode"
   '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: esh-mode!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
           (defun MJR-eshell-insert-last-word (n)
@@ -1145,6 +1195,15 @@ With prefix arg you can pick the statistics to compute."
             nil)
           (defun eshell/egit (&rest args)
             (apply 'eshell-exec-visual (cons "git" args)))
+          ;; (defun eshell/dcd (&rest args)
+          ;;   "Like eshell/dcd, but looks in directory-abbrev-alist too"
+          ;;   (if (not (null args))
+          ;;       (let* ((arg (apply 'eshell-flatten-and-stringify args))
+          ;;              (gom (cdr (assoc (concat "^" arg) directory-abbrev-alist))))
+          ;;         (if gom
+          ;;             (funcall #'eshell/cd gom)
+          ;;             (apply #'eshell/cd args)))
+          ;;       nil))
           (setq eshell-cmpl-cycle-completions nil)
           (setq eshell-history-size 1048576)
           (add-hook 'eshell-mode-hook
@@ -1155,6 +1214,8 @@ With prefix arg you can pick the statistics to compute."
                                 (local-set-key "\M-."  'MJR-eshell-insert-last-word)
                                 (local-set-key (kbd "<up>")    'previous-line)
                                 (local-set-key (kbd "<down>")  'next-line)
+                                (local-set-key (kbd "C-p") 'eshell-previous-input)
+                                (local-set-key (kbd "C-n") 'eshell-next-input)                                
                                 (if (not (server-running-p))
                                     (server-start))
                                 (setenv "PAGER" "cat")
@@ -1327,11 +1388,22 @@ With prefix arg you can pick the statistics to compute."
       ;; (require 'ob-sql)
       ;; (require 'ob-sqlite)
 
+      (defun MJR-org-babel-execute-src-block ()
+        "Wrap org-babel-execute-src-block"
+        (interactive)
+        (let ((org-confirm-babel-evaluate nil))
+          (funcall-interactively #'org-babel-execute-src-block)))
+
+      (defun MJR-org-babel-execute-subtree ()
+        "Wrap org-babel-execute-subtree"
+        (interactive)
+        (let ((org-confirm-babel-evaluate nil))
+          (funcall-interactively #'org-babel-execute-subtree)))
+
       (setq org-html-head-extra "<style>pre {background-color: #0f0f0f; color: #f0f0f0;}</style>") ;; Dark background for code.
       (setq org-html-postamble "Created with %c")
       (setq org-src-fontify-natively t)                         ;; Prety colors
       (setq org-src-tab-acts-natively t)                        ;; tab as in source mode
-      (add-hook 'org-mode-hook 'turn-on-font-lock)              ;; Make sure we turn on font-lock
       (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))  ;; Make sure *.org files use org-mode
       (setq org-log-done 'time)                                 ;; Log timestamps on done TODO items
       (setq org-indent-mode t)                                  ;; Indent stuff
@@ -1348,6 +1420,9 @@ With prefix arg you can pick the statistics to compute."
       (add-hook 'org-mode-hook                                  ;; Get my favorite keys back
                 (lambda ()
                   (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: org-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                  (turn-on-font-lock)
+                  (local-set-key  (kbd "C-c C-v C-s")      'MJR-org-babel-execute-subtree)
+                  (local-set-key  (kbd "C-c C-v C-e")      'MJR-org-babel-execute-src-block)
                   (local-set-key  (kbd "C-c a")      'org-agenda)
                   ))
       ;; Setup orgtbl in other modes
@@ -1414,7 +1489,8 @@ With prefix arg you can pick the statistics to compute."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: tramp-mode setup...")
 (if (require 'tramp nil :noerror)
-    (progn (setq tramp-default-user   MJR-uname
+    (progn (setq tramp-default-user   (if (string-equal MJR-location "WORK:TI") "a0864027" MJR-uname)
+                 tramp-terminal-type  "dumb"
                  tramp-default-method "sshx")
            ;;                                         host                    user         method
            (add-to-list 'tramp-default-method-alist '("\\`localhost\\'"       "\\`root\\'" "sudo"))
@@ -1494,12 +1570,12 @@ With prefix arg you can pick the statistics to compute."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: auctex setup...")
-(let ((atex-path (find-if (lambda (p) (file-exists-p (concat p "/auctex.el")))
-                          (list "/usr/local/share/emacs/site-lisp/"
-                                (concat MJR-home-cor "/elisp/auctex/share/site-lisp/")))))
-  (if atex-path
-      (progn (add-to-list 'load-path atex-path)
-             (load "auctex.el" nil t t))))
+(progn (let ((core-atex-base (MJR-find-newest-core-package "auctex")))
+         (if core-atex-base
+             (let ((core-atex-path (concat core-atex-base "/share/site-lisp/")))
+               (if (file-exists-p core-atex-path)
+                   (add-to-list 'load-path core-atex-path)))))
+       (load "auctex.el" t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: PoV-mode setup...")
@@ -1748,6 +1824,8 @@ With prefix arg you can pick the statistics to compute."
                          (define-key slime-repl-mode-map "\M-," 'tags-loop-continue)                         ;; Use  tags contineu for M,
                          (define-key slime-repl-mode-map (kbd "ESC ESC .") 'slime-edit-definition)           ;; Put SLIMEy M. on MM.
                          (define-key slime-repl-mode-map (kbd "ESC ESC ,") 'slime-pop-find-definition-stack) ;; Put SLIMEy M, on MM,
+                         (define-key slime-repl-mode-map (kbd "C-p") 'slime-repl-backward-input)             ;; Previous history on C-p
+                         (define-key slime-repl-mode-map (kbd "C-n") 'slime-repl-forward-input)              ;; Previous history on C-p
                          ;; CODE bindings
                          (define-key slime-mode-map "\M-." 'slime-edit-definition-with-etags)           ;; A somewhat slimey version of find-tag
                          (define-key slime-mode-map "\M-," 'tags-loop-continue)                         ;; Use  tags contineu for M,
@@ -1946,9 +2024,21 @@ With prefix arg you can pick the statistics to compute."
                              (add-hook 'inferior-ess-mode-hook
                                        (lambda ()
                                          (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                         ;(local-set-key (kbd "C-p") 'comint-previous-input) ;; Don't need.  Set in comint-mode-hook
+                                         ;(local-set-key (kbd "C-n") 'comint-next-input)      ;; Don't need.  Set in comint-mode-hook
                                          (progn (ess-toggle-underscore 't)
                                                 (ess-toggle-underscore nil))
                                          (ess-set-style 'mjr-ess-style))))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: PKG SETUP: comint")
+(eval-after-load "comint"
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: comint!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+          (add-hook 'comint-mode-hook
+                    (lambda ()
+                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: comint-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (local-set-key (kbd "C-p") 'comint-previous-input)
+                      (local-set-key (kbd "C-n") 'comint-next-input)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Theme....")
@@ -2009,6 +2099,7 @@ With prefix arg you can pick the statistics to compute."
 (global-set-key (kbd "C-c f")     'ffap)
 (global-set-key (kbd "C-c c")     'compile)
 (global-set-key (kbd "C-c a")     'org-agenda)
+(global-set-key (kbd "C-c b")     'browse-url)
 (global-set-key (kbd "C-c t")     'MJR-term)
 (global-set-key (kbd "C-c d")     'MJR-date)
 (global-set-key (kbd "C-c l")     'MJR-thingy-lookeruper)
