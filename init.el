@@ -970,6 +970,13 @@ With prefix arg you can pick the statistics to compute."
 ;; prettify-symbols in prog-mode.el
 ;; (setq prettify-symbols-unprettify-at-point 't)
 ;; (global-prettify-symbols-mode t)
+(if (string-equal MJR-platform "WINDOWS-MGW")
+    (let ((found-shell (find-if #'file-exists-p (list "c:/msys64/usr/bin/bash.exe"
+                                                      ))))
+      (if found-shell
+          (progn (setq shell-file-name          found-shell)
+                 (setq explicit-shell-file-name found-shell)
+                 (setq explicit-bash.exe-args '("--noediting" "--login" "-i"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Built-in Mode Config...")
@@ -1273,8 +1280,6 @@ With prefix arg you can pick the statistics to compute."
             (if (not (null args))
                 (funcall #'cperl-perldoc (apply 'eshell-flatten-and-stringify args)))
             nil)
-          (defun eshell/egit (&rest args)
-            (apply 'eshell-exec-visual (cons "git" args)))
           (defun eshell/dcd (&rest args)
             "Like eshell/dcd, but looks in directory-abbrev-alist too"
             (if (not (null args))
@@ -1510,6 +1515,9 @@ With prefix arg you can pick the statistics to compute."
              (local-set-key  (kbd "C-c C-v C-e")    'MJR-org-babel-execute-src-block) ;; use "C-c C-v e" to eval with confirmation prompts
              (local-set-key  (kbd "C-c a")          'org-agenda)
              ))
+ ;; Need to set the R path on Windows...
+ (if (string-equal MJR-platform "WINDOWS-MGW")
+     (setq org-babel-R-command "'/c/Program Files/Microsoft/R Open/R-3.4.0/bin/R.exe' --slave --no-save"))
  ;; Setup orgtbl in other modes
  (if nil
      (dolist (m '(emacs-lisp-mode-hook
@@ -1746,61 +1754,62 @@ With prefix arg you can pick the statistics to compute."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: bookmarks setup...")
-;; Why?  I normally have a system specific bookmark list managed by Emacs, but I have a core set of book marks I always want on that list and they may
-;; have different targets depending upon where I'm running Emacs.
-(eval-after-load "bookmark"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: bookmarks!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-          (bookmark-maybe-load-default-file)
-          (setq bookmark-save-flag 0) ;; Save bookmark file after each change to the bookmark list.
-          (dolist (bp (list (cons "templates-tex"      (concat MJR-home-cor "/texinputs/"))                 ;; Templates and input files: TeX/LaTeX
-                            (cons "templates-org"      (concat MJR-home-cor "/org-mode/"))                  ;; Templates and input files: org-mode
-                            (cons "lispy-prod"         (concat MJR-home-cor "/lispy/"))                     ;; *mjrcalc*: Production copy
-                            (cons "lispy-dev"          (concat MJR-home "/world/my_prog/lispStuff/lispy/")) ;; *mjrcalc*: Development copy
-                            (cons "note-cheatsheet"    (concat MJR-home "/world/stuff/my_ref/"))            ;; Notes: Cheat sheets
-                            (cons "note-computer"      (concat MJR-home "/world/stuff/notes/computer/"))    ;; Notes: Computer stuff
-                            (cons "ref-code-R"         (concat MJR-home "/world/my_prog/learn/R"))          ;; Refrence code: R
-                            (cons "ref-code-ruby"      (concat MJR-home "/world/my_prog/learn/ruby"))       ;; Refrence code: Ruby
-                            (cons "dotfiles"           (concat MJR-home "/world/dotfiles/"))                ;; dot fiel repo
-                            (cons "world"              (concat MJR-home "/world/"))                         ;; All my stuff. ;)
-                            (cons "home-win"           (list                                                ;; Windows Home directory -- VM/cygwin/windows   
-                                                        (concat "C:\\Users\\" (user-real-login-name))        ;; Windows (native/mingw/msys2/etc...)
-                                                        (concat "/c/Users/" (user-real-login-name))          ;; msys2
-                                                        (concat "/cygwin/c/Users/" (user-real-login-name))   ;; Cygwin
-                                                        "/media/sf_winHome"                                  ;; Virtual Box mount on Windows
-                                                        (concat MJR-home "/winHome/")                        ;; Link on most platforms
-                                                        "~/winHOme"))                                        ;; Link on most platforms
-                            (cons "home-msys2"         (list                                                ;; msys2 home directory
-                                                        (concat "C:/msys64/home/" (user-real-login-name))))  
-                            (cons "home-cyg"           (list                                                ;; cygwin home directory
-                                                        (concat "/home/" (user-real-login-name))             ;; Runing under cygwin
-                                                        (concat "c:/cygwin64/home/" (user-real-login-name))  ;; Running Under msys2
-                                                        ))
-                            (cons "doc1"               (list                                                ;; ebook repo #1
-                                                        "/Users/Shared/Doc1/"                                ;; OSX
-                                                        "D:\\Doc1\\"                                         ;; Windows
-                                                        "/cygdrive/d/Doc1"                                   ;; Cygwin
-                                                        "/media/sf_D_DRIVE/Doc1"))                           ;; Virtual Box mount on Windows
-                            (cons "doc2"               (list                                                ;; ebook repo #1 (cs, science, etc..)
-                                                        "/Users/Shared/Doc2/index.org"                       ;; OSX
-                                                        "/cygdrive/d/Doc2//index.org"                        ;; Cygwin
-                                                        "D:\\Doc2\\index.org"                                ;; Windows (native/mingw/msys2/etc...)
-                                                        "/media/sf_D_DRIVE/Doc2/index.org"))                 ;; Virtual Box mount on Windows
-                            (cons "doc3"               (list                                                ;; ebook repo #3 (math books)
-                                                        "/Users/Shared/Doc3/index.org"                       ;; OSX
-                                                        "/cygdrive/d/Doc3/index.org"                         ;; Cygwin
-                                                        "D:\\Doc3\\index.org"                                ;; Windows (native/mingw/msys2/etc...)
-                                                        "/media/sf_D_DRIVE/Doc3/index.org"))))               ;; Virtual Box mount on Windows
-            (let* ((bmk-name             (car bp))
-                   (bmk-target-options   (cdr bp))
-                   (bmk-target-validated (if (stringp bmk-target-options)
-                                             (if (file-exists-p bmk-target-options) bmk-target-options)
-                                             (find-if #'file-exists-p bmk-target-options)))
-                   (bmk-target-expanded (and bmk-target-validated (expand-file-name bmk-target-validated))))
-              (if (and bmk-name bmk-target-expanded)
-                  (let ((bmkl (list bmk-name (cons 'filename bmk-target-expanded))))
-                    (if (assoc bmk-name bookmark-alist)
-                        (setcdr (assoc bmk-name bookmark-alist) bmkl)
-                        (add-to-list 'bookmark-alist bmkl))))))))
+(if (not MJR-pookie-mode)
+    (eval-after-load "bookmark"
+      '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: bookmarks!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+              (bookmark-maybe-load-default-file)
+              (setq bookmark-save-flag 0) ;; Save bookmark file after each change to the bookmark list.
+              ;; Make sure some bookmarks exist and point to the right thing.
+              (dolist (bp (list (cons "templates-tex"      (concat MJR-home-cor "/texinputs/"))                 ;; Templates and input files: TeX/LaTeX
+                                (cons "templates-org"      (concat MJR-home-cor "/org-mode/"))                  ;; Templates and input files: org-mode
+                                (cons "lispy-prod"         (concat MJR-home-cor "/lispy/"))                     ;; *mjrcalc*: Production copy
+                                (cons "lispy-dev"          (concat MJR-home "/world/my_prog/lispStuff/lispy/")) ;; *mjrcalc*: Development copy
+                                (cons "note-cheatsheet"    (concat MJR-home "/world/stuff/my_ref/"))            ;; Notes: Cheat sheets
+                                (cons "note-computer"      (concat MJR-home "/world/stuff/notes/computer/"))    ;; Notes: Computer stuff
+                                (cons "ref-code-R"         (concat MJR-home "/world/my_prog/learn/R"))          ;; Refrence code: R
+                                (cons "ref-code-ruby"      (concat MJR-home "/world/my_prog/learn/ruby"))       ;; Refrence code: Ruby
+                                (cons "dotfiles"           (concat MJR-home "/world/dotfiles/"))                ;; dot fiel repo
+                                (cons "world"              (concat MJR-home "/world/"))                         ;; All my stuff. ;)
+                                (cons "home-win"           (list                                                ;; Windows Home directory -- VM/cygwin/windows   
+                                                            (concat "C:\\Users\\" (user-real-login-name))        ;; Windows (native/mingw/msys2/etc...)
+                                                            (concat "/c/Users/" (user-real-login-name))          ;; msys2
+                                                            (concat "/cygwin/c/Users/" (user-real-login-name))   ;; Cygwin
+                                                            "/media/sf_winHome"                                  ;; Virtual Box mount on Windows
+                                                            (concat MJR-home "/winHome/")                        ;; Link on most platforms
+                                                            "~/winHOme"))                                        ;; Link on most platforms
+                                (cons "home-msys2"         (list                                                ;; msys2 home directory
+                                                            (concat "C:/msys64/home/" (user-real-login-name))))  
+                                (cons "home-cyg"           (list                                                ;; cygwin home directory
+                                                            (concat "/home/" (user-real-login-name))             ;; Runing under cygwin
+                                                            (concat "c:/cygwin64/home/" (user-real-login-name))  ;; Running Under msys2
+                                                            ))
+                                (cons "doc1"               (list                                                ;; ebook repo #1
+                                                            "/Users/Shared/Doc1/"                                ;; OSX
+                                                            "D:\\Doc1\\"                                         ;; Windows
+                                                            "/cygdrive/d/Doc1"                                   ;; Cygwin
+                                                            "/media/sf_D_DRIVE/Doc1"))                           ;; Virtual Box mount on Windows
+                                (cons "doc2"               (list                                                ;; ebook repo #1 (cs, science, etc..)
+                                                            "/Users/Shared/Doc2/index.org"                       ;; OSX
+                                                            "/cygdrive/d/Doc2//index.org"                        ;; Cygwin
+                                                            "D:\\Doc2\\index.org"                                ;; Windows (native/mingw/msys2/etc...)
+                                                            "/media/sf_D_DRIVE/Doc2/index.org"))                 ;; Virtual Box mount on Windows
+                                (cons "doc3"               (list                                                ;; ebook repo #3 (math books)
+                                                            "/Users/Shared/Doc3/index.org"                       ;; OSX
+                                                            "/cygdrive/d/Doc3/index.org"                         ;; Cygwin
+                                                            "D:\\Doc3\\index.org"                                ;; Windows (native/mingw/msys2/etc...)
+                                                            "/media/sf_D_DRIVE/Doc3/index.org"))))               ;; Virtual Box mount on Windows
+                (let* ((bmk-name             (car bp))
+                       (bmk-target-options   (cdr bp))
+                       (bmk-target-validated (if (stringp bmk-target-options)
+                                                 (if (file-exists-p bmk-target-options) bmk-target-options)
+                                                 (find-if #'file-exists-p bmk-target-options)))
+                       (bmk-target-expanded (and bmk-target-validated (expand-file-name bmk-target-validated))))
+                  (if (and bmk-name bmk-target-expanded)
+                      (let ((bmkl (list bmk-name (cons 'filename bmk-target-expanded))))
+                        (if (assoc bmk-name bookmark-alist)
+                            (setcdr (assoc bmk-name bookmark-alist) bmkl)
+                            (add-to-list 'bookmark-alist bmkl))))))))    
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: bookmarks: SKIP: Pookie mode"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: iMaxima setup...")
@@ -2271,3 +2280,27 @@ With prefix arg you can pick the statistics to compute."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Done Customizing Emacs....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;; (defun run-cmdexe ()
+;;       (interactive)
+;;       (let ((shell-file-name "cmd.exe"))
+;;             (shell "*cmd.exe*")))
+
+;; (defun run-gitbash ()
+;;       (interactive)
+;;       (let ((shell-file-name "C:\\Program Files\\Git\\bin\\bash.exe"))
+;;             (shell "*bash*")))
+
+;; (defun run-bash ()
+;;       (interactive)
+;;       (let ((shell-file-name "c:/msys64/usr/bin/bash.exe"))
+;;         (shell "*bash*")))
+
+;; (setq explicit-shell-file-name "c:/msys64/usr/bin/bash.exe")
+;; (setq shell-file-name "bash")
+;; (setq explicit-bash.exe-args '("--noediting" "--login" "-i"))
+;; (setenv "SHELL" "c:/msys64/usr/bin/bash.exe")
+
+
