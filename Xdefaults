@@ -1,38 +1,4 @@
-
-!! .Xdefaults for Linux.  .Xresources for OS X.
-
-
-!Emacs.font: Hack:size=15
- 
-#if (WIDTH<=1024)
-!! Tiny screen
-#define EMACS_GEOM 82x26+0+0
-#define TERM_GEOM  82x26-0-0
-#define EMACS_FONT Droid Sans Mono:size=15:antialise=false
-#define TERM_FONT Droid Sans Mono:size=8:antialise=false
-#define STD_FIX_FONT -xos4-terminus-medium-r-*-*-*-120-100-100-*-*-iso8859-16
-#elif (WIDTH<=1500)
-!! Small Screen: 11 inch
-#define EMACS_GEOM 165x45+0+0
-#define TERM_GEOM  168x47+0+0
-#define EMACS_FONT Droid Sans Mono:size=12:antialise=false
-#define TERM_FONT Droid Sans Mono:size=8:antialise=false
-#define STD_FIX_FONT -xos4-terminus-medium-r-*-*-*-120-100-100-*-*-iso8859-16
-#elif (WIDTH<=2000)
-!! Medium screen: 15
-#define EMACS_GEOM 166x60+0+0
-#define TERM_GEOM  190x40-0-0
-#define EMACS_FONT Droid Sans Mono:size=15:antialise=false
-#define TERM_FONT Droid Sans Mono:size=8:antialise=false
-#define STD_FIX_FONT -xos4-terminus-medium-r-*-*-*-120-100-100-*-*-iso8859-16
-#else
-!! Big screen
-#define EMACS_GEOM 166x60+0+0
-#define TERM_GEOM  190x60-0-0
-#define EMACS_FONT Droid Sans Mono:size=15:antialise=false
-#define TERM_FONT Droid Sans Mono:size=8:antialise=false
-#define STD_FIX_FONT -xos4-terminus-bold-r-*-*-*-160-100-100-*-*-iso8859-16
-#endif
+!define STD_FIX_FONT 
 
 !Xft.dpi: 150
 Xft.antialias: true
@@ -42,7 +8,7 @@ Xft.rgba: rgb
 
 Kscd.geometry:          +0-1
 
-*font: STD_FIX_FONT
+*font: -xos4-terminus-medium-r-*-*-*-120-100-100-*-*-iso8859-16
 
 xpdf.initialZoom: page
 Xpdf.geometry:    1000x1200-0+0
@@ -67,29 +33,30 @@ olwm.ShowResizeGeometry:  true
 olwm.ShowMoveeometry:     true
 olwm.Use3DFrames:         false
 
-emacs.pane.menubar.*.fontList:  STD_FIX_FONT
-emacs*font:     	            EMACS_FONT
-emacs.geometry: 	            EMACS_GEOM
-Emacs.fontBackend:              xft
+emacs.pane.menubar.*.fontList:  -xos4-terminus-medium-r-*-*-*-120-100-100-*-*-iso8859-16
+emacs*font:     	            DejaVu Sans Mono:size=14:antialise=false
+emacs.geometry: 	            165x45+0+0
+emacs.fontBackend:              xft
 
-emacs24.pane.menubar.*.fontList: STD_FIX_FONT
-emacs24*font:     	             EMACS_FONT
-emacs24.geometry: 	             EMACS_GEOM
+emacs24.pane.menubar.*.fontList: -xos4-terminus-medium-r-*-*-*-120-100-100-*-*-iso8859-16
+emacs24*font:     	             DejaVu Sans Mono:size=14:antialise=false
+emacs24.geometry: 	             165x45+0+0
 emacs24.fontBackend:             xft
 
 xterm.*.background:       black
 xterm.*.cersorColor:      white
 xterm.*.cursesemul:       True
 xterm.*.renderFont:       True
-xterm.*.faceName:         TERM_FONT
+xterm.*.faceName:         DejaVu Sans Mono:size=10:antialise=false
 xterm.*.foreground:       white
 xterm.*.fullCursor:	      True
-xterm.*.geometry:         TERM_GEOM
+xterm.*.geometry:         168x47+0+0
 xterm.*.scrollBar:	      False
 xterm.*.scrollKey:        False
 xterm.*.scrollTtyOutput:  True
 xterm.*.titeInhibit:      true
 xterm.*.visualBell:       True
+xterm*termName:           xterm-256color
 
 rxvt.iso14755:           false
 rxvt.iso14755_52:        false
@@ -103,7 +70,7 @@ rxvt.*.cursorColor:      White
 rxvt.*.font:             10x20
 rxvt.*.foreground:       white
 rxvt.*.fullCursor:       True
-rxvt.*.geometry:         TERM_GEOM
+rxvt.*.geometry:         168x47+0+0
 rxvt.*.inheritPixmap:    False
 rxvt.*.scrollBar:        False
 rxvt.*.scrollColor:      DeepSkyBlue
@@ -122,10 +89,10 @@ rxvt-unicode.*.colorUL:          red
 rxvt-unicode.*.cursesemul:       True
 rxvt-unicode.*.cursorColor2:     White
 rxvt-unicode.*.cursorColor:      White
-rxvt-unicode.*.font:             xft:TERM_FONT
+rxvt-unicode.*.font:             xft:DejaVu Sans Mono:size=10:antialise=false
 rxvt-unicode.*.foreground:       white
 rxvt-unicode.*.fullCursor:       True
-rxvt-unicode.*.geometry:         TERM_GEOM
+rxvt-unicode.*.geometry:         168x47+0+0
 rxvt-unicode.*.inheritPixmap:    False
 rxvt-unicode.*.scrollBar:        False
 rxvt-unicode.*.scrollColor:      DeepSkyBlue
@@ -144,10 +111,10 @@ urxvt.*.colorUL:          red
 urxvt.*.cursesemul:       True
 urxvt.*.cursorColor2:     White
 urxvt.*.cursorColor:      White
-urxvt.*.font:             xft:TERM_FONT
+urxvt.*.font:             xft:DejaVu Sans Mono:size=10:antialise=false
 urxvt.*.foreground:       white
 urxvt.*.fullCursor:       True
-urxvt.*.geometry:         TERM_GEOM
+urxvt.*.geometry:         168x47+0+0
 urxvt.*.inheritPixmap:    False
 urxvt.*.scrollBar:        False
 urxvt.*.scrollColor:      DeepSkyBlue
@@ -174,4 +141,3 @@ x3270.inputColor: orange
 x3270.colorBackground: black
 x3270.selectBackgroung: dim gray
 Dtwm*VCLSalFrame*secondariesOnTop: True
-
