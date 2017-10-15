@@ -1754,12 +1754,12 @@ With prefix arg you can pick the statistics to compute."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: bookmarks setup...")
-(if (not MJR-pookie-mode)
-    (eval-after-load "bookmark"
-      '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: bookmarks!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-              (bookmark-maybe-load-default-file)
-              (setq bookmark-save-flag 0) ;; Save bookmark file after each change to the bookmark list.
-              ;; Make sure some bookmarks exist and point to the right thing.
+(eval-after-load "bookmark"
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: bookmarks!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+          (bookmark-maybe-load-default-file)
+          (setq bookmark-save-flag 0) ;; Save bookmark file after each change to the bookmark list.
+          ;; Make sure some bookmarks exist and point to the right thing.
+          (if (not MJR-pookie-mode)
               (dolist (bp (list (cons "templates-tex"      (concat MJR-home-cor "/texinputs/"))                 ;; Templates and input files: TeX/LaTeX
                                 (cons "templates-org"      (concat MJR-home-cor "/org-mode/"))                  ;; Templates and input files: org-mode
                                 (cons "lispy-prod"         (concat MJR-home-cor "/lispy/"))                     ;; *mjrcalc*: Production copy
@@ -1808,8 +1808,8 @@ With prefix arg you can pick the statistics to compute."
                       (let ((bmkl (list bmk-name (cons 'filename bmk-target-expanded))))
                         (if (assoc bmk-name bookmark-alist)
                             (setcdr (assoc bmk-name bookmark-alist) bmkl)
-                            (add-to-list 'bookmark-alist bmkl))))))))    
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: bookmarks: SKIP: Pookie mode"))
+                            (add-to-list 'bookmark-alist bmkl))))))
+              (MJR-quiet-message "MJR: INIT: PKG SETUP: bookmarks: SKIP: Pookie mode"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: iMaxima setup...")
@@ -2130,8 +2130,10 @@ With prefix arg you can pick the statistics to compute."
                                                         ("vignettes"        . ess-display-vignettes)))
                              (progn (ess-toggle-underscore 't)
                                     (ess-toggle-underscore nil))
-                             (if (file-exists-p "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe")
-                                 (setq inferior-R-program-name "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))
+                             (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
+                                                                           "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
+                               (if found-r
+                                   (setq inferior-R-program-name found-r)))
                              (add-to-list 'ess-style-alist
                                           '(mjr-ess-style
                                             (ess-indent-level . 2)                       ;; * (ess-indent-level . 4)
@@ -2303,4 +2305,6 @@ With prefix arg you can pick the statistics to compute."
 ;; (setq explicit-bash.exe-args '("--noediting" "--login" "-i"))
 ;; (setenv "SHELL" "c:/msys64/usr/bin/bash.exe")
 
+;; "C:\Program Files (x86)\Adobe\Acrobat Reader DC\Reader\AcroRd32.exe" /A "view=Fit&navpanes=0&toolbar=0&scrollbar=0&statusbar=0&messages=0" "Downloads\Cloud Artifacts\microLeaseTermAndTCO.pdf"
 
+;; evince -f ~/winHome/Downloads/Cloud\ Artifacts/microLeaseTermAndTCO.pdf
