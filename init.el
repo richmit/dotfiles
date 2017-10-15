@@ -138,9 +138,12 @@
   (let ((urln (user-real-login-name)))
     (cond ((find urln '("richmit"
                         "a0864027"
-                        "mjr") :test #'string=) (progn (set-if-auto-config 'MJR-uname       "richmit")))
-          ((string= urln "jrichli")             (progn (set-if-auto-config 'MJR-expert-mode nil)
-                                                       (set-if-auto-config 'MJR-pookie-mode 't))))
+                        "mjr")      :test #'string=) (progn (set-if-auto-config 'MJR-uname      "richmit")))
+          ((find urln '("jrichli"
+                        "swift")    :test #'string=) (progn (set-if-auto-config 'MJR-uname      "jrichli")
+                                                            (set-if-auto-config 'MJR-expert-mode nil)
+                                                            (set-if-auto-config 'MJR-pookie-mode 't))))
+    
     (set-if-auto-config 'MJR-uname       urln)
     (set-if-auto-config 'MJR-expert-mode 't)
     (set-if-auto-config 'MJR-pookie-mode nil))
@@ -220,7 +223,7 @@ so it gets picked up."
     (if (file-exists-p elisp-path)
         (let ((candidate-path-names (directory-files elisp-path 't (concat "^" package-name "[=-]"))))
           (if candidate-path-names
-              (let ((best-directory-path (find-if #'file-directory-p (sort candidate-path-names #'string-greaterp))))
+              (let ((best-directory-path (find-if #'file-directory-p (sort candidate-path-names (lambda (a b) (string-lessp b a))))))
                 (if best-directory-path
                     (file-name-as-directory best-directory-path))))))))
 
@@ -334,12 +337,13 @@ Prefix arg = 16: 5 vertical windows  (C-u C-u)"
 (defun MJR-open-cwd ()
   "Open buffer's CWD in a file browser (explorer on windows, dolphon or nautilus on Linux)"
   (interactive)
-  (if (string-equal MJR-platform "WINDOWS-MGW")
-      (w32-shell-execute "open" ".")      
-      (let ((fme (find-if #'executable-find (list "dolphin" "nautilus"))))
-            (if fme
-                (start-process "file-explorer" nil fme (expand-file-name "."))
-                (message "MJR: MJR-open-cwd: ERROR: Could not find file manager binary")))))
+  (cond ((string-equal MJR-platform "WINDOWS-MGW") (w32-shell-execute "open" "."))
+        ((string-equal MJR-platform "WINDOWS-CYG") (w32-shell-execute "open" "."))
+        ((string-equal MJR-platform "DARWIN")      (start-process-shell-command "open" "open" "open " "."))
+        ((string-equal MJR-platform "LINUX")       (let ((fme (find-if #'executable-find (list "dolphin" "nautilus"))))
+                                                     (if fme
+                                                         (start-process "file-explorer" nil fme (expand-file-name "."))
+                                                         (message "MJR: MJR-open-cwd: ERROR: Could not find file manager binary"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-unfill: DEFINED!")

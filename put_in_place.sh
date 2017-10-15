@@ -7,7 +7,7 @@ if [ -e README.md ] ; then
 
   echo ' '
   
-  for f in ~/.emacs ~/.Xdefaults ~/.emacs.d/mjr-dark-theme.el ~/.emacs.d/init.el; do
+  for f in ~/.emacs ~/.emacs.d/mjr-dark-theme.el ~/.emacs.d/init.el; do
     if [ -e "$f" ] ; then
       echo BACKUP "$f" to "$f$BAKEXT"
       cp "$f" "$f$BAKEXT"
