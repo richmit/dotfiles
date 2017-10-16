@@ -165,7 +165,8 @@
             (let ((p (concat MJR-home "/" candidate)))
               (if (file-exists-p p) (set-if-auto-config variable p)))))))
   ;; Set MJR-location
-  (set-if-auto-config 'MJR-location (cond ((or (file-exists-p "/apps/")
+  (set-if-auto-config 'MJR-location (cond ((or (string-equal user-real-login-name "a0864027")
+                                               (file-exists-p "/apps/")
                                                (file-exists-p "/apps/flames/data")
                                                (file-exists-p "/home/flames/data"))      "WORK:TI")
                                           ((or (file-exists-p "/home/Shared/core/")
@@ -602,96 +603,97 @@ The 'MJR' comments come in one of two forms:
 (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-thingy-lookeruper: DEFINED!")
 
 (defvar MJR-thingy-lookeruper-methods nil
-  "A list of lists that define various things that may be looked up.  Each sub list contains three values:
+  "A list defineing various things that may be looked up via MJR-thingy-lookeruper.  Each entry is a list containing three values:
    * name of lookup
-   * Regular expression to match aginst buffer major mode string
+   * Regular expression, or list of regular expressions, to match aginst buffer major mode string. Use nil to match any mode.
    * Function used to pull string from buffer.
      This should be as specific as possible.
-   * List of methods to use to do the lookups.  List contains strings with a shell command and/or lisp functions
-     The first word of a string is expected to be a shell command, and will only be considered if the file exists.
-     In strings, %U will be replaced with the URL hexified search string, and %Q will be replaced with the search string")
-;; Various de methods usefull at work
-(if (and (string-equal MJR-location "WORK:TI") (file-exists-p "/usr/local/bin/de"))
-    (progn
-      ;; Use 'de' to search the TI directory
-      (push (list "TI-LDAP-de"
-                  ".*"
-                  (lambda () (and (thing-at-point-looking-at ".+" 20) (match-string 0)))
-                  '("/usr/local/bin/de '%Q'"))
-            MJR-thingy-lookeruper-methods)
-      ;; Use 'de' to search for a TI Employee ID
-      (push (list "Employee-ID"
-                  ".*"
-                  (lambda () (and (thing-at-point-looking-at "\\(a[0-9]\\{7\\}\\|x[a-zA-Z0-9]\\{7\\}\\)" 10) (match-string 0)))
-                  '("/usr/local/bin/de '%Q'"))	
-            MJR-thingy-lookeruper-methods)))
-;; Various ldapsearch methods usefull at work
-(if (and (string-equal MJR-location "WORK:TI") (file-exists-p "/usr/bin/ldapsearch"))
-    (progn      
-      ;; Use ldapsearch to search For a TI Site code (SITE)
-      (push (list "SiteCode"
-                       ".*"
-                       (lambda () (and (thing-at-point-looking-at "\\b\\([A-Z][A-Z0-9]\\{3\\}\\)\\b" 20) (match-string 1)))
-                       '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=tiSiteCodes,ou=applications,o=ti,c=us' '(&(objectClass=tiSite)(siteName=%Q))'"))
-                 MJR-thingy-lookeruper-methods)
-      ;; Use ldapsearch to search For a TI Org3 (SBE)
-      (push (list "Org3"
-                  ".*"
-                  (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{3\\}\\)\\b" 20) (match-string 1)))
-                  '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=grpStructure,ou=data,ou=applications,o=ti,c=us' '(o=%Q)'"))
-            MJR-thingy-lookeruper-methods)
-      ;; Use ldapsearch to search For a TI Org6 (SBE-1)
-      (push (list "Org6"
-                  ".*"
-                  (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{6\\}\\)\\b" 20) (match-string 1)))
-                  '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=divStructure,ou=data,ou=applications,o=ti,c=us' '(o=%Q)'"))
-            MJR-thingy-lookeruper-methods)
-      ;; Use ldapsearch to search For a TI Org9 (SBE-2)
-      (push (list "Org9"
-                  ".*"
-                  (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{9\\}\\)\\b" 20) (match-string 1)))
-                  '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=deptStructure,ou=data,ou=applications,o=ti,c=us' '(o=%Q)'"))
-            MJR-thingy-lookeruper-methods)
-      ;; Use ldapsearch to search For a TI Cost Center (SBE-3)
-      (push (list "CostCenter"
-                  ".*"
-                  (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{8\\}\\)\\b" 20) (match-string 1)))
-                  '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=finStructure,ou=data,ou=applications,o=ti,c=US' '(o=%Q)'"))
-            MJR-thingy-lookeruper-methods)
-      ;; Use ldapsearch to search For a TI Division 003 Cost Center (SBE-3)
-      (push (list "CostCenterUS5"
-                  ".*"
-                  (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{5\\}\\)\\b" 20) (match-string 1)))
-                  '("/usr/bin/ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=finStructure,ou=data,ou=applications,o=ti,c=US' '(o=003%Q)'"))
-            MJR-thingy-lookeruper-methods)))
+   * List of methods to use to do the lookups.  List contains strings with a shell command and/or lisp functions.
+     For strings: The first word is expected to be a shell command, and will only be considered if the file exists or
+     an executable of that name may be found on the path.  %U will be replaced with the URL hexified search
+     string, and %Q will be replaced with the search string")
+;; Various methods useful at work
+(if (string-equal MJR-location "WORK:TI")
+    (progn 
+      (if (file-exists-p "/usr/local/bin/de")
+          ;; Use 'de' to search the TI directory
+          (push (list "TI-LDAP-de"
+                      nil
+                      (lambda () (and (thing-at-point-looking-at ".+" 20) (match-string 0)))
+                      '("/usr/local/bin/de '%Q'"))
+                MJR-thingy-lookeruper-methods))
+      (if (executable-find "ldapsearch")
+          (progn      
+            ;; Use ldapsearch to search For a TI Employee ID (IDNumber)
+            (push (list "Employee-ID"
+                        nil
+                        (lambda () (and (thing-at-point-looking-at "\\(a[0-9]\\{7\\}\\|x[a-zA-Z0-9]\\{7\\}\\)" 10) (match-string 0)))
+                        '("ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'o=ti,c=us' '(&(objectClass=person)(IDNumber=%Q))'"))
+                  MJR-thingy-lookeruper-methods)
+            ;; Use ldapsearch to search For a TI Site code (SITE)
+            (push (list "SiteCode"
+                        nil
+                        (lambda () (and (thing-at-point-looking-at "\\b\\([A-Z][A-Z0-9]\\{3\\}\\)\\b" 20) (match-string 1)))
+                        '("ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=tiSiteCodes,ou=applications,o=ti,c=us' '(&(objectClass=tiSite)(siteName=%Q))'"))
+                  MJR-thingy-lookeruper-methods)
+            ;; Use ldapsearch to search For a TI Org3 (SBE)
+            (push (list "Org3"
+                        nil
+                        (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{3\\}\\)\\b" 20) (match-string 1)))
+                        '("ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=grpStructure,ou=data,ou=applications,o=ti,c=us' '(o=%Q)'"))
+                  MJR-thingy-lookeruper-methods)
+            ;; Use ldapsearch to search For a TI Org6 (SBE-1)
+            (push (list "Org6"
+                        nil
+                        (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{6\\}\\)\\b" 20) (match-string 1)))
+                        '("ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=divStructure,ou=data,ou=applications,o=ti,c=us' '(o=%Q)'"))
+                  MJR-thingy-lookeruper-methods)
+            ;; Use ldapsearch to search For a TI Org9 (SBE-2)
+            (push (list "Org9"
+                        nil
+                        (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{9\\}\\)\\b" 20) (match-string 1)))
+                        '("ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=deptStructure,ou=data,ou=applications,o=ti,c=us' '(o=%Q)'"))
+                  MJR-thingy-lookeruper-methods)
+            ;; Use ldapsearch to search For a TI Cost Center (SBE-3)
+            (push (list "CostCenter"
+                        nil
+                        (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{8\\}\\)\\b" 20) (match-string 1)))
+                        '("ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=finStructure,ou=data,ou=applications,o=ti,c=US' '(o=%Q)'"))
+                  MJR-thingy-lookeruper-methods)
+            ;; Use ldapsearch to search For a TI Division 003 Cost Center (SBE-3)
+            (push (list "CostCenterUS5"
+                        nil
+                        (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]\\{5\\}\\)\\b" 20) (match-string 1)))
+                        '("ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'ou=finStructure,ou=data,ou=applications,o=ti,c=US' '(o=003%Q)'"))
+                  MJR-thingy-lookeruper-methods)))))
 ;; Lookup a local group ID (Numeric group ID)
 (push (list "gid"
-            ".*"
+            nil
             (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]+\\)\\b" 20) (match-string 1)))
-            '("/usr/bin/getent group %Q"))
+            '("getent group %Q"))
       MJR-thingy-lookeruper-methods)
 ;; Lookup a local group name
 (push (list  "gname"
-             ".*"
+             nil
              (lambda () (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1)))
-             '("/usr/bin/getent group %Q"))
+             '("getent group %Q"))
       MJR-thingy-lookeruper-methods)
 ;; Lookup a local user ID (Numeric user ID)
 (push (list "uid"
-            ".*"
+            nil
             (lambda () (and (thing-at-point-looking-at "\\b\\([0-9]+\\)\\b" 20) (match-string 1)))
-            '("/usr/bin/getent passwd %Q"))
+            '("getent passwd %Q"))
       MJR-thingy-lookeruper-methods)
 ;; Look up a user name (uname)
 (push (list "uname-long"
-            ".*"
+            nil
             (lambda () (let ((tmp (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1))))
                          (and tmp (find tmp (system-users) :test #'string-equal))))
-            '("/home/sysadmin/bin/pde %Q" "/usr/bin/finger -s %Q" "/usr/bin/getent passwd %Q"))
+            '("/home/sysadmin/bin/pde %Q" "getent passwd %Q"))
       MJR-thingy-lookeruper-methods)
 ;; Look up a word via dictionary.reference.com
 (push (list "dictionary"
-            ".*"
+            nil
             (lambda () (and (thing-at-point-looking-at "\\b\\([a-zA-Z'-]+\\)\\b" 20) (match-string 1)))
             (if (string-equal MJR-platform "WINDOWS-MGW")
                 (list (lambda (lstr) (browse-url (concat "http://dictionary.reference.com/browse/" (url-hexify-string lstr) "?s=t"))))    
@@ -699,7 +701,7 @@ The 'MJR' comments come in one of two forms:
       MJR-thingy-lookeruper-methods)
 ;; Look via google
 (push (list "google"
-            ".*"
+            nil
             (lambda () (and (thing-at-point-looking-at ".+" 20) (match-string 0)))
             (if (string-equal MJR-platform "WINDOWS-MGW")
                 (list (lambda (lstr) (browse-url (concat "http://google.com/#q=" (url-hexify-string string-to-lookup)))))
@@ -707,56 +709,77 @@ The 'MJR' comments come in one of two forms:
           MJR-thingy-lookeruper-methods)
 ;; Look up a user name (uname)
 (push (list "uname-short"
-            ".*"
+            nil
             (lambda () (let ((tmp (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1))))
                          (and tmp (find tmp (system-users) :test #'string-equal))))
-            '("/usr/bin/getent passwd %Q"))
+            '("getent passwd %Q"))
           MJR-thingy-lookeruper-methods)
 ;; Just toss it into a browser
 (push (list "URL"
-            ".*"
+            nil
             (lambda () (thing-at-point 'url))
             (list #'browse-url))
           MJR-thingy-lookeruper-methods)
 ;; Lookup host name
 (push (list "DNS"
-            ".*"
+            nil
             (lambda () (and (thing-at-point-looking-at "\\([.a-zA-Z0-9_-]+\\.\\(com\\|edu\\|org\\|gov\\)\\)\\b" 20) (match-string 1)))
-            '("/usr/bin/nslookup %Q" "c:/Windows/System32/nslookup.exe %Q" "/usr/bin/dig %Q"))
+            '("nslookup %Q"
+              "dig %Q"))
       MJR-thingy-lookeruper-methods)
 ;; Look up file data
 (push (list "fstat"
-            ".*"
-            (lambda () (let ((tmp (and (thing-at-point-looking-at ".+" 20) (match-string 0))))
+            nil
+            (lambda () (let ((tmp (ffap-guess-file-name-at-point)))
                          (and tmp (file-exists-p tmp) tmp)))
-            (list (if (string-equal MJR-platform "WINDOWS-MGW") "" (concat MJR-home-bin "/fstat.pl '%Q'")) "/usr/bin/stat '%Q'"))
+            (list (concat MJR-home-bin "/fstat.pl '%Q'")
+                  "stat '%Q'"))
       MJR-thingy-lookeruper-methods)
 ;; Lookup a lisp symbol in an interactive elisp session or an elisp source file
 (push (list "elisp-symbol"
-            "^\\(lisp-interaction-mode\\|emacs-lisp-mode\\)$"
+            (list "^lisp-interaction-mode$" "^emacs-lisp-mode$" )
             #'symbol-at-point
-            (list (lambda (thingy) (if (functionp thingy)
-                                       (describe-function thingy)
-                                       (if (boundp thingy)
-                                           (describe-variable thingy)
-                                           (message "MJR-thingy-lookeruper: ERROR: Could not lookup symbol: %s" thingy))))))
+            (list #'describe-symbol))
       MJR-thingy-lookeruper-methods)
 ;; Lookup a symbol in an R session or R source code file
 (push (list "r-symbol"
-            "^\\(inferior-ess-mode\\|ess-mode\\)$"
+            (list "^inferior-ess-mode$" "^ess-mode$")
             (lambda () (let ((tmp (symbol-at-point))) (and tmp (symbol-name tmp))))
             (list (lambda (thingy) (ess-help thingy))))
       MJR-thingy-lookeruper-methods)
-;; Lookup a symbol in an interactive SLIME REPL in the hyperspec
+;; Lookup a symbol in an interactive SLIME REPL or common lisp buffer in the hyperspec
 (push (list "clisp-symbol"
-            "^slime-repl-mode$"
-            (lambda () (let ((tmp (symbol-at-point))) (and tmp (symbol-name tmp))))
-            (list (lambda (thingy) (hyperspec-lookup thingy))))
+            (list "^slime-repl-mode$" "^lisp-mode$")
+            #'symbol-at-point
+            (list (lambda (thingy) (hyperspec-lookup (symbol-name thingy)))))
+      MJR-thingy-lookeruper-methods)
+;; Lookup a symbol via devdocs.io for ruby, perl, & python buffers
+(push (list "devdocs.io"
+            (list "^ruby-mode$" "^perl-mode$" "^python-mode$" "^c\\+\\+-mode$")
+            #'symbol-at-point
+            (list (lambda (thingy) (browse-url (concat "http://devdocs.io/#q="
+                                                       (cdr (assoc major-mode (list (cons 'ruby-mode   "ruby-2.4")
+                                                                                    (cons 'perl-mode   "perl-5.26")
+                                                                                    (cons 'c++-mode    "cpp")
+                                                                                    (cons 'python-mode "python-3.6"))))
+                                                       " "
+                                                       (url-hexify-string (symbol-name thingy)))))))
+      MJR-thingy-lookeruper-methods)
+;; Look up a word via dictionary.reference.com
+(push (list "man"
+            "^shell-mode$"
+            (lambda () (and (thing-at-point-looking-at "\\b\\([a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1)))
+            (list #'man))
       MJR-thingy-lookeruper-methods)
 
-(defvar MJR-thingy-lookeruper-methods-is-dirty 't
- "Variable used internally to decide if MJR-thingy-lookeruper-methods list needs to be cleaned up")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvar MJR-thingy-lookeruper-methods-clean nil
+  "An optimized version of MJR-thingy-lookeruper-methods.
 
+Created dynamically by MJR-thingy-lookeruper when MJR-thingy-lookeruper-methods-clean is NUL.
+Format is like MJR-thingy-lookeruper-methods, but the third element is a single action -- not a list.")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-thingy-lookeruper (string-to-lookup lookup-method)
   "Extensible looker upper of thingys at the point or in the active region (active region support requires transient-mark-mode).
 
@@ -771,18 +794,32 @@ gid, host name, dictionary word, and Google search."
    (let ((have-region    (and transient-mark-mode (region-active-p) (mark) (buffer-substring-no-properties (min (point) (mark)) (max (point) (mark)))))
          (search-strings nil)
          (search-methods nil))
-     (dolist (cur-method MJR-thingy-lookeruper-methods)
+     ;; Create MJR-thingy-lookeruper-methods-clean if it is empty
+     (if (null MJR-thingy-lookeruper-methods-clean)
+         (progn
+           (setq MJR-thingy-lookeruper-methods-clean
+                 (loop for (cur-method-name cur-method-mode-regex cur-method-tap cur-method-search-command-list) in MJR-thingy-lookeruper-methods
+                       for cur-method-search-command = (find-if (lambda (f) (if (stringp f)
+                                                                                (let ((command-to-find (first (split-string f))))
+                                                                                  (or (file-exists-p   command-to-find)
+                                                                                      (executable-find command-to-find)))
+                                                                                f))
+                                                                cur-method-search-command-list)
+                       when cur-method-search-command
+                       collect (list cur-method-name cur-method-mode-regex cur-method-tap cur-method-search-command)))
+           (message "MJR-thingy-lookeruper: Cleaning list (%d -> %d)"
+                    (length MJR-thingy-lookeruper-methods)
+                    (length MJR-thingy-lookeruper-methods-clean))))     
+     (dolist (cur-method MJR-thingy-lookeruper-methods-clean)
        (destructuring-bind (cur-method-name cur-method-mode-regex cur-method-tap cur-method-search-command-list) cur-method
-         (if (string-match cur-method-mode-regex (symbol-name major-mode))
+         (if (if (stringp cur-method-mode-regex)
+                 (string-match cur-method-mode-regex (symbol-name major-mode))
+                 (or (not cur-method-mode-regex)
+                     (find-if (lambda (x) (string-match x (symbol-name major-mode))) cur-method-mode-regex)))
              (let ((fnd-thingy (or have-region (and cur-method-tap (funcall cur-method-tap)))))
                (if fnd-thingy
-                   (let ((search-command (find-if (lambda (f) (if (stringp f)
-                                                                  (file-exists-p (first (split-string f)))
-                                                                  f))
-                                                  cur-method-search-command-list)))
-                     (if search-command
-                         (setq search-strings (append search-strings (list fnd-thingy))
-                               search-methods (append search-methods (list cur-method-name))))))))))
+                   (setq search-strings (append search-strings (list fnd-thingy))
+                         search-methods (append search-methods (list cur-method-name))))))))
      (cond ((= 1 (length search-strings)) (list (car search-strings) (car search-methods)))
            ((not (null search-strings))   (let ((i-lookup-method (if (require 'ido nil :noerror)
                                                                      (ido-completing-read "Lookup Method: " search-methods)
@@ -793,11 +830,7 @@ gid, host name, dictionary word, and Google search."
                                                   (error "MJR-thingy-lookeruper: Method is invalid")))))
            ('t                            (error "MJR-thingy-lookeruper: Could not find a string to lookup")))))
   (message "MJR-thingy-lookeruper: '%s' via '%s'" string-to-lookup lookup-method)
-  (let ((the-command (find-if (lambda (f) (if (stringp f)
-                                              (file-exists-p (first (split-string f)))
-                                              f))
-                              (nth 3 (find-if (lambda (c) (string-equal lookup-method (car c))) MJR-thingy-lookeruper-methods)))))
-(message "MJR-thingy-lookeruper Command: '%s'" the-command)    
+  (let ((the-command (nth 3 (find-if (lambda (c) (string-equal lookup-method (car c))) MJR-thingy-lookeruper-methods-clean))))
     (if the-command
         (if (stringp the-command)
             (let ((the-command-x the-command))
@@ -1671,9 +1704,9 @@ With prefix arg you can pick the statistics to compute."
 (MJR-quiet-message "MJR: INIT: PKG SETUP: auctex setup...")
 (progn (let ((core-atex-base (MJR-find-newest-core-package "auctex")))
          (if core-atex-base
-             (let ((core-atex-path (concat core-atex-base "/share/site-lisp/")))
-               (if (file-exists-p core-atex-path)
-                   (add-to-list 'load-path core-atex-path)))))
+             (progn
+               (MJR-quiet-message "MJR: INIT: PKG SETUP: auctex found... %s" core-atex-base)
+               (add-to-list 'load-path core-atex-base))))
        (load "auctex.el" t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
