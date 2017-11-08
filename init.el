@@ -59,7 +59,8 @@
 ;;     * Several paths are checked for Macaulay, Maxima, and common lisp.
 ;;
 ;; I keep common stuff in a "core" directory I take with me.  Some stuff this config looks for:
-;;     * MJR-home-cor/codeBits/  -- A directory of source code templates and headers used by MJR-PrependHeader
+;;     * MJR-home-cor/codeBits/  -- A directory of source code templates MJR-prepend-header
+;;     * MJR-home-cor/codeBits/cheaderSTD.txt  -- Used by MJR-fix-c-includes
 ;;     * MJR-home-cor/elisp      -- A directory containing various bits of elisp
 ;;        * MJR-home-cor/elisp/git/
 ;;        * MJR-home-cor/elisp/auctex/
@@ -168,10 +169,11 @@
   (set-if-auto-config 'MJR-location (cond ((or (string-equal user-real-login-name "a0864027")
                                                (file-exists-p "/apps/")
                                                (file-exists-p "/apps/flames/data")
-                                               (file-exists-p "/home/flames/data"))      "WORK:TI")
+                                               (file-exists-p "/home/flames/data")
+                                               (file-exists-p "/Users/a0864027"))        "WORK:TI")
                                           ((or (file-exists-p "/home/Shared/core/")
                                                (file-exists-p "/media/sf_richmit/core/")
-                                               (file-exists-p "/Users/Shared/core/"))    "HOME")
+                                               (file-exists-p "/Users/richmit"))         "HOME")
                                           ('t                                            "UNKNOWN")))
   ;; Set MJR-platform
   (set-if-auto-config 'MJR-platform (cond ((string-match "mingw-nt"  system-configuration) "WINDOWS-MGW")
@@ -190,6 +192,12 @@
 (MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home-dot:    %s" MJR-home-dot)
 (MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: LOCATION:        %s" MJR-location)
 (MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: PLATFORM:        %s" MJR-platform)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: STAGE: initializing package manager packages...")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(setq package-enable-at-startup nil)
+(package-initialize)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Require Section...")
@@ -472,56 +480,123 @@ The 'MJR' comments come in one of two forms:
           (insert (concat com-start com-1 com-end "\n"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(if (file-exists-p (concat MJR-home-cor "/codeBits/cheaderSTD.txt"))
+    (progn
+      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-fix-c-includes: DEFINED!")
+      (defun MJR-fix-c-includes ()
+        "Fixes C/C++ #include lines to match my standard header format.
+
+         In dired-mode operate on marked (or current) file(s); otherwise operate on current buffer.
+
+         The standard header format is defined by a header DB stored in core/codeBits/cheaderSTD.txt.
+
+         Returns number of files modified in dired-mode; otherwise the number of lines modified."
+        (interactive)
+        (let ((proc-buffer (lambda ()
+                             (let ((case-fold-search   nil)
+                                   (include-line-regex "^\\s-*#[iI][nN][cC][lL][uU][dD][eE]\\s-*\\([<\"]\\)\\([^>\"]+\\)\\([>\"]\\).*$") ;; Optional whitespace, "include" case insenstive, optional whitespace, < or " (1), non-empty string not containing < or " (2), < or " (3), optional stuff, end of line
+                                   (golden-includes    nil)
+                                   (change-count       0))
+                               ;; Read golden include data
+                               (with-temp-buffer
+                                 (insert-file-contents (concat MJR-home-cor "/codeBits/cheaderSTD.txt"))
+                                 (goto-char (point-min))
+                                 (while (re-search-forward include-line-regex nil t)
+                                   (let ((golden-include-line (match-string 0))
+                                         (golden-include-name (match-string 2)))
+                                     (push (cons golden-include-name golden-include-line) golden-includes))))
+                               ;; Process Buffer
+                               (goto-char (point-min))   
+                               (while (re-search-forward include-line-regex nil t)
+                                 (let ((include-line        (match-string 0))
+                                       (include-delim-start (match-string 1))
+                                       (include-name        (match-string 2))
+                                       (include-delim-end   (match-string 3)))
+                                   (if (or (and (string-equal include-delim-start "<")  (string-equal include-delim-end ">"))
+                                           (and (string-equal include-delim-start "\"") (string-equal include-delim-end "\"")))
+                                       (let ((golden-line (cdr (assoc include-name golden-includes))))
+                                         (if (and golden-line (not (string-equal golden-line include-line)))
+                                             (progn
+                                               (replace-match golden-line nil nil)
+                                               (incf change-count)))))))
+                               change-count))))
+          (if (string-equal (symbol-name major-mode) "dired-mode")
+              (let ((prefix-value (prefix-numeric-value current-prefix-arg))
+                    (file-change-count 0))
+                (mapc (lambda (file-name)
+                        (message "MJR-fix-c-includes: Processing file: %s" file-name)                  
+                        (with-temp-file file-name
+                          (insert-file-contents file-name)
+                          (if (and (< prefix-value 2) (< 0 (funcall proc-buffer)))
+                              (progn (incf file-change-count)
+                                     (copy-file file-name (make-backup-file-name file-name) 1)))))
+                      (dired-get-marked-files))
+                line-change-count)
+              (save-excursion
+                (funcall proc-buffer))))))
+    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-fix-c-includes: NOT defined!  We could not find the codeBits/cheaderSTD.txt file!"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-cor "/codeBits/"))
     (progn
-      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-PrependHeader: DEFINED!")
-      (defun MJR-PrependHeader (cat-str file-type)
+      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-prepend-header: DEFINED!")
+      (defun MJR-prepend-header (cat-str file-type)
         "Determine the buffer file type, and populate the buffer with an appropriate header and, if the buffer is empty, a template.
 
          Some text in the templates gets expanded: YYYY-MM-DD, YYYY, FILENAME, FILEPATHNAME
 
          Headers and templates are categorized into groups appropriate to different uses: MJR, TI, HWP."
-        (interactive (let ((cat-str-v '("MJR" "TI" "HWP")))
-                       (list (if (require 'ido nil :noerror)
-                                 (ido-completing-read "Category: " cat-str-v)
-                                 (read-string "Category: " "MJR" 'cat-str-v))
-                             (read-string "Type: " "AUTO"))))
+        (interactive
+         (let ((cat-str-v (mapcar #'file-name-nondirectory
+                                  (cl-remove-if (lambda (f) (or (not (file-directory-p f))
+                                                                (not (let ((case-fold-search nil))
+                                                                       (string-match "/[A-Z]+$" f)))))
+                                                (directory-files (concat MJR-home-cor "/codeBits/") 't)))))
+           (let ((da-cat (if (require 'ido nil :noerror)
+                             (ido-completing-read "Category: " cat-str-v nil 't nil nil (find "MJR" cat-str-v :test #'string-equal))
+                             (read-string "Category: " (or (find "MJR" cat-str-v :test #'string-equal) (first cat-str-v)) 'cat-str-v))))
+             (let ((file-type-v (append '("AUTO")
+                                       (mapcar #'file-name-extension (file-expand-wildcards (concat MJR-home-cor "/codeBits/" da-cat "/top.*"))))))
+               (let ((da-type (if (require 'ido nil :noerror)
+                                  (ido-completing-read "Type: " file-type-v nil 't nil nil "AUTO")
+                                  (read-string "Type: " "AUTO" 'file-type-v))))
+                 (list da-cat da-type))))))
         (let ((cur-file-name (buffer-file-name)))
-          (if cur-file-name
-              (let ((file-type (if (string= file-type "AUTO")
+          (let ((file-type (if (string= file-type "AUTO")
+                               (if cur-file-name
                                    (cdr (find-if (lambda (re) (string-match (car re) cur-file-name))
                                                  (list (cons "^makefile$" "make")
                                                        (cons "^Doxyfile$" "doxyfile")
-                                                       (cons ".*"         (file-name-extension cur-file-name)))))
-                                   file-type)))
-                (if file-type
-                    (let* ((src-path      (concat MJR-home-cor "/codeBits/"))
-                           (top-file-name (concat src-path "/" cat-str "/top."      file-type))
-                           (tpl-file-name (concat src-path "/" cat-str "/template." file-type)))
-                      (message top-file-name)
-                      (if (file-exists-p top-file-name)
-                          (if (file-readable-p top-file-name)
-                              (let ((top-string (with-temp-buffer
-                                                  (insert-file-contents top-file-name)
-                                                  (buffer-string)))
-                                    (do-template (and (= (point-min) (point-max)) (file-readable-p tpl-file-name))))
-                                (dolist (cur-rpl (list (cons "YYYY-MM-DD"   (MJR-date "%Y-%m-%d"))
-                                                       (cons "YYYY"         (MJR-date "%Y"))
-                                                       (cons "FILENAME"     (file-name-nondirectory cur-file-name))
-                                                       (cons "FILEPATHNAME" cur-file-name)))
-                                  (setq top-string (replace-regexp-in-string (car cur-rpl) (cdr cur-rpl) top-string 't 't)))
-                                (goto-char (point-min))
-                                (insert top-string)
-                                (if do-template
-                                    (if  (file-readable-p tpl-file-name)
-                                         (insert-file-contents tpl-file-name)
-                                         (MJR-quiet-message "MJR: MJR-PrependHeader: ERROR: Could not find TEMPLATE file for this file type")))
-                                (message "MJR: MJR-PrependHeader: INFO: Header prepended"))
-                              (message "MJR: MJR-PrependHeader: ERROR: Found TOP file, but can not read it"))
-                          (message "MJR: MJR-PrependHeader: ERROR: Could not find TOP file for this file type")))
-                    (message "MJR: MJR-PrependHeader: ERROR: Could not figure out file type")))
-              (message "MJR: MJR-PrependHeader: ERROR: Could not figure out the file name for buffer")))))
-    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-PrependHeader: NOT defined!  We could not find the codeBits directory!"))
+                                                       (cons "\..+$"      (file-name-extension cur-file-name))))))
+                               file-type)))
+            (if file-type
+                (let* ((src-path      (concat MJR-home-cor "/codeBits/"))
+                       (top-file-name (concat src-path "/" cat-str "/top."      file-type))
+                       (tpl-file-name (concat src-path "/" cat-str "/template." file-type)))
+                  (message top-file-name)
+                  (if (file-exists-p top-file-name)
+                      (if (file-readable-p top-file-name)
+                          (let ((top-string (with-temp-buffer
+                                              (insert-file-contents top-file-name)
+                                              (buffer-string)))
+                                (do-template (and (= (point-min) (point-max)) (file-readable-p tpl-file-name))))
+                            (dolist (cur-rpl (list (cons "YYYY-MM-DD"   (MJR-date "%Y-%m-%d"))
+                                                   (cons "YYYY"         (MJR-date "%Y"))
+                                                   (cons "FILENAME"     (if cur-file-name (file-name-nondirectory cur-file-name)))
+                                                   (cons "FILEPATHNAME" cur-file-name)))
+                              (if (cdr cur-rpl)
+                                  (setq top-string (replace-regexp-in-string (car cur-rpl) (cdr cur-rpl) top-string 't 't))))
+                            (goto-char (point-min))
+                            (insert top-string)
+                            (if do-template
+                                (if  (file-readable-p tpl-file-name)
+                                     (insert-file-contents tpl-file-name)
+                                     (MJR-quiet-message "MJR: MJR-prepend-header: ERROR: Could not find TEMPLATE file for this file type")))
+                            (message "MJR: MJR-prepend-header: INFO: Header prepended"))
+                          (message "MJR: MJR-prepend-header: ERROR: Found TOP file, but can not read it"))
+                      (message "MJR: MJR-prepend-header: ERROR: Could not find TOP file for this file type")))
+                (message "MJR: MJR-prepend-header: ERROR: Could not figure out file type"))))))
+    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-prepend-header: NOT defined!  We could not find the codeBits directory!"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-bin "/latexit.rb"))
@@ -981,6 +1056,10 @@ With prefix arg you can pick the statistics to compute."
 (if (version< emacs-version "23.1") (windmove-default-keybindings))
 ;; Global font lock mode
 (global-font-lock-mode 1)
+;; Do *not* automatically save abbrev files
+(setq save-abbrevs nil)
+;; Make buffer pull down menu list all buffers
+(setq buffers-menu-max-size nil)
 ;; Set the mark ring size
 (setq mark-ring-max 64)
 ;; Only split vertically
@@ -998,7 +1077,6 @@ With prefix arg you can pick the statistics to compute."
 (add-to-list 'auto-mode-alist '("\\.[fF]200[38]$"           . f90-mode))            ;; Use f90 mode with fortran 2003 and 2008
 (add-to-list 'auto-mode-alist '("\\.[fF]77$"                . fortran-mode))        ;; Use fortran mode for f77
 (add-to-list 'auto-mode-alist '("\\.[fF][oO][rR]$"          . fortran-mode))        ;; Use fortran mode for f77
-(add-to-list 'auto-mode-alist '("emacs--SS-X-X-X-X$"        . emacs-lisp-mode))     ;; My GNU Emacs dot file. :)
 (add-to-list 'auto-mode-alist '("^/tmp/pico\\.[0-9][0-9]*$" . mail-mode))           ;; alpine tmp files -- use mail-mode
 (add-to-list 'auto-mode-alist '("tmp/mutt/\\.*mutt"         . mail-mode))           ;; mutt tmp files -- use mail-mode
 (add-to-list 'auto-mode-alist '("\\.svg$"                   . image-mode-as-text))  ;; Prevent SVG rendering on load
@@ -1554,7 +1632,11 @@ With prefix arg you can pick the statistics to compute."
              ))
  ;; Need to set the R path on Windows...
  (if (string-equal MJR-platform "WINDOWS-MGW")
-     (setq org-babel-R-command "'/c/Program Files/Microsoft/R Open/R-3.4.0/bin/R.exe' --slave --no-save"))
+     (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
+                                                   "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
+                                                   "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
+       (setq org-babel-R-command found-r)))
+ 
  ;; Setup orgtbl in other modes
  (if nil
      (dolist (m '(emacs-lisp-mode-hook
@@ -2167,7 +2249,8 @@ With prefix arg you can pick the statistics to compute."
                                                         ("vignettes"        . ess-display-vignettes)))
                              (progn (ess-toggle-underscore 't)
                                     (ess-toggle-underscore nil))
-                             (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
+                             (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
+                                                                           "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
                                                                            "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
                                (if found-r
                                    (setq inferior-R-program-name found-r)))
