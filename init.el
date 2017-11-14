@@ -7,7 +7,7 @@
 ;; @std       Emacs Lisp unix windows osx
 ;; @copyright
 ;;  @parblock
-;;  Copyright (c) 1989-2015, Mitchell Jay Richling <http://www.mitchr.me> All rights reserved.
+;;  Copyright (c) 1989-2017, Mitchell Jay Richling <http://www.mitchr.me> All rights reserved.
 ;;
 ;;  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 ;;
@@ -178,6 +178,7 @@
   ;; Set MJR-platform
   (set-if-auto-config 'MJR-platform (cond ((string-match "mingw-nt"  system-configuration) "WINDOWS-MGW")
                                           ((string-match "mingw32"   system-configuration) "WINDOWS-MGW")
+                                          ((string-match "mingw64"   system-configuration) "WINDOWS-MGW")
                                           ((string-match "cygwin"    system-configuration) "WINDOWS-CYG")
                                           ((string-match "linux"     system-configuration) "LINUX")
                                           ((string-match "darwin"    system-configuration) "DARWIN")
@@ -237,6 +238,47 @@ so it gets picked up."
                     (file-name-as-directory best-directory-path))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MJR-dired-flag-latex-junk (&optional zap-extra-hard)
+  "Flag LaTeX temp files/directories for deletion.
+With prefix argument, also mark ps, html, dvi, and ps files."
+  (interactive "P")
+  (if (not (string-equal (symbol-name major-mode) "dired-mode"))
+      (message "MJR-dired-flag-latex-junk-files: Must be in dired-mode to use this function!")
+      (let* ((dired-marker-char dired-del-marker)
+             (ext-to-zap        (append '("snm" "vrb" "nav" "tex~" "bak" "tex.bak" "lg" "idv" "aux" "toc" "log" "out" "hlog")
+                                        (if zap-extra-hard '("html" "pdf" "dvi" "ps"))))
+             (re-to-zap         (mapcar (lambda (ex) (concat "^.+\\." ex "$")) ext-to-zap)))
+        (dired-mark-if
+         (let ((fn (dired-get-filename t t)))
+           (if (and fn (file-exists-p fn))
+               (if (looking-at-p dired-re-dir)
+                   (string-equal (file-name-nondirectory fn) "auto")
+                   (and (file-exists-p (concat (file-name-base fn) ".tex"))
+                        (find-if (lambda (re) (string-match re fn)) re-to-zap)))))
+         "LaTeX temp file"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MJR-dired-flag-junk ()
+  "Flag junk files for deletion -- see MJR-dired-flag-latex-junk-files too."
+  (interactive)
+  (if (not (string-equal (symbol-name major-mode) "dired-mode"))
+      (message "MJR-dired-flag-latex-junk-files: Must be in dired-mode to use this function!")
+      (let ((dired-marker-char dired-del-marker)
+            (re-to-zap         '("^NUL$"
+                                 "^.+~$"
+                                 "^.+\\.bak$"
+                                 "^.+\\.bak[0-9]$"
+                                 "^.+\\.xvpics$"
+                                 "^\\.#.+")))
+        (dired-mark-if
+         (let ((fn (dired-get-filename t t)))
+           (and fn
+                (file-exists-p fn)
+                (not (looking-at-p dired-re-dir))
+                (find-if (lambda (re) (string-match re fn)) re-to-zap)))
+         "Jumk file"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-eval-region (eval-how)
         "Evaluate the region as calc, elisp, or lisp (via slime), put the result in the kill ring.  With prefix arg, insert result into buffer.
 
@@ -266,7 +308,6 @@ Interaction with options:
                              (yank))
                       (message "MJR-eval-region: Value: %s" val))
                   (message "MJR-eval-region: Something went wrong")))
-
             (cond
              ((string-equal eval-how "calc")  (call-interactively #'quick-calc))
              ((string-equal eval-how "elisp") (call-interactively #'eval-expression))
@@ -417,6 +458,12 @@ When not called interactively, this function returns the time as a string.  The 
                (dstr      (replace-regexp-in-string "UTC" "Z" dstrtmp2 't 't)))
           (if (called-interactively-p 'interactive) (insert dstr) dstr))
         "")))
+
+;; Makes MJR-date work with delete-selection-mode
+(put 'MJR-date 'delete-selection
+     (lambda ()
+       (not (run-hook-with-args-until-success
+             'self-insert-uses-region-functions))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-quick-code-comment: DEFINED!")
@@ -2072,52 +2119,53 @@ With prefix arg you can pick the statistics to compute."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: ido...")
-(if (not MJR-pookie-mode)
-    (if (require 'ido nil :noerror)
-        (progn (setq ido-use-filename-at-point 'guess)
-               ;; Don't swtich to other directories if file not found
-               (setq ido-auto-merge-work-directories-length -1)
-               ;; Don't look for URLs at point
-               (setq ido-use-url-at-point nil)
-               ;; Set ignore directory list
-               (dolist (directory-re '("\\`RCS/" "\\`auto/" "\\`\\.git/"))
-                 (add-to-list 'ido-ignore-directories directory-re))
-               ;; I can't get ido-ignore-extensions to work
-               (dolist (ext '("fasl" "ufasl" "fas" "lib" "o" "dvi" "asd" "so"
-                              "aux" "bbl" "bcf" "blg" "log" "out" "run.xml"))
-                 (add-to-list 'ido-ignore-files (concat "\\." ext "$")))
-               ;; Set ignore file list
-               (dolist (file-re '("\\`RCS/" "\\`\\.git/" "\\`\\.DS_Store" "\\`a\\.out"))
-                 (add-to-list 'ido-ignore-files file-re))
-               ;; Set ignore buffer list
-               (dolist (buffer-re '("\\`\\*ESS\\*" "\\`\\*slime-events\\*" "\\`\\*Apropos\\*"
-                                    "\\`\\*Completions\\*" "\\`\\*vc\\*" "\\`\\log-edit-files\\*"
-                                    "\\`\\*slime-compilation\\*" "\\`\\*inferior-lisp\\*" "\\`\\*Warning\\*"))
-                 (add-to-list 'ido-ignore-buffers buffer-re))
-               ;; Order of matches based on extension -- for some reason this doesn't work
-               (setq ido-file-extensions-order '(".org" ".lisp" ".R" ".rb" ".tex" ".txt" ".hpp" ".cpp" ".h" ".c" ".asd" ".log"))
-               ;;(setq ido-ignore-extensions t)
-               ;;(add-to-list completion-ignored-extensions ".dvi")
-               (setq ido-enable-flex-matching t)
-               (setq ido-everywhere t)
-               (ido-mode 1)
-               ;; Wack the pathname at the end of the input string
-               (define-key ido-common-completion-map (kbd "<M-backspace>") (lambda ()
-                                                                             (interactive)
-                                                                             (goto-char (point-max))
-                                                                             (let ((sp (point))
-                                                                                   (ep (progn (search-backward "/") (forward-char) (point))))
-                                                                               (if (not (= sp ep))
-                                                                                   (kill-region sp ep)))))
-               (define-key ido-common-completion-map (kbd "<M-DEL>") (lambda ()
-                                                                       (interactive)
-                                                                       (goto-char (point-max))
-                                                                       (let ((sp (point))
-                                                                             (ep (progn (search-backward "/") (forward-char) (point))))
-                                                                         (if (not (= sp ep))
-                                                                             (kill-region sp ep))))))
-        (MJR-quiet-message "MJR: INIT: PKG SETUP: ido: WARNING: Could not load ido package"))
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: ido: SKIP: Pookie mode"))
+(if (require 'ido nil :noerror)
+    (progn (if MJR-pookie-mode                                                                   
+               (setq ido-use-filename-at-point nil)                                              ;; Disable ffap in pookie mode
+               (setq ido-use-filename-at-point 'guess))                                          ;; Eable ffap in non-pookie mode
+           (setq ido-auto-merge-work-directories-length -1)                                      ;; Don't swtich to other directories if file not found               
+           (setq ido-use-url-at-point nil)                                                       ;; Don't look for URLs at point
+           (dolist (directory-re '("\\`RCS/" "\\`auto/"                                          ;; Set ignore directory list
+                                   "\\`\\.git/"))
+             (add-to-list 'ido-ignore-directories directory-re))                   
+           (dolist (ext '("fasl" "ufasl" "fas" "lib" "o"                                         ;; File extentiosn to ignore -- ido-ignore-extensions no workie for me
+                          "dvi" "asd" "so"
+                          "aux" "bbl" "bcf" "blg" "log"
+                          "out" "run.xml"))
+             (add-to-list 'ido-ignore-files (concat "\\." ext "$")))
+           (dolist (file-re '("\\`RCS/" "\\`\\.git/"                                             ;; Some files to ignore
+                              "\\`\\.DS_Store" "\\`a\\.out"))
+             (add-to-list 'ido-ignore-files file-re))
+           (dolist (buffer-re '("\\`\\*ESS\\*" "\\`\\*slime-events\\*"                           ;; Some buffers to ignore
+                                "\\`\\*Apropos\\*"
+                                "\\`\\*Completions\\*" "\\`\\*vc\\*"
+                                "\\`\\log-edit-files\\*"
+                                "\\`\\*slime-compilation\\*"
+                                "\\`\\*inferior-lisp\\*"
+                                "\\`\\*Warning\\*"))
+             (add-to-list 'ido-ignore-buffers buffer-re))
+           (setq ido-file-extensions-order '(".org" ".lisp" ".R" ".rb" ".tex" ".txt"             ;; Order to list files only differing by extension
+                                             ".hpp" ".cpp" ".h" ".c" ".asd" ".log"))           
+           (setq ido-enable-flex-matching t)                                                     ;; List everything that matches input (not just at start)
+           (setq ido-everywhere t)                                                               ;; Turn it on everyplace
+           (if MJR-pookie-mode                                                                   
+               (ido-mode 'buffers)                                                               ;; pookie mode: Start ido mode for buffers only
+               (ido-mode 1))                                                                     ;; non-pookie mode: Start ido mode for buffers and files
+           (defun MJR-wack-back-to-slash ()                                                      ;; Zap everything backward till a "/" character
+             "Zap characters backward till a slash(/) character"
+               (interactive)
+             (goto-char (point-max))
+             (let ((sp (point))
+                   (ep (progn (search-backward "/")
+                              (forward-char)
+                              (point))))
+               (if (not (= sp ep))
+                   (kill-region sp ep))))
+           ;;(define-key (cdr ido-minor-mode-map-entry) [remap write-file] nil)                  ;; Zap ido for write-file
+           (define-key ido-common-completion-map (kbd "<M-backspace>") #'MJR-wack-back-to-slash) ;; Bind MJR-wack-back-to-slash
+           (define-key ido-common-completion-map (kbd "<M-DEL>")       #'MJR-wack-back-to-slash)
+           )
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: ido: WARNING: Could not load ido package"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: package...")
@@ -2294,6 +2342,14 @@ With prefix arg you can pick the statistics to compute."
                       (local-set-key (kbd "C-p") 'comint-previous-input)
                       (local-set-key (kbd "C-n") 'comint-next-input)))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: PKG SETUP: dos-w32")
+(eval-after-load "dos-w32"
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: dos-w32!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+          ;; I use a bash shell not DOS.  On DOS the value should be "NUL", but for base I need to reset it back to "/dev/null"
+          (setq null-device "/dev/null")))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Theme....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2373,58 +2429,22 @@ With prefix arg you can pick the statistics to compute."
 (MJR-quiet-message "MJR: INIT: STAGE: Emacs Customization System....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(Man-notify-method (quote pushy))
- '(LaTeX-item-indent 0)
- '(TeX-PDF-mode t)
- '(TeX-auto-save t)
- '(TeX-auto-untabify t)
- '(TeX-parse-self t)
- '(ansi-color-faces-vector
-   [default default default italic underline success warning error])
- '(ansi-color-names-vector
-   ["#212526" "#ff4b4b" "#b4fa70" "#fce94f" "#729fcf" "#e090d7" "#8cc4ff" "#eeeeec"])
- '(delete-selection-mode t)
- '(indicate-buffer-boundaries (quote right))
- '(indicate-empty-lines t)
- '(safe-local-variable-values (quote ((Syntax . ANSI-Common-LISP)))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(linum ((t (:inherit (shadow default) :foreground "deep pink")))))
+(customize-set-variable  'TeX-auto-untabify           t)
+(customize-set-variable  'delete-selection-mode       t)
+(customize-set-variable  'indicate-buffer-boundaries  'right)
+(customize-set-variable  'indicate-empty-lines        t)
+(customize-set-variable  'Man-notify-method           'pushy)
+(customize-set-variable  'LaTeX-item-indent           0)
+(customize-set-variable  'TeX-PDF-mode                t)
+(customize-set-variable  'TeX-auto-save               t)
+(customize-set-variable  'TeX-parse-self              t)
+(customize-set-variable  'ansi-color-faces-vector     [default default default italic underline success warning error])
+(customize-set-variable  'ansi-color-names-vector     ["#212526" "#ff4b4b" "#b4fa70" "#fce94f" "#729fcf" "#e090d7" "#8cc4ff" "#eeeeec"])
+(customize-set-variable  'safe-local-variable-values  '((Syntax . ANSI-Common-LISP)))
+
+(setq custom-file "~/.emacs.d/custom.el")
+(load custom-file)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Done Customizing Emacs....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
-;; (defun run-cmdexe ()
-;;       (interactive)
-;;       (let ((shell-file-name "cmd.exe"))
-;;             (shell "*cmd.exe*")))
-
-;; (defun run-gitbash ()
-;;       (interactive)
-;;       (let ((shell-file-name "C:\\Program Files\\Git\\bin\\bash.exe"))
-;;             (shell "*bash*")))
-
-;; (defun run-bash ()
-;;       (interactive)
-;;       (let ((shell-file-name "c:/msys64/usr/bin/bash.exe"))
-;;         (shell "*bash*")))
-
-;; (setq explicit-shell-file-name "c:/msys64/usr/bin/bash.exe")
-;; (setq shell-file-name "bash")
-;; (setq explicit-bash.exe-args '("--noediting" "--login" "-i"))
-;; (setenv "SHELL" "c:/msys64/usr/bin/bash.exe")
-
-;; "C:\Program Files (x86)\Adobe\Acrobat Reader DC\Reader\AcroRd32.exe" /A "view=Fit&navpanes=0&toolbar=0&scrollbar=0&statusbar=0&messages=0" "Downloads\Cloud Artifacts\microLeaseTermAndTCO.pdf"
-
-;; evince -f ~/winHome/Downloads/Cloud\ Artifacts/microLeaseTermAndTCO.pdf

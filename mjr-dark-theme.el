@@ -674,6 +674,8 @@
  '(font-latex-sectioning-4-face               ((t (:foreground "Gold" :bold t :weight bold))))
  '(font-latex-sectioning-5-face               ((t (:foreground "Gold" :bold t :weight bold))))
  '(font-latex-slide-title-face                ((t (                   :bold t :weight bold :inherit 'font-lock-type-face))))
+
+ '(linum                                      ((t (:inherit (shadow default) :foreground "deep pink"))))
 )
 
 (provide-theme 'mjr-dark)
