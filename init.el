@@ -42,7 +42,7 @@
 ;;       - /usr/bin/finger
 ;;       - /usr/bin/dig
 ;;       - /usr/bin/nslookup
-;;     * MJR-view-file-at-point
+;;     * MJR-view-file-or-url-at-point
 ;;       - MJR-home-bin/mjrpdfview
 ;;     * MJR-latexit
 ;;       - MJR-home-bin/latexit.rb
@@ -345,12 +345,14 @@ Interaction with options:
     (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-insert-from-web: NOT defined!  We could not find the curl command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun MJR-view-file-at-point ()
-  "If point is on a pdf file name, then load it up with mjrpdfview.  (open-as with prefix argument on Windows)"
+(defun MJR-view-file-or-url-at-point ()
+  "If point is on a file name or URL, then load with an external viewer/editor.  (open-as with prefix argument on Windows)"
   (interactive)
+  (if (and (not (string-equal MJR-platform "WINDOWS-MGW")) current-prefix-arg)
+      (error "MJR-view-file-or-url-at-point: Prefix argument only supported on native Windows Emacs"))
   (let ((fap (ffap-guess-file-name-at-point)))
-    (if fap 
-        (if (file-exists-p fap)
+    (if fap
+        (if (or (ffap-url-p fap) (file-exists-p fap))
             (cond ((string-equal MJR-platform "WINDOWS-MGW") (w32-shell-execute (if current-prefix-arg "openas" "open") fap))
                   ((string-equal MJR-platform "WINDOWS-CYG") (start-process-shell-command "start" "start" "start " fap))
                   ((string-equal MJR-platform "DARWIN")      (start-process-shell-command "open" "open" "open " fap))
@@ -361,9 +363,9 @@ Interaction with options:
                                                                                                                                  (cons "PNG"  "mjrimgview"))))
                                                                             "xdg-open")))
                                                                (start-process-shell-command ttr ttr (concat ttr " " fap))))
-                  ('t                                        (message "MJR: MJR-view-file-at-point: ERROR: Found a file, but patform is unknown")))
-            (message "MJR: MJR-view-file-at-point: ERROR: File a name at point, but it did not exist in the filesystem: %s" fap))
-        (message "MJR: MJR-view-file-at-point: ERROR: Cound not find a filename name at point!"))))
+                  ('t                                        (message "MJR: MJR-view-file-or-url-at-point: ERROR: Found a file, but patform is unknown")))
+            (message "MJR: MJR-view-file-or-url-at-point: ERROR: File a name at point, but it did not exist in the filesystem: %s" fap))
+        (message "MJR: MJR-view-file-or-url-at-point: ERROR: Cound not find a filename name at point!"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-follow-mode ()
@@ -746,6 +748,18 @@ The 'MJR' comments come in one of two forms:
                 MJR-thingy-lookeruper-methods))
       (if (executable-find "ldapsearch")
           (progn      
+            ;; Use ldapsearch to search For a TI Employee Name (cn and fullName)
+            (push (list "TI Person Name"
+                        nil
+                        (lambda () (and (thing-at-point-looking-at "\\([a-zA-Z][a-zA-Z]*[, ] *[a-zA-Z][a-zA-Z]*\\)" 10) (match-string 0)))
+                        '("ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'o=ti,c=us' '(&(objectClass=person)(|(cn~=%Q)(fullName~=%Q)))'"))
+                  MJR-thingy-lookeruper-methods)
+            ;; Use ldapsearch to search For a TI Employee E-Mail (mailAlias, emailDestination, and mail)
+            (push (list "TI E-Mail"
+                        nil
+                        (lambda () (and (thing-at-point-looking-at "\\([[:graph:]][[:graph:]]*@[[:graph:]]*ti\\.com\\)" 30) (match-string 0)))
+                        '("ldapsearch -z 0 -x -h ldap.directory.ti.com -b 'o=ti,c=us' '(&(objectClass=person)(|(mailAlias=%Q)(emailDestination=%Q)(mail=%Q)))'"))
+                  MJR-thingy-lookeruper-methods)
             ;; Use ldapsearch to search For a TI Employee ID (IDNumber)
             (push (list "Employee-ID"
                         nil
@@ -1194,33 +1208,33 @@ With prefix arg you can pick the statistics to compute."
           ;; Use firefox
           (setq browse-url-browser-function
                 (list (cons "hyperspec"                  #'eww-browse-url)
-		      (cons "/SS/exampleCode/ruby"       #'eww-browse-url)
-		      (cons "/SS/exampleCode/AUPG"       #'eww-browse-url)
-		      (cons "/SS/exampleCode/blas"       #'eww-browse-url)
-		      (cons "/SS/exampleCode/boost"      #'eww-browse-url)
-		      (cons "/SS/exampleCode/cfitsio"    #'eww-browse-url)
-		      (cons "/SS/exampleCode/cpp"        #'eww-browse-url)
-		      (cons "/SS/exampleCode/curl"       #'eww-browse-url)
-		      (cons "/SS/exampleCode/DB"         #'eww-browse-url)
-		      (cons "/SS/exampleCode/F77"        #'eww-browse-url)
-		      (cons "/SS/exampleCode/fltk"       #'eww-browse-url)
-		      (cons "/SS/exampleCode/Fortran"    #'eww-browse-url)
-		      (cons "/SS/exampleCode/glut"       #'eww-browse-url)
-		      (cons "/SS/exampleCode/GMP"        #'eww-browse-url)
-		      (cons "/SS/exampleCode/GSL"        #'eww-browse-url)
-		      (cons "/SS/exampleCode/HDF5"       #'eww-browse-url)
-		      (cons "/SS/exampleCode/mpi"        #'eww-browse-url)
-		      (cons "/SS/exampleCode/NetCDF"     #'eww-browse-url)
-		      (cons "/SS/exampleCode/openssl"    #'eww-browse-url)
-		      (cons "/SS/exampleCode/postscript" #'eww-browse-url)
-		      (cons "/SS/exampleCode/R"          #'eww-browse-url)
-		      (cons "/SS/exampleCode/random"     #'eww-browse-url)
-		      (cons "/SS/exampleCode/ruby"       #'eww-browse-url)
-		      (cons "/SS/exampleCode/sqlite"     #'eww-browse-url)
-		      (cons "/SS/exampleCode/vtk"        #'eww-browse-url)                  
-		      (cons "."                          (if (string-match MJR-platform "WINDOWS-MGW")
-                                                     #'browse-url-default-browser
-                                                     #'browse-url-firefox))))
+                      (cons "/SS/exampleCode/ruby"       #'eww-browse-url)
+                      (cons "/SS/exampleCode/AUPG"       #'eww-browse-url)
+                      (cons "/SS/exampleCode/blas"       #'eww-browse-url)
+                      (cons "/SS/exampleCode/boost"      #'eww-browse-url)
+                      (cons "/SS/exampleCode/cfitsio"    #'eww-browse-url)
+                      (cons "/SS/exampleCode/cpp"        #'eww-browse-url)
+                      (cons "/SS/exampleCode/curl"       #'eww-browse-url)
+                      (cons "/SS/exampleCode/DB"         #'eww-browse-url)
+                      (cons "/SS/exampleCode/F77"        #'eww-browse-url)
+                      (cons "/SS/exampleCode/fltk"       #'eww-browse-url)
+                      (cons "/SS/exampleCode/Fortran"    #'eww-browse-url)
+                      (cons "/SS/exampleCode/glut"       #'eww-browse-url)
+                      (cons "/SS/exampleCode/GMP"        #'eww-browse-url)
+                      (cons "/SS/exampleCode/GSL"        #'eww-browse-url)
+                      (cons "/SS/exampleCode/HDF5"       #'eww-browse-url)
+                      (cons "/SS/exampleCode/mpi"        #'eww-browse-url)
+                      (cons "/SS/exampleCode/NetCDF"     #'eww-browse-url)
+                      (cons "/SS/exampleCode/openssl"    #'eww-browse-url)
+                      (cons "/SS/exampleCode/postscript" #'eww-browse-url)
+                      (cons "/SS/exampleCode/R"          #'eww-browse-url)
+                      (cons "/SS/exampleCode/random"     #'eww-browse-url)
+                      (cons "/SS/exampleCode/ruby"       #'eww-browse-url)
+                      (cons "/SS/exampleCode/sqlite"     #'eww-browse-url)
+                      (cons "/SS/exampleCode/vtk"        #'eww-browse-url)                  
+                      (cons "."                          (if (string-match MJR-platform "WINDOWS-MGW")
+                                                             #'browse-url-default-browser
+                                                             #'browse-url-firefox))))
           ;; Put stuff in a new window
           (setq browse-url-new-window-flag 't)
           ;; Really don't put things in new tabs!!
@@ -1518,6 +1532,55 @@ With prefix arg you can pick the statistics to compute."
     (delete-file fileM)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MJR-rotate-replace (rotate-list &optional match-what)
+  "Parallel search and replace strings (name inspired by ROTATEF function).
+ROTATE-LIST is a list of strings.  String n'th is replaced with n+1'th, with the final string being replaced by the first.
+MATCH-WHAT argument determines what to match (word, symbol, and string).  NIL means string.
+When run interactively MATCH-WHAT is set via the prefix arg: 1=>query, 4=>word, 16=>symbol, 32=>string
+Operation is limited to region if a region is active."
+  (interactive (list (let ((c 1)
+                           (s nil))
+                       (while (let ((in-str (read-string (format "Enter string or [enter] -- String(%d) : " c))))
+                                (incf c)
+                                (if (not (string-equal "" in-str))
+                                    (push in-str s))))
+                       (if (> (length s) 1)
+                           s
+                           (error "MJR-rotate-replace: Must provide at least two strings!!")))
+                     (let* ((npfx (prefix-numeric-value current-prefix-arg)))
+                       (cond ((>= npfx  32) "string")
+                             ((>= npfx  16) "symbol")
+                             ((>= npfx   4) "word")
+                             ((>= npfx   1) (if (require 'ido nil :noerror)
+                                                (ido-completing-read "Match Type: " '("word" "symbol" "string") nil 't)
+                                                (completing-read "Match Type (word, symbol, or string): " '("word" "symbol" "string") nil 't "word")))))))
+
+  (if (not (listp rotate-list))
+      (error "MJR-rotate-replace: rotate-list argument must be a list!!!")
+      (if (some (lambda (x) (not (stringp x))) rotate-list)
+          (error "MJR-rotate-replace: rotate-list argument must be a list of strings!!!")
+          (let ((rl-len (length rotate-list)))
+            (if (< rl-len 2)
+                (error "MJR-rotate-replace: rotate-list argument must contain at least two strings!!!")
+                (let ((paren (if match-what
+                                 (if (not (stringp match-what))
+                                     (error "MJR-rotate-replace: match-what argument must be NIL or a string!!!")
+                                     (let ((n (position match-what '("word" "symbol" "string") :test #'string-equal)))
+                                       (if (not n)
+                                           (error "MJR-rotate-replace: match-what argument is a string, but not valid (word, symbol, string)!!!")
+                                           (elt (list 'words 'symbols nil) n)))))))
+                  (save-excursion
+                    (let* ((reg-min  (if (and (mark) (or (null transient-mark-mode) (region-active-p)))
+                                         (min (point) (mark))
+                                         (point)))
+                           (reg-max  (if (and (mark) (or (null transient-mark-mode) (region-active-p)))
+                                         (max (point) (mark))
+                                         (point-max))))
+                      (goto-char reg-min)
+                      (while (re-search-forward (regexp-opt rotate-list paren) reg-max 't)
+                        (replace-match (elt rotate-list (mod (1+ (position (match-string-no-properties 0) rotate-list :test #'string-equal)) rl-len))))))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: mail-mode setup...")
 (eval-after-load "sendmail"
   '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: mail-mode!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
@@ -1578,132 +1641,133 @@ With prefix arg you can pick the statistics to compute."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: org-mode setup...")
-(progn
- (let ((org-path (MJR-find-newest-core-package "org")))
-   (if org-path
-       (add-to-list 'load-path (concat org-path "lisp"))))
+(if 't ;; The big if is here so we can disable org-mode configuration before we do an ELPA package install of org...
+    (progn
+      (let ((org-path (MJR-find-newest-core-package "org")))
+        (if org-path
+            (add-to-list 'load-path (concat org-path "lisp"))))
 
- (require 'org-install)
- ;;(require 'org-habit)
+      (require 'org-install)
+      ;;(require 'org-habit)
 
- (setq org-replace-disputed-keys t)  ;; Don't override S-<arrow> keys
+      (setq org-replace-disputed-keys t)  ;; Don't override S-<arrow> keys
 
- (if (not (require 'htmlize nil :noerror))
-     (MJR-quiet-message "MJR: INIT: PKG SETUP: htmlize: WARNING: Could not load package in init."))
+      (if (not (require 'htmlize nil :noerror))
+          (MJR-quiet-message "MJR: INIT: PKG SETUP: htmlize: WARNING: Could not load package in init."))
 
- (org-babel-do-load-languages
-  'org-babel-load-languages
-  '((awk         . t)
-    (C           . t)
-    (css         . t)
-    (dot         . t)
-    (emacs-lisp  . t)
-    (eval        . t)
-    (fortran     . t)
-    (gnuplot     . t)
-    (java        . t)
-    (js          . t)
-    (latex       . t)
-    (lisp        . t)
-    (matlab      . t)
-    (maxima      . t)
-    (octave      . t)
-    (perl        . t)
-    (python      . t)
-    (R           . t)
-    (ruby        . t)
-    (sh          . t)
-    (sql         . t)
-    (sqlite      . t)))
+      (org-babel-do-load-languages
+       'org-babel-load-languages
+       '((awk         . t)
+         (C           . t)
+         (css         . t)
+         (dot         . t)
+         (emacs-lisp  . t)
+         (eval        . t)
+         (fortran     . t)
+         (gnuplot     . t)
+         (java        . t)
+         (js          . t)
+         (latex       . t)
+         (lisp        . t)
+         (matlab      . t)
+         (maxima      . t)
+         (octave      . t)
+         (perl        . t)
+         (python      . t)
+         (R           . t)
+         (ruby        . t)
+         (sh          . t)
+         (sql         . t)
+         (sqlite      . t)))
 
- ;; (require 'ob)
- ;; (require 'ob-awk)
- ;; (require 'ob-C)
- ;; (require 'ob-css)
- ;; (require 'ob-dot)
- ;; (require 'ob-emacs-lisp)
- ;; (require 'ob-eval)
- ;; (require 'ob-fortran)
- ;; (require 'ob-gnuplot)
- ;; (require 'ob-java)
- ;; (require 'ob-js)
- ;; (require 'ob-latex)
- ;; (require 'ob-lisp)
- ;; (require 'ob-matlab)
- ;; (require 'ob-maxima)
- ;; (require 'ob-octave)
- ;; (require 'ob-perl)
- ;; (require 'ob-python)
- ;; (require 'ob-R)
- ;; (require 'ob-ruby)
- ;; (require 'ob-sh)
- ;; (require 'ob-sql)
- ;; (require 'ob-sqlite)
+      ;; (require 'ob)
+      ;; (require 'ob-awk)
+      ;; (require 'ob-C)
+      ;; (require 'ob-css)
+      ;; (require 'ob-dot)
+      ;; (require 'ob-emacs-lisp)
+      ;; (require 'ob-eval)
+      ;; (require 'ob-fortran)
+      ;; (require 'ob-gnuplot)
+      ;; (require 'ob-java)
+      ;; (require 'ob-js)
+      ;; (require 'ob-latex)
+      ;; (require 'ob-lisp)
+      ;; (require 'ob-matlab)
+      ;; (require 'ob-maxima)
+      ;; (require 'ob-octave)
+      ;; (require 'ob-perl)
+      ;; (require 'ob-python)
+      ;; (require 'ob-R)
+      ;; (require 'ob-ruby)
+      ;; (require 'ob-sh)
+      ;; (require 'ob-sql)
+      ;; (require 'ob-sqlite)
 
- (defun MJR-org-babel-execute-src-block ()
-   "Wrap org-babel-execute-src-block"
-   (interactive)
-   (let ((org-confirm-babel-evaluate nil))
-     (funcall-interactively #'org-babel-execute-src-block)))
+      (defun MJR-org-babel-execute-src-block ()
+        "Wrap org-babel-execute-src-block"
+        (interactive)
+        (let ((org-confirm-babel-evaluate nil))
+          (funcall-interactively #'org-babel-execute-src-block)))
 
- (defun MJR-org-babel-execute-subtree ()
-   "Wrap org-babel-execute-subtree"
-   (interactive)
-   (let ((org-confirm-babel-evaluate nil))
-     (funcall-interactively #'org-babel-execute-subtree)))
+      (defun MJR-org-babel-execute-subtree ()
+        "Wrap org-babel-execute-subtree"
+        (interactive)
+        (let ((org-confirm-babel-evaluate nil))
+          (funcall-interactively #'org-babel-execute-subtree)))
 
- (setq org-html-head-extra "<style>pre {background-color: #0f0f0f; color: #f0f0f0;}</style>") ;; Dark background for code.
- (setq org-html-postamble "Created with %c")
- (setq org-src-fontify-natively t)                         ;; Prety colors
- (setq org-src-tab-acts-natively t)                        ;; tab as in source mode
- (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))  ;; Make sure *.org files use org-mode
- (setq org-log-done 'time)                                 ;; Log timestamps on done TODO items
- (setq org-indent-mode t)                                  ;; Indent stuff
- (setq org-startup-folded nil)                             ;; Start with un-folded view
- (setq org-export-with-sub-superscripts nil)               ;; "_" and "^" are not special
- (setq org-confirm-babel-evaluate 't)                      ;; Ask about evals
- (setq org-export-babel-evaluate nil)                      ;; Do NOT eval on export
- (setq org-log-into-drawer "LOGBOOK")                      ;; Put TODO changes and notes in LOGBOOK drawer
- (setq org-agenda-files
-       (let* ((tdp (concat MJR-home "/TODO/")))
-         (if (file-directory-p tdp)
-             (directory-files tdp 't "\.org$"))))          ;; My generic TODO file
- (setq org-babel-min-lines-for-block-output 0)             ;; Always put babel results in blocks
- (add-hook 'org-mode-hook                                  ;; Get my favorite keys back
-           (lambda ()
-             (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: org-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-             (turn-on-font-lock)
-             (local-set-key  (kbd "C-c C-v C-s")    'MJR-org-babel-execute-subtree)   ;; use "C-c C-v s" to eval with confirmation prompts
-             (local-set-key  (kbd "C-c C-v C-e")    'MJR-org-babel-execute-src-block) ;; use "C-c C-v e" to eval with confirmation prompts
-             (local-set-key  (kbd "C-c a")          'org-agenda)
-             ))
- ;; Need to set the R path on Windows...
- (if (string-equal MJR-platform "WINDOWS-MGW")
-     (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
-                                                   "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
-                                                   "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
-       (setq org-babel-R-command found-r)))
- 
- ;; Setup orgtbl in other modes
- (if nil
-     (dolist (m '(emacs-lisp-mode-hook
-                  fortran-mode-hook
-                  perl-mode-hook
-                  cperl-mode-hook
-                  lisp-mode-hook
-                  ess-mode-hook
-                  sh-mode-hook
-                  c++-mode-hook
-                  java-mode-hook
-                  js-mode-hook
-                  python-mode-hook
-                  ruby-mode-hook
-                  text-mode-hook
-                  html-mode-hook
-                  c-mode-hook))
-       (add-hook m (lambda ()
-                     (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: +orgtbl-mode" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                     (turn-on-orgtbl))))))
+      (setq org-html-head-extra "<style>pre {background-color: #0f0f0f; color: #f0f0f0;}</style>") ;; Dark background for code.
+      (setq org-html-postamble "Created with %c")
+      (setq org-src-fontify-natively t)                         ;; Prety colors
+      (setq org-src-tab-acts-natively t)                        ;; tab as in source mode
+      (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))  ;; Make sure *.org files use org-mode
+      (setq org-log-done 'time)                                 ;; Log timestamps on done TODO items
+      (setq org-indent-mode t)                                  ;; Indent stuff
+      (setq org-startup-folded nil)                             ;; Start with un-folded view
+      (setq org-export-with-sub-superscripts nil)               ;; "_" and "^" are not special
+      (setq org-confirm-babel-evaluate 't)                      ;; Ask about evals
+      (setq org-export-babel-evaluate nil)                      ;; Do NOT eval on export
+      (setq org-log-into-drawer "LOGBOOK")                      ;; Put TODO changes and notes in LOGBOOK drawer
+      (setq org-agenda-files
+            (let* ((tdp (concat MJR-home "/TODO/")))
+              (if (file-directory-p tdp)
+                  (directory-files tdp 't "\.org$"))))          ;; My generic TODO file
+      (setq org-babel-min-lines-for-block-output 0)             ;; Always put babel results in blocks
+      (add-hook 'org-mode-hook                                  ;; Get my favorite keys back
+                (lambda ()
+                  (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: org-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                  (turn-on-font-lock)
+                  (local-set-key  (kbd "C-c C-v C-s")    'MJR-org-babel-execute-subtree)   ;; use "C-c C-v s" to eval with confirmation prompts
+                  (local-set-key  (kbd "C-c C-v C-e")    'MJR-org-babel-execute-src-block) ;; use "C-c C-v e" to eval with confirmation prompts
+                  (local-set-key  (kbd "C-c a")          'org-agenda)
+                  ))
+      ;; Need to set the R path on Windows...
+      (if (string-equal MJR-platform "WINDOWS-MGW")
+          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
+                                                        "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
+                                                        "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
+            (setq org-babel-R-command found-r)))
+      
+      ;; Setup orgtbl in other modes
+      (if nil
+          (dolist (m '(emacs-lisp-mode-hook
+                       fortran-mode-hook
+                       perl-mode-hook
+                       cperl-mode-hook
+                       lisp-mode-hook
+                       ess-mode-hook
+                       sh-mode-hook
+                       c++-mode-hook
+                       java-mode-hook
+                       js-mode-hook
+                       python-mode-hook
+                       ruby-mode-hook
+                       text-mode-hook
+                       html-mode-hook
+                       c-mode-hook))
+            (add-hook m (lambda ()
+                          (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: +orgtbl-mode" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                          (turn-on-orgtbl)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: calender (solar stuff)")
@@ -1747,7 +1811,17 @@ With prefix arg you can pick the statistics to compute."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: tramp-mode setup...")
 (if (require 'tramp nil :noerror)
-    (progn (setq tramp-default-user   (if (string-equal MJR-location "WORK:TI") (user-real-login-name) MJR-uname)
+    (progn (if (and (string-equal MJR-location "WORK:TI")
+                    (string-equal MJR-platform "WINDOWS-MGW"))
+               (customize-set-variable 'tramp-password-prompt-regexp
+                                       (concat "^.*"
+                                               (regexp-opt'("password:"
+                                                            "Password:"
+                                                            "Enter the passcode from your smartphone or hard token"
+                                                            )
+                                                          t)
+                                               ".*$")))
+           (setq tramp-default-user   (if (string-equal MJR-location "WORK:TI") (user-real-login-name) MJR-uname)
                  tramp-terminal-type  "dumb"
                  tramp-default-method "sshx")
            ;;                                         host                    user         method
@@ -2006,9 +2080,9 @@ With prefix arg you can pick the statistics to compute."
                      `(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: maplev!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                              (setq maplev-include-path (list ,maplev-base-path ,(concat maplev-base-path "/maple")))
                              (setq maplev-copyright-owner "Mitch J. Richling")
-                             (setq maplev-default-release "2016")
-                             (setq maplev-release "2016")
-                             (setq maplev-executable-alist '(("2016" . ("c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/cmaple.exe"
+                             (setq maplev-default-release "2017")
+                             (setq maplev-release "2017")
+                             (setq maplev-executable-alist '(("2017" . ("c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/cmaple.exe"
                                                                         nil
                                                                         "c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/mint.exe"))))
                              (setq maplev-mint-query nil)
@@ -2059,6 +2133,7 @@ With prefix arg you can pick the statistics to compute."
                                       (list "/usr/share/doc/hyperspec/"
                                             "/Users/Shared/Doc2/software-dev/LISP/hyperspec/"
                                             "/media/sf_D_DRIVE/Doc2/software-dev/LISP/hyperspec/"
+                                            "d:/Doc2/software-dev/LISP/hyperspec/Body"
                                             "/opt/local/share/doc/lisp/HyperSpec-7-0/HyperSpec/"))))
             (if spec-to-use
                 (setq common-lisp-hyperspec-root (concat "file:" spec-to-use))
@@ -2416,7 +2491,7 @@ With prefix arg you can pick the statistics to compute."
 (global-set-key (kbd "C-c l")     'MJR-thingy-lookeruper)
 (global-set-key (kbd "C-c s")     (lambda () (interactive) (eshell (or (and current-prefix-arg (prefix-numeric-value current-prefix-arg)) 0))))
 (global-set-key (kbd "C-c t")     'MJR-term)
-(global-set-key (kbd "C-c v")     'MJR-view-file-at-point)
+(global-set-key (kbd "C-c v")     'MJR-view-file-or-url-at-point)
 ;global-set-key (kbd "C-c m")     'MJR-expand        ;;; Set in mode code: yasnippet
 ;global-set-key (kbd "C-c s")     'slime-selector    ;;; Set in mode code: slime
 ;global-set-key (kbd "C-c h")     'MJR-hs-toggle     ;;; Set in mode code: hs-minor-mode
@@ -2443,8 +2518,20 @@ With prefix arg you can pick the statistics to compute."
 (customize-set-variable  'safe-local-variable-values  '((Syntax . ANSI-Common-LISP)))
 
 (setq custom-file "~/.emacs.d/custom.el")
-(load custom-file)
+(if (file-exists-p custom-file)
+    (load custom-file))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Done Customizing Emacs....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; (defun MJR-rev-line ()
+;;  "Reverse the characters on the current line"
+;;   (interactive)
+;;   (beginning-of-line)
+;;   (insert (reverse (delete-and-extract-region (line-beginning-position)
+;;                                               (line-end-position)))))
+
+
+;;  '(package-selected-packages (quote (org auctex magit htmlize)))
