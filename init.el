@@ -63,14 +63,9 @@
 ;;     * MJR-home-cor/codeBits/cheaderSTD.txt  -- Used by MJR-fix-c-includes
 ;;     * MJR-home-cor/elisp      -- A directory containing various bits of elisp
 ;;        * MJR-home-cor/elisp/git/
-;;        * MJR-home-cor/elisp/auctex/
-;;        * MJR-home-cor/elisp/pov-mode/
 ;;        * MJR-home-cor/elisp/gap/
 ;;        * MJR-home-cor/elisp/octave/
 ;;        * MJR-home-cor/elisp/processing/
-;;        * MJR-home-cor/elisp/slime/
-;;        * MJR-home-cor/elisp/ess/
-;;        * MJR-home-cor/elisp/yasnippet
 ;;     * MJR-home-cor/texinputs   Used for bookmarks  (TeX input files and templtes)
 ;;     * MJR-home-cor/org-mode    Used for bookmarks  (org-mode input files and templtes)
 ;;     * MJR-home-cor/lispy       Used for bookmarks  (production copy of *mjrcalc*)
@@ -278,6 +273,34 @@ With prefix argument, also mark ps, html, dvi, and ps files."
                 (find-if (lambda (re) (string-match re fn)) re-to-zap)))
          "Jumk file"))))
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MJR-ascii-table ()
+  "Pop up a buffer with an ASCI table in it"
+  (interactive)
+  (let ((ascii-buffer (generate-new-buffer "*ascii-table*")))
+    (with-current-buffer ascii-buffer
+      (set-buffer-file-coding-system 'utf-8-unix)
+      (erase-buffer)
+      (loop with cs = '("NUL" "SOH" "STX" "ETX" "EOT" "NEQ" "ACK" "BEL" "BS "
+                        "HT " "LF " "VT " "NP " "CR " "SO " "SI " "DLE" "DC1"
+                        "DC2" "DC3" "DC4" "NAK" "SYN" "ETB" "CAN" "EM " "SUB"
+                        "ESC" "FS " "GS " "RS " "US " "SP")
+            with i = 0
+            for r from 0 upto (1- 16)
+            do (loop for c from 0 upto (1- 8)
+                     do (setf i (+ r (* c 16)))
+                     do (insert (format (if (< c 6) " |%3d %2x " " |%4d %2x ") i i))
+                     do (cond ((< i 33)  (insert (elt cs i)))
+                              ((> i 126) (insert "DEL"))
+                              ((= c 2)   (progn (insert-char i) (insert " ")))
+                              ((> c 6)   (progn (insert-char i) (insert "  ")))
+                              ('t        (insert-char i))))
+            do (insert " | \n"))
+      (goto-char (point-min)))
+    (switch-to-buffer ascii-buffer)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-eval-region (eval-how)
         "Evaluate the region as calc, elisp, or lisp (via slime), put the result in the kill ring.  With prefix arg, insert result into buffer.
@@ -345,6 +368,16 @@ Interaction with options:
     (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-insert-from-web: NOT defined!  We could not find the curl command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MJR-describe-region-or-char ()
+  "Provide info about region or char under point.
+
+Intended to be bound to M-=.  When mark=point or no mar, call describe-char.  Otherwise call count-words-region."
+  (interactive)
+  (if (and (mark) (not (= (point) (mark))))
+      (call-interactively #'count-words-region)
+      (call-interactively #'describe-char)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-view-file-or-url-at-point ()
   "If point is on a file name or URL, then load with an external viewer/editor.  (open-as with prefix argument on Windows)"
   (interactive)
@@ -369,16 +402,11 @@ Interaction with options:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-follow-mode ()
-  "Close all open windows in the current frame; create 2, 3, or 4 vertical windows with current buffer; and activate follow-mode.
+  "Close all open windows in the current frame; create vertical windows with current buffer; and activate follow-mode.
 
-Prefix arg =  1: 2 vertical windows  (default)
-Prefix arg =  4: 3 vertical windows  (C-u)
-Prefix arg = 16: 5 vertical windows  (C-u C-u)"
+The number of verical windows will be min(8, max(2, prefix-arg))"
   (interactive)
-  (let* ((npfx  (prefix-numeric-value current-prefix-arg))
-         (cols  (cond ((>= npfx  16) 4)
-                      ((>= npfx   4) 3)
-                      ((>= npfx   1) 2))))
+  (let* ((cols  (min 8 (max 2 (prefix-numeric-value current-prefix-arg)))))
     (delete-other-windows)
     (dotimes (i (1- cols))
       (split-window-horizontally))
@@ -1092,10 +1120,6 @@ With prefix arg you can pick the statistics to compute."
 (show-paren-mode 1)
 ;; Put file size in mode line
 (size-indication-mode)
-;; Put column number in mode line
-(column-number-mode t)
-;; Put line number in mode line
-(line-number-mode t)
 ;; Title the frame so the window manager can find Emacs correctly
 (setq frame-title-format "GNU Emacs: %b")
 ;; Turn off menus, tool bars, and scroll bars
@@ -1153,7 +1177,52 @@ With prefix arg you can pick the statistics to compute."
           (progn (setq shell-file-name          found-shell)
                  (setq explicit-shell-file-name found-shell)
                  (setq explicit-bash.exe-args '("--noediting" "--login" "-i"))))))
-
+;; In *scratch* buffers, print everything
+(setq eval-expression-print-length nil
+      eval-expression-print-level  nil)
+;; Set the modeline
+(setq-default eol-mnemonic-unix "/LF ")
+(setq-default eol-mnemonic-dos  "/CRLF ")
+(setq-default eol-mnemonic-mac  "/CR ")
+(setq-default mode-line-format  '("%e "
+                                  mode-line-mule-info
+                                  mode-line-client
+                                  mode-line-modified
+                                  mode-line-remote
+                                  mode-line-frame-identification
+                                  mode-line-buffer-identification
+                                  "   "
+                                  "%p/%I L:%l C:%c"                                     ; Normally done with 'mode-line-position'
+                                  " P:" (:eval (format "%d" (point)))
+                                  ;" M:" (:eval (format "%d" (mark)))
+                                  " "
+                                  (:eval (propertize (if (boundp 'vc-mode)                 ; VC backend
+                                                         (if vc-mode
+                                                             (if (and vc-mode
+                                                                      (string-match "^ *Git:" vc-mode)
+                                                                      (or (dolist (x minor-mode-list)
+                                                                            (if (string-match "magit" (symbol-name x))
+                                                                                (return 't)))
+                                                                          (require 'magit nil 't)))
+                                                                 (propertize "Git"
+                                                                             'help-echo
+                                                                             "mouse-1: magit-status"
+                                                                             'local-map
+                                                                             '(keymap
+                                                                               (mode-line keymap
+                                                                                          (mouse-1 . magit-status)))
+                                                                             'mouse-face 'mode-line-highlight)
+                                                                 vc-mode)
+                                                             (propertize "!VC" 'help-echo "No version control detected" ))
+                                                         (propertize "VC?" 'help-echo "ERROR: Unable to detect version control"))
+                                                     'face '(:foreground "blue" :weight bold)))
+                                  "  "
+                                  mode-line-modes                                           ; Modes
+                                  "   "
+                                  (:eval (format-time-string "%Y-%m-%d %H:%M"               ; Date/time the way I like it
+                                                             (current-time)))
+                                  " "))
+              
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Built-in Mode Config...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1410,13 +1479,13 @@ With prefix arg you can pick the statistics to compute."
 (eval-after-load "em-term"
   '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: em-term!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
           (mapc (lambda (i) (add-to-list 'eshell-visual-commands i)) '("s" "sn" "sscreen" "sscreen.sh"
-                                                                         "t" "tn" "td" "tnn" "stmux" "stmux.sh"
-                                                                         "hexDump.rb" "hexDump"
-                                                                         "byteAnalysis.rb" "byteAnalysis"
-                                                                         "getSecret.sh" "getSecret"
-                                                                         "hlflt.rb" "hlflt"
-                                                                         "logTail.rb" "logTail"
-                                                                         ))
+                                                                       "t" "tn" "td" "tnn" "stmux" "stmux.sh"
+                                                                       "hexDump.rb" "hexDump"
+                                                                       "byteAnalysis.rb" "byteAnalysis"
+                                                                       "getSecret.sh" "getSecret"
+                                                                       "hlflt.rb" "hlflt"
+                                                                       "logTail.rb" "logTail"
+                                                                       ))
           (mapcar (lambda (i) (add-to-list 'eshell-visual-subcommands i)) '(("git" "help" "log" "l" "ll" "diff" "show")))))
 (eval-after-load "esh-mode"
   '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: esh-mode!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
@@ -1905,25 +1974,14 @@ Operation is limited to region if a region is active."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: auctex setup...")
-(progn (let ((core-atex-base (MJR-find-newest-core-package "auctex")))
-         (if core-atex-base
-             (progn
-               (MJR-quiet-message "MJR: INIT: PKG SETUP: auctex found... %s" core-atex-base)
-               (add-to-list 'load-path core-atex-base))))
-       (load "auctex.el" t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: PoV-mode setup...")
-(if (not (string-equal MJR-platform "WINDOWS-MGW"))
-    (let ((pov-path (MJR-find-newest-core-package "pov-mode")))
-      (if pov-path
-          (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: pov-mode found... %s" pov-path)
-                 (add-to-list 'load-path pov-path)
-                 (autoload 'pov-mode "pov-mode" "PoVray scene file mode" t)
-                 (add-to-list 'auto-mode-alist '("\\.pov\\'" . pov-mode))
-                 (add-to-list 'auto-mode-alist '("\\.inc\\'" . pov-mode)))
-          (MJR-quiet-message "MJR: INIT: PKG SETUP: PoV-mode not found...")))
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: PoV-mode: WARNING: Setup suppressed on windows"))
+(if (locate-library "auctex")
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: auctex found in non-core...")
+    (let ((core-atex-base (MJR-find-newest-core-package "auctex")))
+      (if core-atex-base
+          (progn
+            (MJR-quiet-message "MJR: INIT: PKG SETUP: auctex found in core... %s" core-atex-base)
+            (add-to-list 'load-path core-atex-base)
+            (load "auctex.el" t)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: latex-mode setup...")
@@ -2080,11 +2138,17 @@ Operation is limited to region if a region is active."
                      `(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: maplev!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
                              (setq maplev-include-path (list ,maplev-base-path ,(concat maplev-base-path "/maple")))
                              (setq maplev-copyright-owner "Mitch J. Richling")
-                             (setq maplev-default-release "2017")
-                             (setq maplev-release "2017")
-                             (setq maplev-executable-alist '(("2017" . ("c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/cmaple.exe"
+                             (setq maplev-default-release "2018")
+                             (setq maplev-release "2018")
+                             (setq maplev-executable-alist '(("2018" . ("c:/Program Files/Maple 2018/bin.X86_64_WINDOWS/cmaple.exe"
+                                                                        nil
+                                                                        "c:/Program Files/Maple 2018/bin.X86_64_WINDOWS/mint.exe"))
+                                                             ("2017" . ("c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/cmaple.exe"
                                                                         nil
                                                                         "c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/mint.exe"))))
+
+
+                             
                              (setq maplev-mint-query nil)
                              (setq maplev-description-quote-char ?\"))))))))
 
@@ -2142,55 +2206,60 @@ Operation is limited to region if a region is active."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME...")
-(let ((slime-path (MJR-find-newest-core-package "slime")))
-  (if slime-path
-      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: slime found... %s" slime-path)
-             (add-to-list 'load-path slime-path)
-             (require 'slime-autoloads)
-             (eval-after-load "slime"
-               '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: slime!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                       (let ((slime-lisp-bin (find-if #'file-exists-p
-                                                      (list "/usr/local/big/sbcl/1.3.11/bin/sbcl"
-                                                            "/usr/local/big/sbcl/1.3.4/bin/sbcl"
-                                                            "/usr/local/big/sbcl/1.2.14/bin/sbcl"
-                                                            "/usr/local/big/sbcl/1.2.11/bin/sbcl"
-                                                            "/home/richmit/s/linux/local/bin/sbcl"
-                                                            "/usr/local/bin/sbcl-run"
-                                                            "/usr/local/bin/sbcl"
-                                                            "/opt/local/bin/sbcl"
-                                                            "/usr/bin/sbcl"
-                                                            "C:\\PROGRA~1\\STEELB~1\\1.3.12\\SBCL.EXE"
-                                                            "C:\\PROGRA~1\\STEELB~1\\1.0.51\\SBCL.EXE"))))
-                         (if slime-lisp-bin
-                             (setq inferior-lisp-program slime-lisp-bin)
-                             (MJR-quiet-message "MJR INIT: WARNING: No working lisp found"))
-
-                         (slime-setup '(slime-repl)) ; Setup (use SLIME-REPL)
-                         (setq lisp-simple-loop-indentation  1
-                               lisp-loop-keyword-indentation 6
-                               lisp-loop-forms-indentation   6)
-                         (setq slime-net-coding-system 'utf-8-unix)
-                         (add-hook 'lisp-mode-hook
-                                   (lambda ()
-                                     (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: lisp-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                                     (setq slime-net-coding-system 'utf-8-unix)))
-                         ;; REPL bindings
-                         (define-key slime-repl-mode-map "\M-." 'slime-edit-definition-with-etags)           ;; A somewhat slimey version of find-tag
-                         (define-key slime-repl-mode-map "\M-," 'tags-loop-continue)                         ;; Use  tags contineu for M,
-                         (define-key slime-repl-mode-map (kbd "ESC ESC .") 'slime-edit-definition)           ;; Put SLIMEy M. on MM.
-                         (define-key slime-repl-mode-map (kbd "ESC ESC ,") 'slime-pop-find-definition-stack) ;; Put SLIMEy M, on MM,
-                         (define-key slime-repl-mode-map (kbd "C-p") 'slime-repl-backward-input)             ;; Previous history on C-p
-                         (define-key slime-repl-mode-map (kbd "C-n") 'slime-repl-forward-input)              ;; Previous history on C-p
-                         ;; CODE bindings
-                         (define-key slime-mode-map "\M-." 'slime-edit-definition-with-etags)           ;; A somewhat slimey version of find-tag
-                         (define-key slime-mode-map "\M-," 'tags-loop-continue)                         ;; Use  tags contineu for M,
-                         (define-key slime-mode-map (kbd "ESC ESC .") 'slime-edit-definition)           ;; Put SLIMEy M. on MM.
-                         (define-key slime-mode-map (kbd "ESC ESC ,") 'slime-pop-find-definition-stack) ;; Put SLIMEy M, on MM,
-                         ;;(define-key slime-mode-map "\M-." 'find-tag)
-                         ;; M-x slime-who-calls       Show function callers.
-                         ;; M-x slime-who-references  Show references to global variable.
-                         (global-set-key (kbd "C-c s")   'slime-selector)))))  ; Switch back to slime REPL
-      (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME Not Found...")))
+(if (require 'slime-autoloads nil :noerror)
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: slime found in non-core...")
+    (let ((slime-path (MJR-find-newest-core-package "slime")))
+      (if slime-path
+          (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: slime found in core... %s" slime-path)
+                 (add-to-list 'load-path slime-path)
+                 (require 'slime-autoloads)))))
+(if (require 'slime-autoloads nil :noerror)
+    (eval-after-load "slime"
+      '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: slime!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+              (let ((slime-lisp-bin (find-if #'file-exists-p
+                                             (list "/usr/local/big/sbcl/1.3.11/bin/sbcl"
+                                                   "/usr/local/big/sbcl/1.3.4/bin/sbcl"
+                                                   "/usr/local/big/sbcl/1.2.14/bin/sbcl"
+                                                   "/usr/local/big/sbcl/1.2.11/bin/sbcl"
+                                                   "/home/richmit/s/linux/local/bin/sbcl"
+                                                   "/usr/local/bin/sbcl-run"
+                                                   "/usr/local/bin/sbcl"
+                                                   "/opt/local/bin/sbcl"
+                                                   "/usr/bin/sbcl"
+                                                   "C:\\PROGRA~1\\STEELB~1\\1.3.18\\SBCL.EXE"
+                                                   "C:\\PROGRA~1\\STEELB~1\\1.3.12\\SBCL.EXE"
+                                                   "C:\\PROGRA~1\\STEELB~1\\1.0.51\\SBCL.EXE"))))
+                (if slime-lisp-bin
+                    (setq inferior-lisp-program slime-lisp-bin)
+                    (MJR-quiet-message "MJR INIT: WARNING: No working lisp found"))
+                (slime-setup '(slime-repl)) ; Setup (use SLIME-REPL)
+                (setq lisp-simple-loop-indentation  1
+                      lisp-loop-keyword-indentation 6
+                      lisp-loop-forms-indentation   6)
+                (setq slime-net-coding-system 'utf-8-unix)
+                (add-hook 'lisp-mode-hook
+                          (lambda ()
+                            (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: lisp-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                            (setq slime-net-coding-system 'utf-8-unix)))
+                ;; REPL bindings
+                (define-key slime-repl-mode-map "\M-."            'slime-edit-definition-with-etags) ;; A somewhat slimey version of find-tag
+                (define-key slime-repl-mode-map "\M-,"            'tags-loop-continue)               ;; Use  tags contineu for M,
+                (define-key slime-repl-mode-map (kbd "ESC ESC .") 'slime-edit-definition)            ;; Put SLIMEy M. on MM.
+                (define-key slime-repl-mode-map (kbd "ESC ESC ,") 'slime-pop-find-definition-stack)  ;; Put SLIMEy M, on MM,
+                (define-key slime-repl-mode-map (kbd "C-p")       'slime-repl-backward-input)        ;; Previous history on C-p
+                (define-key slime-repl-mode-map (kbd "C-n")       'slime-repl-forward-input)         ;; Previous history on C-p
+                (define-key slime-repl-mode-map (kbd "C-c s")     'slime-selector)                   ;; Slime Selector
+                ;; CODE bindings                                                                     
+                (define-key slime-mode-map "\M-."                 'slime-edit-definition-with-etags) ;; A somewhat slimey version of find-tag
+                (define-key slime-mode-map "\M-,"                 'tags-loop-continue)               ;; Use  tags contineu for M,
+                (define-key slime-mode-map (kbd "ESC ESC .")      'slime-edit-definition)            ;; Put SLIMEy M. on MM.
+                (define-key slime-mode-map (kbd "ESC ESC ,")      'slime-pop-find-definition-stack)  ;; Put SLIMEy M, on MM,
+                (define-key slime-mode-map (kbd "C-c s")          'slime-selector)                   ;; Slime Selector
+                ;;(define-key slime-mode-map "\M-." 'find-tag)
+                ;; M-x slime-who-calls       Show function callers.
+                ;; M-x slime-who-references  Show references to global variable.
+)))
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME Not Found..."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: ido...")
@@ -2271,18 +2340,6 @@ Operation is limited to region if a region is active."
              (require 'sunrise-x-tree))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: inf-ruby")
-(let ((inf-ruby-path (MJR-find-newest-core-package "inf-ruby")))
-  (if inf-ruby-path
-      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: inf-ruby found... %s" inf-ruby-path)
-             (eval-after-load "inf-ruby"
-               '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: inf-ruby!" (MJR-date "%Y-%m-%d_%H:%M:%S"))))
-             (add-to-list 'load-path inf-ruby-path)
-             (autoload 'inf-ruby-minor-mode "inf-ruby" "Run an inferior Ruby process" t)
-             (autoload 'inf-ruby            "inf-ruby" "Run an inferior Ruby process" t)
-             (add-hook 'ruby-mode-hook 'inf-ruby-minor-mode))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: hs-minor-mode")
 (progn
   (eval-after-load "hideshow"
@@ -2306,106 +2363,90 @@ Operation is limited to region if a region is active."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet")
-(let ((yasnippet-code-path (MJR-find-newest-core-package "yasnippet")))
-  (if yasnippet-code-path
-      (let ((yasnippet-snip-path (remove-if-not #'file-exists-p (list (concat MJR-home-cor   "/yasnippets")
-                                                                      (concat MJR-home-cor   "/yasnippet")))))
-        (MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet found... %s" yasnippet-code-path)
-        (if yasnippet-snip-path
-            (progn
-              (MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet snippet directory found... %s" yasnippet-snip-path)
-              (eval-after-load "yasnippet"
-                '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: yasnippet!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                        (setq yas-snippet-dirs yasnippet-snip-path)
-                        ;; Nix the default tab binding..
-                        (define-key yas-minor-mode-map (kbd "<tab>") nil)
-                        (define-key yas-minor-mode-map (kbd "TAB")   nil)
-                        ;; Add in-key-map binding for my own expand
-                        (define-key yas-minor-mode-map (kbd "ESC ESC TAB") 'MJR-expand)
-                        ;; Nix yas-fallback behaviour so C-c m won't complain when expand fails
-                        (setq yas-fallback-behavior nil)
-                        ;; How we get some global templates
-                        (add-hook 'yas-minor-mode-hook
-                                  (lambda ()
-                                    (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: yas-minor-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                                    (yas-activate-extra-mode 'fundamental-mode)))
-                        ;; Make yas work everyplace
-                        (yas-global-mode 1)
-                        ;; Call yas-expand or yas-insert-snippet depending on if region is active
-                        (defun MJR-expand ()
-                          "If no region is active, use yas-expand to attempt yasnippet expantion; otherwise call yas-insert-snippet."
-                          (interactive)
-                          ;; (if (not (find 'fundamental-mode minor-mode-list))
-                          ;;     (yas-activate-extra-mode 'fundamental-mode))
-                          (if (and transient-mark-mode (region-active-p))
-                              (funcall-interactively #'yas-insert-snippet)
-                              (if (not (funcall-interactively #'yas-expand))
-                                  (funcall-interactively #'yas-insert-snippet))))
-                        (global-set-key (kbd "C-c m") 'MJR-expand)))
-              (add-to-list 'load-path yasnippet-code-path)
-              (require 'yasnippet))))))
+(let ((yasnippet-snip-path (remove-if-not #'file-exists-p (list (concat MJR-home-cor   "/yasnippets")
+                                                                (concat MJR-home-cor   "/yasnippet")))))
+  (if yasnippet-snip-path
+      (progn
+        (MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet snippet directory found... %s" yasnippet-snip-path)
+        (eval-after-load "yasnippet"
+          '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: yasnippet!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                  (setq yas-snippet-dirs yasnippet-snip-path)
+                  ;; Nix the default tab binding..
+                  (define-key yas-minor-mode-map (kbd "<tab>") nil)
+                  (define-key yas-minor-mode-map (kbd "TAB")   nil)
+                  ;; Add in-key-map binding for my own expand
+                  (define-key yas-minor-mode-map (kbd "ESC ESC TAB") 'MJR-expand)
+                  ;; Nix yas-fallback behaviour so C-c m won't complain when expand fails
+                  (setq yas-fallback-behavior nil)
+                  ;; How we get some global templates
+                  (add-hook 'yas-minor-mode-hook
+                            (lambda ()
+                              (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: yas-minor-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                              (yas-activate-extra-mode 'fundamental-mode)))
+                  ;; Make yas work everyplace
+                  (yas-global-mode 1)
+                  ;; Call yas-expand or yas-insert-snippet depending on if region is active
+                  (defun MJR-expand ()
+                    "If no region is active, use yas-expand to attempt yasnippet expantion; otherwise call yas-insert-snippet."
+                    (interactive)
+                    ;; (if (not (find 'fundamental-mode minor-mode-list))
+                    ;;     (yas-activate-extra-mode 'fundamental-mode))
+                    (if (and transient-mark-mode (region-active-p))
+                        (funcall-interactively #'yas-insert-snippet)
+                        (if (not (funcall-interactively #'yas-expand))
+                            (funcall-interactively #'yas-insert-snippet))))
+                  (global-set-key (kbd "C-c m") 'MJR-expand)))
+        (require 'yasnippet))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: ESS")
-(let ((ess-base-path (MJR-find-newest-core-package "ess")))
-  (if ess-base-path
-      (let ((ess-path (concat ess-base-path "lisp/")))
-        (if (file-exists-p (concat ess-path "ess-site.el"))
-            (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: ESS found... %s" ess-path)
-                   (add-to-list 'load-path ess-path)
-                   (autoload 'R          "ess-site" "Run interactive 'R' session"        t)
-                   (autoload 'R-mode     "ess-site" "Mode for editing 'R' code"          t)
-                   (autoload 'julia      "ess-site" "Run interactive 'julia' session"    t)
-                   (autoload 'julia-mode "ess-site" "Mode for editing 'julia-mode' code" t)
-                   (add-to-list 'auto-mode-alist '("\\.R$"   . R-mode))
-                   (add-to-list 'auto-mode-alist '("\\.jl$"  . julia-mode))
-                   (eval-after-load "ess-site"
-                     '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: ess!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                             (setq ess-fancy-comments nil)
-                             (setq ess-handy-commands '(("set-width"        . ess-execute-screen-options)
-                                                        ("rdired"           . ess-rdired)
-                                                        ("change-directory" . ess-change-directory)
-                                                        ("help-apropos"     . ess-display-help-apropos)
-                                                        ("help-index"       . ess-display-package-index)
-                                                        ("help-object"      . ess-display-help-on-object)
-                                                        ("search"           . ess-execute-search)
-                                                        ("vignettes"        . ess-display-vignettes)))
-                             (progn (ess-toggle-underscore 't)
-                                    (ess-toggle-underscore nil))
-                             (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
-                                                                           "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
-                                                                           "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
-                               (if found-r
-                                   (setq inferior-R-program-name found-r)))
-                             (add-to-list 'ess-style-alist
-                                          '(mjr-ess-style
-                                            (ess-indent-level . 2)                       ;; * (ess-indent-level . 4)
-                                            (ess-first-continued-statement-offset . 2)   ;; * (ess-first-continued-statement-offset . 0)
-                                            (ess-continued-statement-offset . 2)         ;; * (ess-continued-statement-offset . 4)
-                                            (ess-brace-offset . -2)                      ;; * (ess-brace-offset .  0)
-                                            (ess-expression-offset . 2)                  ;; * (ess-expression-offset . 4)
-                                            (ess-else-offset . 0)                        ;; = (ess-else-offset . 0)
-                                            (ess-close-brace-offset . 0)                 ;; = (ess-close-brace-offset . 0))
-                                            (ess-brace-imaginary-offset . 0)             ;; ?
-                                            (ess-continued-brace-offset . 0)             ;; ?
-                                            (ess-arg-function-offset . nil)              ;; * (ess-arg-function-offset . 4)
-                                            (ess-arg-function-offset-new-line . nil)     ;; * (ess-arg-function-offset-new-line '(4))
-                                            ))
-                             (setq ess-default-style 'mjr-ess-style)
-                             (add-hook 'ess-mode-hook
-                                       (lambda ()
-                                         (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                                         (progn (ess-toggle-underscore 't)
-                                                (ess-toggle-underscore nil))
-                                         (ess-set-style 'mjr-ess-style)))
-                             (add-hook 'inferior-ess-mode-hook
-                                       (lambda ()
-                                         (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                                         ;(local-set-key (kbd "C-p") 'comint-previous-input) ;; Don't need.  Set in comint-mode-hook
-                                         ;(local-set-key (kbd "C-n") 'comint-next-input)      ;; Don't need.  Set in comint-mode-hook
-                                         (progn (ess-toggle-underscore 't)
-                                                (ess-toggle-underscore nil))
-                                         (ess-set-style 'mjr-ess-style))))))))))
+(eval-after-load "ess-site"
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: ess!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+          (setq ess-fancy-comments nil)
+          (setq ess-handy-commands '(("set-width"        . ess-execute-screen-options)
+                                     ("rdired"           . ess-rdired)
+                                     ("change-directory" . ess-change-directory)
+                                     ("help-apropos"     . ess-display-help-apropos)
+                                     ("help-index"       . ess-display-package-index)
+                                     ("help-object"      . ess-display-help-on-object)
+                                     ("search"           . ess-execute-search)
+                                     ("vignettes"        . ess-display-vignettes)))
+          (progn (ess-toggle-underscore 't)
+                 (ess-toggle-underscore nil))
+          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
+                                                        "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
+                                                        "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
+            (if found-r
+                (setq inferior-R-program-name found-r)))
+          (add-to-list 'ess-style-alist
+                       '(mjr-ess-style
+                         (ess-indent-level . 2)                       ;; * (ess-indent-level . 4)
+                         (ess-first-continued-statement-offset . 2)   ;; * (ess-first-continued-statement-offset . 0)
+                         (ess-continued-statement-offset . 2)         ;; * (ess-continued-statement-offset . 4)
+                         (ess-brace-offset . -2)                      ;; * (ess-brace-offset .  0)
+                         (ess-expression-offset . 2)                  ;; * (ess-expression-offset . 4)
+                         (ess-else-offset . 0)                        ;; = (ess-else-offset . 0)
+                         (ess-close-brace-offset . 0)                 ;; = (ess-close-brace-offset . 0))
+                         (ess-brace-imaginary-offset . 0)             ;; ?
+                         (ess-continued-brace-offset . 0)             ;; ?
+                         (ess-arg-function-offset . nil)              ;; * (ess-arg-function-offset . 4)
+                         (ess-arg-function-offset-new-line . nil)     ;; * (ess-arg-function-offset-new-line '(4))
+                         ))
+          (setq ess-default-style 'mjr-ess-style)
+          (add-hook 'ess-mode-hook
+                    (lambda ()
+                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (progn (ess-toggle-underscore 't)
+                             (ess-toggle-underscore nil))
+                      (ess-set-style 'mjr-ess-style)))
+          (add-hook 'inferior-ess-mode-hook
+                    (lambda ()
+                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                        ;(local-set-key (kbd "C-p") 'comint-previous-input) ;; Don't need.  Set in comint-mode-hook
+                                        ;(local-set-key (kbd "C-n") 'comint-next-input)      ;; Don't need.  Set in comint-mode-hook
+                      (progn (ess-toggle-underscore 't)
+                             (ess-toggle-underscore nil))
+                      (ess-set-style 'mjr-ess-style)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: comint")
@@ -2482,6 +2523,10 @@ Operation is limited to region if a region is active."
 (global-set-key (kbd "ESC ESC y") '(lambda () (interactive) (popup-menu 'yank-menu)))
 (global-set-key (kbd "ESC ESC g") 'goto-line)
 (global-set-key (kbd "ESC ESC ;") 'MJR-quick-code-comment)
+(global-set-key (kbd "ESC =")     'MJR-describe-region-or-char)
+(cond ((require 'magit nil 't) (global-set-key (kbd "C-c g") 'magit-status))
+      ((require 'it    nil 't) (global-set-key (kbd "C-c g") 'git-status))
+      ('t                      ((MJR-quiet-message "MJR INIT: WARNING: Unable to bind C-c g to #'magit-status or #'git-status"))))
 (global-set-key (kbd "C-c a")     'org-agenda)
 (global-set-key (kbd "C-c b")     'browse-url)
 (global-set-key (kbd "C-c c")     'compile)
@@ -2495,6 +2540,7 @@ Operation is limited to region if a region is active."
 ;global-set-key (kbd "C-c m")     'MJR-expand        ;;; Set in mode code: yasnippet
 ;global-set-key (kbd "C-c s")     'slime-selector    ;;; Set in mode code: slime
 ;global-set-key (kbd "C-c h")     'MJR-hs-toggle     ;;; Set in mode code: hs-minor-mode
+
 
 ;; Not global, but the mini-buffer is kinda everyplace...
 (define-key minibuffer-local-map (kbd "C-p") 'previous-history-element)
@@ -2533,5 +2579,3 @@ Operation is limited to region if a region is active."
 ;;   (insert (reverse (delete-and-extract-region (line-beginning-position)
 ;;                                               (line-end-position)))))
 
-
-;;  '(package-selected-packages (quote (org auctex magit htmlize)))
