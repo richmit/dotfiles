@@ -912,7 +912,7 @@ The 'MJR' comments come in one of two forms:
             (list (lambda (thingy) (ess-help thingy))))
       MJR-thingy-lookeruper-methods)
 ;; Lookup a symbol in an interactive SLIME REPL or common lisp buffer in the hyperspec
-(push (list "clisp-symbol"
+(push (list "hyperspec"
             (list "^slime-repl-mode$" "^lisp-mode$")
             #'symbol-at-point
             (list (lambda (thingy) (hyperspec-lookup (symbol-name thingy)))))
@@ -929,7 +929,7 @@ The 'MJR' comments come in one of two forms:
                                                        " "
                                                        (url-hexify-string (symbol-name thingy)))))))
       MJR-thingy-lookeruper-methods)
-;; Look up a word via dictionary.reference.com
+;; Look for a man page
 (push (list "man"
             "^shell-mode$"
             (lambda () (and (thing-at-point-looking-at "\\b\\([a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1)))
@@ -1088,12 +1088,12 @@ With prefix arg you can pick the statistics to compute."
 (setq apropos-do-all t)
 ;; Want the regon to be highlighted
 (setq transient-mark-mode 'true)
-;; Replace highlighted region with new text or delete (like windows)
-(delete-selection-mode t)
 ;; Make mouse select, clipboard, and yank buffer sane
 (setq select-active-regions   'only)
-;;(setq x-select-enable-primary 't) ;; See next line
-(setq select-enable-primary 't)
+;; Non-nil -> cut/paste uses primary selection (os depend ant)
+(if MJR-pookie-mode
+    (setq select-enable-primary nil)
+    (setq select-enable-primary 't))
 ;; Highlight the search strings
 (setq search-highlight t)
 ;; Highlight query replace
@@ -1812,7 +1812,8 @@ Operation is limited to region if a region is active."
                   ))
       ;; Need to set the R path on Windows...
       (if (string-equal MJR-platform "WINDOWS-MGW")
-          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
+          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
+                                                        "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
             (setq org-babel-R-command found-r)))
@@ -2413,7 +2414,8 @@ Operation is limited to region if a region is active."
                                      ("vignettes"        . ess-display-vignettes)))
           (progn (ess-toggle-underscore 't)
                  (ess-toggle-underscore nil))
-          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
+          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
+                                                        "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
             (if found-r
