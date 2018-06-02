@@ -676,6 +676,11 @@
  '(font-latex-slide-title-face                ((t (                   :bold t :weight bold :inherit 'font-lock-type-face))))
 
  '(linum                                      ((t (:inherit (shadow default) :foreground "deep pink"))))
+
+
+ '(line-number                         ((t (:inherit (shadow default) :foreground "deep pink" :background "grey15"))))
+ '(line-number-current-line            ((t (:inherit (shadow default) :foreground "deep pink" :background "grey10"))))
+ 
 )
 
 (provide-theme 'mjr-dark)
@@ -685,3 +690,5 @@
 ;; End:
 
 ;;; mjr-dark-theme.el ends here
+
+

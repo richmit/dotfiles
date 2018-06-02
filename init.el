@@ -139,7 +139,7 @@
                         "swift")    :test #'string=) (progn (set-if-auto-config 'MJR-uname      "jrichli")
                                                             (set-if-auto-config 'MJR-expert-mode nil)
                                                             (set-if-auto-config 'MJR-pookie-mode 't))))
-    
+
     (set-if-auto-config 'MJR-uname       urln)
     (set-if-auto-config 'MJR-expert-mode 't)
     (set-if-auto-config 'MJR-pookie-mode nil))
@@ -272,8 +272,6 @@ With prefix argument, also mark ps, html, dvi, and ps files."
                 (not (looking-at-p dired-re-dir))
                 (find-if (lambda (re) (string-match re fn)) re-to-zap)))
          "Jumk file"))))
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-ascii-table ()
@@ -583,7 +581,7 @@ The 'MJR' comments come in one of two forms:
                                          (golden-include-name (match-string 2)))
                                      (push (cons golden-include-name golden-include-line) golden-includes))))
                                ;; Process Buffer
-                               (goto-char (point-min))   
+                               (goto-char (point-min))
                                (while (re-search-forward include-line-regex nil t)
                                  (let ((include-line        (match-string 0))
                                        (include-delim-start (match-string 1))
@@ -601,7 +599,7 @@ The 'MJR' comments come in one of two forms:
               (let ((prefix-value (prefix-numeric-value current-prefix-arg))
                     (file-change-count 0))
                 (mapc (lambda (file-name)
-                        (message "MJR-fix-c-includes: Processing file: %s" file-name)                  
+                        (message "MJR-fix-c-includes: Processing file: %s" file-name)
                         (with-temp-file file-name
                           (insert-file-contents file-name)
                           (if (and (< prefix-value 2) (< 0 (funcall proc-buffer)))
@@ -766,7 +764,7 @@ The 'MJR' comments come in one of two forms:
      string, and %Q will be replaced with the search string")
 ;; Various methods useful at work
 (if (string-equal MJR-location "WORK:TI")
-    (progn 
+    (progn
       (if (file-exists-p "/usr/local/bin/de")
           ;; Use 'de' to search the TI directory
           (push (list "TI-LDAP-de"
@@ -775,7 +773,7 @@ The 'MJR' comments come in one of two forms:
                       '("/usr/local/bin/de '%Q'"))
                 MJR-thingy-lookeruper-methods))
       (if (executable-find "ldapsearch")
-          (progn      
+          (progn
             ;; Use ldapsearch to search For a TI Employee Name (cn and fullName)
             (push (list "TI Person Name"
                         nil
@@ -860,7 +858,7 @@ The 'MJR' comments come in one of two forms:
             nil
             (lambda () (and (thing-at-point-looking-at "\\b\\([a-zA-Z'-]+\\)\\b" 20) (match-string 1)))
             (if (string-equal MJR-platform "WINDOWS-MGW")
-                (list (lambda (lstr) (browse-url (concat "http://dictionary.reference.com/browse/" (url-hexify-string lstr) "?s=t"))))    
+                (list (lambda (lstr) (browse-url (concat "http://dictionary.reference.com/browse/" (url-hexify-string lstr) "?s=t"))))
                 (list (concat MJR-home-bin "/browser -foreground 100 -new-window 'http://dictionary.reference.com/browse/%U?s=t' &"))))
       MJR-thingy-lookeruper-methods)
 ;; Look via google
@@ -973,7 +971,7 @@ gid, host name, dictionary word, and Google search."
                        collect (list cur-method-name cur-method-mode-regex cur-method-tap cur-method-search-command)))
            (message "MJR-thingy-lookeruper: Cleaning list (%d -> %d)"
                     (length MJR-thingy-lookeruper-methods)
-                    (length MJR-thingy-lookeruper-methods-clean))))     
+                    (length MJR-thingy-lookeruper-methods-clean))))
      (dolist (cur-method MJR-thingy-lookeruper-methods-clean)
        (destructuring-bind (cur-method-name cur-method-mode-regex cur-method-tap cur-method-search-command-list) cur-method
          (if (if (stringp cur-method-mode-regex)
@@ -1222,7 +1220,7 @@ With prefix arg you can pick the statistics to compute."
                                   (:eval (format-time-string "%Y-%m-%d %H:%M"               ; Date/time the way I like it
                                                              (current-time)))
                                   " "))
-              
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Built-in Mode Config...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1300,7 +1298,7 @@ With prefix arg you can pick the statistics to compute."
                       (cons "/SS/exampleCode/random"     #'eww-browse-url)
                       (cons "/SS/exampleCode/ruby"       #'eww-browse-url)
                       (cons "/SS/exampleCode/sqlite"     #'eww-browse-url)
-                      (cons "/SS/exampleCode/vtk"        #'eww-browse-url)                  
+                      (cons "/SS/exampleCode/vtk"        #'eww-browse-url)
                       (cons "."                          (if (string-match MJR-platform "WINDOWS-MGW")
                                                              #'browse-url-default-browser
                                                              #'browse-url-firefox))))
@@ -1360,31 +1358,32 @@ With prefix arg you can pick the statistics to compute."
             (speedbar-add-supported-extension ext))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: linum")
 (if (not MJR-pookie-mode)
-    (if (require 'linum nil :noerror)
-        (progn (global-linum-mode -1)
-               (dolist (m '(emacs-lisp-mode-hook
-                            fortran-mode-hook
-                            perl-mode-hook
-                            cperl-mode-hook
-                            lisp-mode-hook
-                            ess-mode-hook
-                            sh-mode-hook
-                            c++-mode-hook
-                            java-mode-hook
-                            js-mode-hook
-                            python-mode-hook
-                            ruby-mode-hook
+    (if (string-greaterp emacs-version "26")
+        (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: global-display-line-numbers-mode")
+               (customize-set-variable  'global-display-line-numbers-mode nil)
+               (customize-set-variable  'display-line-numbers-widen       't)
+               (dolist (m '(ess-mode-hook
                             text-mode-hook
-                            html-mode-hook
-                            c-mode-hook))
+                            prog-mode-hook))
                  (add-hook m (lambda ()
-                               (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: +linum-mode" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                               (linum-mode 1)))))
-        (MJR-quiet-message "MJR: INIT: PKG SETUP: linum: WARNING: Could not load package"))
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: linum: WARNING: SKIP: pookie mode!"))
-
+                               (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: +display-line-numbers-mode(%s)" (MJR-date "%Y-%m-%d_%H:%M:%S") major-mode)
+                               (display-line-numbers-mode 1))))
+               (dolist (m '(lisp-interaction-mode-hook))
+                 (add-hook m (lambda ()
+                               (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: -display-line-numbers-mode(%s)" (MJR-date "%Y-%m-%d_%H:%M:%S") major-mode)
+                               (display-line-numbers-mode -1)))))
+        (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: linum")
+               (if (require 'linum nil :noerror)
+                   (progn (global-linum-mode -1)
+                          (dolist (m '(ess-mode-hook
+                                       text-mode-hook
+                                       prog-mode-hook))
+                            (add-hook m (lambda ()
+                                          (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: +linum-mode" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                          (linum-mode 1)))))
+                   (MJR-quiet-message "MJR: INIT: PKG SETUP: linum: WARNING: Could not load package"))
+               (MJR-quiet-message "MJR: INIT: PKG SETUP: linum: WARNING: SKIP: pookie mode!"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: cmake")
@@ -1439,7 +1438,7 @@ With prefix arg you can pick the statistics to compute."
       (progn
         (dolist (git-el-file git-el-files)
           (load git-el-file))
-        
+
         ;; (let ((path-to-git "c:/Program Files/Git/bin/"))
         ;;   (if (file-exists-p path-to-git)
         ;;       (progn (setq        explicit-shell-file-name (concat path-to-git "bash.exe"))
@@ -1545,7 +1544,7 @@ With prefix arg you can pick the statistics to compute."
                                 (local-set-key (kbd "<up>")    'previous-line)
                                 (local-set-key (kbd "<down>")  'next-line)
                                 (local-set-key (kbd "C-p")     'eshell-previous-input)
-                                (local-set-key (kbd "C-n")     'eshell-next-input)                                
+                                (local-set-key (kbd "C-n")     'eshell-next-input)
                                 (if (not (server-running-p))
                                     (server-start))
                                 (setenv "PAGER" "cat")
@@ -1745,7 +1744,7 @@ Operation is limited to region if a region is active."
          (python      . t)
          (R           . t)
          (ruby        . t)
-         (sh          . t)
+         (shell       . t)
          (sql         . t)
          (sqlite      . t)))
 
@@ -1769,7 +1768,7 @@ Operation is limited to region if a region is active."
       ;; (require 'ob-python)
       ;; (require 'ob-R)
       ;; (require 'ob-ruby)
-      ;; (require 'ob-sh)
+      ;; (require 'ob-shell)
       ;; (require 'ob-sql)
       ;; (require 'ob-sqlite)
 
@@ -1817,7 +1816,7 @@ Operation is limited to region if a region is active."
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
             (setq org-babel-R-command found-r)))
-      
+
       ;; Setup orgtbl in other modes
       (if nil
           (dolist (m '(emacs-lisp-mode-hook
@@ -1985,6 +1984,15 @@ Operation is limited to region if a region is active."
             (load "auctex.el" t)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: PKG SETUP: TeX-mode setup...")
+(if (or (string-equal MJR-platform "WINDOWS-MGW")
+        (string-equal MJR-platform "WINDOWS-CYG"))
+    (add-hook 'TeX-mode-hook
+              (function (lambda ()
+                          (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: TeX-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                          (setq ispell-parser 'nroff)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: latex-mode setup...")
 (add-hook 'latex-mode-hook
           (function (lambda ()
@@ -2069,7 +2077,7 @@ Operation is limited to region if a region is active."
                                 (cons "ref-code-ruby"      (concat MJR-home "/world/my_prog/learn/ruby"))       ;; Refrence code: Ruby
                                 (cons "dotfiles"           (concat MJR-home "/world/dotfiles/"))                ;; dot fiel repo
                                 (cons "world"              (concat MJR-home "/world/"))                         ;; All my stuff. ;)
-                                (cons "home-win"           (list                                                ;; Windows Home directory -- VM/cygwin/windows   
+                                (cons "home-win"           (list                                                ;; Windows Home directory -- VM/cygwin/windows
                                                             (concat "C:\\Users\\" (user-real-login-name))        ;; Windows (native/mingw/msys2/etc...)
                                                             (concat "/c/Users/" (user-real-login-name))          ;; msys2
                                                             (concat "/cygwin/c/Users/" (user-real-login-name))   ;; Cygwin
@@ -2077,7 +2085,7 @@ Operation is limited to region if a region is active."
                                                             (concat MJR-home "/winHome/")                        ;; Link on most platforms
                                                             "~/winHOme"))                                        ;; Link on most platforms
                                 (cons "home-msys2"         (list                                                ;; msys2 home directory
-                                                            (concat "C:/msys64/home/" (user-real-login-name))))  
+                                                            (concat "C:/msys64/home/" (user-real-login-name))))
                                 (cons "home-cyg"           (list                                                ;; cygwin home directory
                                                             (concat "/home/" (user-real-login-name))             ;; Runing under cygwin
                                                             (concat "c:/cygwin64/home/" (user-real-login-name))  ;; Running Under msys2
@@ -2149,7 +2157,7 @@ Operation is limited to region if a region is active."
                                                                         "c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/mint.exe"))))
 
 
-                             
+
                              (setq maplev-mint-query nil)
                              (setq maplev-description-quote-char ?\"))))))))
 
@@ -2250,7 +2258,7 @@ Operation is limited to region if a region is active."
                 (define-key slime-repl-mode-map (kbd "C-p")       'slime-repl-backward-input)        ;; Previous history on C-p
                 (define-key slime-repl-mode-map (kbd "C-n")       'slime-repl-forward-input)         ;; Previous history on C-p
                 (define-key slime-repl-mode-map (kbd "C-c s")     'slime-selector)                   ;; Slime Selector
-                ;; CODE bindings                                                                     
+                ;; CODE bindings
                 (define-key slime-mode-map "\M-."                 'slime-edit-definition-with-etags) ;; A somewhat slimey version of find-tag
                 (define-key slime-mode-map "\M-,"                 'tags-loop-continue)               ;; Use  tags contineu for M,
                 (define-key slime-mode-map (kbd "ESC ESC .")      'slime-edit-definition)            ;; Put SLIMEy M. on MM.
@@ -2265,14 +2273,14 @@ Operation is limited to region if a region is active."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: ido...")
 (if (require 'ido nil :noerror)
-    (progn (if MJR-pookie-mode                                                                   
+    (progn (if MJR-pookie-mode
                (setq ido-use-filename-at-point nil)                                              ;; Disable ffap in pookie mode
                (setq ido-use-filename-at-point 'guess))                                          ;; Eable ffap in non-pookie mode
-           (setq ido-auto-merge-work-directories-length -1)                                      ;; Don't swtich to other directories if file not found               
+           (setq ido-auto-merge-work-directories-length -1)                                      ;; Don't swtich to other directories if file not found
            (setq ido-use-url-at-point nil)                                                       ;; Don't look for URLs at point
            (dolist (directory-re '("\\`RCS/" "\\`auto/"                                          ;; Set ignore directory list
                                    "\\`\\.git/"))
-             (add-to-list 'ido-ignore-directories directory-re))                   
+             (add-to-list 'ido-ignore-directories directory-re))
            (dolist (ext '("fasl" "ufasl" "fas" "lib" "o"                                         ;; File extentiosn to ignore -- ido-ignore-extensions no workie for me
                           "dvi" "asd" "so"
                           "aux" "bbl" "bcf" "blg" "log"
@@ -2290,10 +2298,10 @@ Operation is limited to region if a region is active."
                                 "\\`\\*Warning\\*"))
              (add-to-list 'ido-ignore-buffers buffer-re))
            (setq ido-file-extensions-order '(".org" ".lisp" ".R" ".rb" ".tex" ".txt"             ;; Order to list files only differing by extension
-                                             ".hpp" ".cpp" ".h" ".c" ".asd" ".log"))           
+                                             ".hpp" ".cpp" ".h" ".c" ".asd" ".log"))
            (setq ido-enable-flex-matching t)                                                     ;; List everything that matches input (not just at start)
            (setq ido-everywhere t)                                                               ;; Turn it on everyplace
-           (if MJR-pookie-mode                                                                   
+           (if MJR-pookie-mode
                (ido-mode 'buffers)                                                               ;; pookie mode: Start ido mode for buffers only
                (ido-mode 1))                                                                     ;; non-pookie mode: Start ido mode for buffers and files
            (defun MJR-wack-back-to-slash ()                                                      ;; Zap everything backward till a "/" character
@@ -2580,4 +2588,3 @@ Operation is limited to region if a region is active."
 ;;   (beginning-of-line)
 ;;   (insert (reverse (delete-and-extract-region (line-beginning-position)
 ;;                                               (line-end-position)))))
-
