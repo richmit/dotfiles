@@ -1811,7 +1811,8 @@ Operation is limited to region if a region is active."
                   ))
       ;; Need to set the R path on Windows...
       (if (string-equal MJR-platform "WINDOWS-MGW")
-          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
+          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
+                                                        "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
@@ -2422,7 +2423,8 @@ Operation is limited to region if a region is active."
                                      ("vignettes"        . ess-display-vignettes)))
           (progn (ess-toggle-underscore 't)
                  (ess-toggle-underscore nil))
-          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
+          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
+                                                        "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
@@ -2560,18 +2562,19 @@ Operation is limited to region if a region is active."
 (MJR-quiet-message "MJR: INIT: STAGE: Emacs Customization System....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(customize-set-variable  'TeX-auto-untabify           t)
-(customize-set-variable  'delete-selection-mode       t)
-(customize-set-variable  'indicate-buffer-boundaries  'right)
-(customize-set-variable  'indicate-empty-lines        t)
-(customize-set-variable  'Man-notify-method           'pushy)
-(customize-set-variable  'LaTeX-item-indent           0)
-(customize-set-variable  'TeX-PDF-mode                t)
-(customize-set-variable  'TeX-auto-save               t)
-(customize-set-variable  'TeX-parse-self              t)
-(customize-set-variable  'ansi-color-faces-vector     [default default default italic underline success warning error])
-(customize-set-variable  'ansi-color-names-vector     ["#212526" "#ff4b4b" "#b4fa70" "#fce94f" "#729fcf" "#e090d7" "#8cc4ff" "#eeeeec"])
-(customize-set-variable  'safe-local-variable-values  '((Syntax . ANSI-Common-LISP)))
+(customize-set-variable  'shell-command-dont-erase-buffer 'beg-last-out)  ;; Just keep tacking on shell-command output, but put point at top of last command output
+(customize-set-variable  'TeX-auto-untabify               t)
+(customize-set-variable  'delete-selection-mode           t)
+(customize-set-variable  'indicate-buffer-boundaries      'right)
+(customize-set-variable  'indicate-empty-lines            t)
+(customize-set-variable  'Man-notify-method               'pushy)
+(customize-set-variable  'LaTeX-item-indent               0)
+(customize-set-variable  'TeX-PDF-mode                    t)
+(customize-set-variable  'TeX-auto-save                   t)
+(customize-set-variable  'TeX-parse-self                  t)
+(customize-set-variable  'ansi-color-faces-vector         [default default default italic underline success warning error])
+(customize-set-variable  'ansi-color-names-vector         ["#212526" "#ff4b4b" "#b4fa70" "#fce94f" "#729fcf" "#e090d7" "#8cc4ff" "#eeeeec"])
+(customize-set-variable  'safe-local-variable-values      '((Syntax . ANSI-Common-LISP)))
 
 (setq custom-file "~/.emacs.d/custom.el")
 (if (file-exists-p custom-file)
