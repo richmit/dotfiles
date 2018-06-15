@@ -2412,7 +2412,9 @@ Operation is limited to region if a region is active."
 (MJR-quiet-message "MJR: INIT: PKG SETUP: ESS")
 (eval-after-load "ess-site"
   '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: ess!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-          (setq ess-fancy-comments nil)
+          (customize-set-variable  'ess-use-flymake nil)
+          (customize-set-variable  'ess-fancy-comments nil)
+          (customize-set-variable  'ess-history-file nil)
           (setq ess-handy-commands '(("set-width"        . ess-execute-screen-options)
                                      ("rdired"           . ess-rdired)
                                      ("change-directory" . ess-change-directory)
