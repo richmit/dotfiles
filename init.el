@@ -334,8 +334,6 @@ Interaction with options:
              ((string-equal eval-how "elisp") (call-interactively #'eval-expression))
              ((string-equal eval-how "lisp")  (call-interactively #'slime-interactive-eval)))))
 
-(global-set-key (kbd "ESC ESC :") 'MJR-eval-region)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-calc-eval-multibase-region ()
   "Evaluate the region as calc code, and insert at end of region result in several bases."
@@ -1388,7 +1386,8 @@ With prefix arg you can pick the statistics to compute."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: cmake")
 (let ((cmake-path (find-if (lambda (p) (file-exists-p (concat p "/cmake-mode.el")))
-                           (list "/usr/local/big/cmake/3.6.2/share/cmake-3.6/editors/emacs"
+                           (list "C:\\msys64\\mingw64\\share\\cmake-3.11\\editors\\emacs"
+                                 "/usr/local/big/cmake/3.6.2/share/cmake-3.6/editors/emacs"
                                  "/usr/local/big/cmake/3.3.2/share/cmake-3.3/editors/emacs"
                                  "/usr/share/cmake-3.0/editors/emacs"))))
   (if cmake-path
@@ -2525,22 +2524,21 @@ Operation is limited to region if a region is active."
 (global-set-key (kbd "<mouse-6>") 'scroll-right)
 (global-set-key (kbd "<mouse-7>") 'scroll-left)
 
-;; filco emulation on mbp
-(global-set-key (kbd "s-l")       'scroll-down-command) ; Super+l
-(global-set-key (kbd "s-.")       'scroll-up-command)   ; Super+.
-
 ;; Override C-x C-b
 (global-set-key (kbd "C-x C-b")   'buffer-menu)
+
+;; git keys
+(cond ((require 'magit nil 't) (global-set-key (kbd "C-c g") 'magit-status))
+      ((require 'git   nil 't) (global-set-key (kbd "C-c g") 'git-status))
+      ('t                      ((MJR-quiet-message "MJR INIT: WARNING: Unable to bind C-c g to #'magit-status or #'git-status"))))
 
 ;; Random key bindings
 (global-set-key (kbd "C-x r a")   'append-to-register)
 (global-set-key (kbd "ESC ESC y") '(lambda () (interactive) (popup-menu 'yank-menu)))
 (global-set-key (kbd "ESC ESC g") 'goto-line)
 (global-set-key (kbd "ESC ESC ;") 'MJR-quick-code-comment)
+(global-set-key (kbd "ESC ESC :") 'MJR-eval-region)
 (global-set-key (kbd "ESC =")     'MJR-describe-region-or-char)
-(cond ((require 'magit nil 't) (global-set-key (kbd "C-c g") 'magit-status))
-      ((require 'it    nil 't) (global-set-key (kbd "C-c g") 'git-status))
-      ('t                      ((MJR-quiet-message "MJR INIT: WARNING: Unable to bind C-c g to #'magit-status or #'git-status"))))
 (global-set-key (kbd "C-c a")     'org-agenda)
 (global-set-key (kbd "C-c b")     'browse-url)
 (global-set-key (kbd "C-c c")     'compile)
@@ -2551,10 +2549,11 @@ Operation is limited to region if a region is active."
 (global-set-key (kbd "C-c s")     (lambda () (interactive) (eshell (or (and current-prefix-arg (prefix-numeric-value current-prefix-arg)) 0))))
 (global-set-key (kbd "C-c t")     'MJR-term)
 (global-set-key (kbd "C-c v")     'MJR-view-file-or-url-at-point)
+(global-set-key (kbd "M-<f11>")   'toggle-frame-fullscreen) ;; This is the same binding used by mintty. ;)
 ;global-set-key (kbd "C-c m")     'MJR-expand        ;;; Set in mode code: yasnippet
 ;global-set-key (kbd "C-c s")     'slime-selector    ;;; Set in mode code: slime
 ;global-set-key (kbd "C-c h")     'MJR-hs-toggle     ;;; Set in mode code: hs-minor-mode
-
+(global-set-key (kbd "C-t")       'yank) ;; For split keyboards...
 
 ;; Not global, but the mini-buffer is kinda everyplace...
 (define-key minibuffer-local-map (kbd "C-p") 'previous-history-element)
