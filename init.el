@@ -233,6 +233,27 @@ so it gets picked up."
                     (file-name-as-directory best-directory-path))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; On windows, we set the font we like and then setup a way to adjust its size in the face of DPI changes
+(if (string-equal MJR-platform "WINDOWS-MGW")
+    (progn (setq MJR-startup-dpi              (* 25.4 (/ (sqrt (+ (* (display-pixel-width) (display-pixel-width)) (* (display-pixel-height) (display-pixel-height))))
+                                                         (sqrt (+ (* (display-mm-width)    (display-mm-width))    (* (display-mm-height)    (display-mm-height))))))
+                 MJR-windows-font-family      "Consolas" ;; Good fonts: Consolas, Courier New, Lucida Console
+                 MJR-windows-font-target-size 120)
+           (set-face-attribute 'default nil :family MJR-windows-font-family :height MJR-windows-font-target-size)
+           (MJR-quiet-message "MJR: INIT: STAGE: Windows font setup (%s at %d for %d DPI display!" MJR-windows-font-family MJR-windows-font-target-size MJR-startup-dpi)
+           (defun MJR-adjust-for-dpi-change ()
+             "On Windows: If the DPI changes after Emacs startup, this function will attmpt adjust the font size accordingly."
+             (interactive)
+             (let* ((now-dpi  (* 25.4 (/ (sqrt (+ (* (display-pixel-width) (display-pixel-width)) (* (display-pixel-height) (display-pixel-height))))
+                                         (sqrt (+ (* (display-mm-width)    (display-mm-width))    (* (display-mm-height)    (display-mm-height))))))))
+               (if (< 0.01 (abs (- MJR-startup-dpi now-dpi)))
+                   (let ((fnt-new-size (truncate (* MJR-windows-font-target-size (/ now-dpi MJR-startup-dpi)))))
+                     (if (= MJR-windows-font-target-size fnt-new-size)
+                         (message "MJR-adjust-for-dpi-change: DPI changed, but not enough to change font size (dpi change from %f to %f)" MJR-startup-dpi now-dpi)
+                         (progn (message "MJR-adjust-for-dpi-change: Windows font size set to %d for display (dpi change from %f to %f)" fnt-new-size MJR-startup-dpi now-dpi)
+                                (set-face-attribute 'default nil :family MJR-windows-font-family :height fnt-new-size)))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-dired-flag-latex-junk (&optional zap-extra-hard)
   "Flag LaTeX temp files/directories for deletion.
 With prefix argument, also mark ps, html, dvi, and ps files."
@@ -1008,48 +1029,71 @@ gid, host name, dictionary word, and Google search."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;g
 (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-stats-numbers-in-column: DEFINED!")
-(defun MJR-stats-numbers-in-column (stats-to-compute)
-  "Compute various statistics on the the numbers highlighted by a rectangle, and put a summary in the kill ring.
+(defun MJR-stats-numbers-in-column (start end &optional prefix-or-stats-wanted)
+  "Compute statistics for numbers in a column.  Rsults are  put on the kill ring.
 
-With prefix arg you can pick the statistics to compute."
-  (interactive (let ((stat-names  '("sum" "mean"  "min" "max" "sd" "n" "sumsq" "sum,mean,min,max,sd,n,sumsq" )))
-                 (list (split-string (if current-prefix-arg
-                                         (if (require 'ido nil :noerror)
-                                             (ido-completing-read "Stats to compute: " stat-names)
-                                             (read-string "Stats to compute: " "sum" 'stat-names))
-                                         "sum,mean,min,max,sd,n,sumsq")
-                                     "[^a-zA-Z]"))))
-  (cl-flet ((MJR-get-numbers-in-column () (save-excursion
-                                            (let* ((saved-point (point))
-                                                 (saved-mark  (if (mark) (mark) saved-point))
-                                                 (min-col     (min (progn (goto-char saved-point) (current-column)) (progn (goto-char saved-mark) (current-column))))
-                                                 (min-line    (min (line-number-at-pos saved-point) (line-number-at-pos saved-mark)))
-                                                 (max-line    (max (line-number-at-pos saved-point) (line-number-at-pos saved-mark)))
-                                                 (list-o-numb nil))
-                                            (loop for cur-line from min-line upto max-line do
-                                                  (let* ((min-pt (progn (goto-line cur-line) (move-to-column min-col) (point)))
-                                                         (max-pt (point-at-eol)))
-                                                    (setq list-o-numb (append list-o-numb (list (string-to-number (buffer-substring min-pt max-pt)))))))
-                                            ;(kill-new (format "%s" list-o-numb))
-                                            list-o-numb)))
-            (MJR-stats-cmp     (the-list) (if (listp the-list)
-                                              (let* ((the-flist (mapcar (lambda (x) (if (numberp x) (float x))) the-list))
-                                                     (the-n     (length the-flist))
-                                                     (allfp     (notany 'not the-flist))
-                                                     (the-min   (if allfp (apply 'min the-flist)))
-                                                     (the-sum   (if allfp (apply '+ the-flist)))
-                                                     (the-mean  (if allfp (if (< 0 the-n) (/ (* 1.0 the-sum) the-n))))
-                                                     (the-sumsq (if allfp (apply '+ (mapcar (lambda (x) (* x x)) the-flist))))
-                                                     (the-var   (if allfp (if (< 0 the-n) (- (/ the-sumsq the-n) (* the-mean the-mean)))))
-                                                     (the-sd    (if allfp (if (< 0 the-var) (sqrt the-var))))
-                                                     (the-max   (if allfp (apply 'max the-flist))))
-                                                (list (cons "min"   the-min)  (cons "max"   the-max) (cons "sum"   the-sum)  (cons "sumsq" the-sumsq)
-                                                      (cons "mean"  the-mean) (cons "sd"    the-sd)  (cons "n"     the-n))))))
-    (let* ((da-stats  (MJR-stats-cmp (MJR-get-numbers-in-column)))
-           (da-string (apply #'concat (mapcar (lambda (da-stat) (format " %s: %s" da-stat (cdr (assoc da-stat da-stats))))
-                                              stats-to-compute))))
-      (kill-new da-string)
-      (message da-string))))
+The column of numbers may be defined in two ways:
+  * With an active, rectangular region -- one numer per line of the rectangle
+  * Number found under the point, and on subsiquent lines below the current one and in the same column as the point.
+
+Statstics:
+  * Available:       sumsq, var, sum, mean, median, min, max, sd, range, n
+  * Default printed:             sum, mean, median, min, max, sd, range, n
+  
+When called with a prefix argument (or when prefix-or-stats-wanted is an integer), the stats to print will be interactively queried from the user. 
+Non-interactively the prefix-or-stats-wanted argument should be a list of strings or a single string with a comma delimited list of stats. Note 
+the function always returns all statistics in an alist regardless of what stats are printed."
+  (interactive "r\np")
+  (let* ((all-stats     '("sumsq" "var" "sum" "mean" "median" "min" "max" "sd" "range" "n"))
+         (stats-wanted (cond ((and (listp prefix-or-stats-wanted) (not (null prefix-or-stats-wanted)))   prefix-or-stats-wanted)
+                             ((stringp prefix-or-stats-wanted)                                 (split-string prefix-or-stats-wanted "[^a-zA-Z]"))
+                             ((and (numberp prefix-or-stats-wanted) (not (= 1 prefix-or-stats-wanted)))  (split-string  (let ((stat-names (append all-stats (list (mapconcat 'identity all-stats ",")))))
+                                                                                                                          (if (require 'ido nil :noerror)
+                                                                                                                              (ido-completing-read "Stats to compute: " stat-names)
+                                                                                                                              (read-string "Stats to compute: " "sum" 'stat-names)))
+                                                                                                                        "[^a-zA-Z]"))
+                             ('t                                                     (member "sum" all-stats))))
+         (datas        (if (and transient-mark-mode (region-active-p) (not (= start end)))
+                           (progn (message "MJR-stats-numbers-in-column: INFO: Using rectangular region to get data")
+                                  (mapcar (lambda (s) (substring-no-properties s)) (extract-rectangle start end)))
+                           (let ((seed-string-number  (and (thing-at-point-looking-at "[-+]?\\([0-9]+\\.?[0-9]*\\|\\.[0-9]+\\)\\([eE][-+]?[0-9]+\\)?" 40) (match-string 0))))
+                             (message "MJR-stats-numbers-in-column: INFO: Using column crawl to get data (no rectangle selected)")
+                             (if (not seed-string-number)
+                                 (error "MJR-stats-numbers-in-column: ERROR: Point not on number")
+                                 (let ((target-column   (current-column))
+                                       (list-of-number-strings (list seed-string-number)))
+                                   (while (let ((last-line  (line-number-at-pos))
+                                                (last-point (point)))
+                                            (or (if (zerop (forward-line 1))
+                                                    (if (or 't (not (= last-point (point))))
+                                                        (let ((line-start (point)))
+                                                          (move-to-column target-column 't)
+                                                          (if (and (or (zerop target-column) (not (= line-start (point))))
+                                                                   (= target-column (- (point) line-start)))
+                                                              (let ((nap (and (thing-at-point-looking-at "[-+]?\\([0-9]+\\.?[0-9]*\\|\\.[0-9]+\\)\\([eE][-+]?[0-9]+\\)?" 40) (match-string 0))))
+                                                                (if nap
+                                                                    (setq list-of-number-strings (cons nap list-of-number-strings))))))))
+                                                (null (goto-char last-point)))))
+                                   (reverse list-of-number-strings))))))
+         (data         (mapcar (lambda (s) (float (string-to-number s))) datas))
+         (sorted-data  (sort (copy-list data) #'<))
+         (the-n        (length sorted-data))
+         (the-min      (first sorted-data))
+         (the-sum      (apply '+ sorted-data))
+         (the-mean     (if (< 0 the-n) (/ (* 1.0 the-sum) the-n)))
+         (the-median   (if (evenp the-n) (/ (+  (nth (/ (- the-n 1) 2) sorted-data) (nth (/ the-n 2) sorted-data)) 2.0) (nth (/ the-n 2) sorted-data)))
+         (the-sumsq    (apply '+ (mapcar (lambda (x) (* x x)) sorted-data)))
+         (the-var      (if (< 0 the-n) (- (/ the-sumsq the-n) (* the-mean the-mean))))
+         (the-sd       (if (< 0 the-var) (sqrt the-var)))
+         (the-max      (car (last sorted-data)))
+         (the-range    (- the-max the-min))
+         (stat-alist   (list (cons "min"   the-min)   (cons "max"     the-max)    (cons "sum"   the-sum) (cons "sumsq" the-sumsq)
+                             (cons "mean"  the-mean)  (cons "median"  the-median) (cons "sd"    the-sd)  (cons "var"   the-var)
+                             (cons "range" the-range) (cons "n"       the-n)))
+         (stat-string  (apply #'concat (mapcar (lambda (stat-name) (format " %s: %s" stat-name (cdr (assoc stat-name stat-alist)))) stats-wanted))))
+    (kill-new stat-string)
+    (message  stat-string)
+    stat-alist))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: STAGE: Generic Global Emacs Config Stuff...")
@@ -1068,6 +1112,8 @@ With prefix arg you can pick the statistics to compute."
     (setq-default truncate-lines 'true))
 ;; Make the buffer name column width wider (default is 19)
 (setq Buffer-menu-name-width 40)
+;; No popups
+(setq use-dialog-box nil) 
 ;; Turn on S-arrows for window selection
 (windmove-default-keybindings)
 ;; kill stuff in a read only buffer
@@ -1308,6 +1354,15 @@ With prefix arg you can pick the statistics to compute."
           (if (not (string-match MJR-platform "WINDOWS-MGW"))
               (if (file-exists-p (concat MJR-home-bin "/browser"))
                   (setq browse-url-firefox-program (concat MJR-home-bin "/browser"))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: PKG SETUP: epa-file")
+(eval-after-load "epa-file"
+  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: epa-file!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+          (let ((sepath (find-if #'file-exists-p '("c:Program Files (x86)/GnuPG/bin/gpg.exe"))))
+            (if sepath
+                (custom-set-variables '(epg-gpg-program  "c:Program Files (x86)/GnuPG/bin/gpg.exe"))))))
+;;(require 'epa-file nil :noerror)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: time")
@@ -1810,7 +1865,8 @@ Operation is limited to region if a region is active."
                   ))
       ;; Need to set the R path on Windows...
       (if (string-equal MJR-platform "WINDOWS-MGW")
-          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
+          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/Rterm.exe"
+                                                        "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
@@ -1949,9 +2005,22 @@ Operation is limited to region if a region is active."
                                      (c-recognize-knr-p          . nil)
                                      (c-basic-offset             . 2)
                                      (c-comment-only-line-offset . 0)
-                                     (c-offsets-alist (inclass      . ++)
-                                                      (access-label . -)
-                                                      (case-label   . +))))
+                                     (c-offsets-alist (inclass         . ++)
+                                                      (namespace-open  . 0)
+                                                      (namespace-close . 0)
+                                                      (innamespace     . 0)
+                                                      (arglist-close   . c-lineup-close-paren)
+                                                      (access-label    . -)
+                                                      (case-label      . +)
+                                                      (c               . (lambda (langelem) ;; For doxygen do c-lineup-dont-change, else do c-lineup-C-comments
+                                                                           (let* ((root-pos (c-langelem-pos langelem))
+                                                                                  (root-col (c-langelem-col langelem 't))
+                                                                                  (root-str (substring-no-properties (buffer-substring root-pos
+                                                                                                                                       (min (+ root-pos 4)
+                                                                                                                                            (point-max))))))
+                                                                             (if (string-equal root-str "/**\n") ;; Doxygen comments match this EXACT string...
+                                                                                 (c-lineup-dont-change langelem)
+                                                                                 (c-lineup-C-comments langelem))))))))
                       (c-set-style "MJR")
                       (local-set-key "\C-c\C-c" 'compile))))
 
@@ -2235,6 +2304,7 @@ Operation is limited to region if a region is active."
                                                    "/usr/local/bin/sbcl"
                                                    "/opt/local/bin/sbcl"
                                                    "/usr/bin/sbcl"
+                                                   "C:\\PROGRA~1\\STEELB~1\\1.4.14\\SBCL.EXE"
                                                    "C:\\PROGRA~1\\STEELB~1\\1.3.18\\SBCL.EXE"
                                                    "C:\\PROGRA~1\\STEELB~1\\1.3.12\\SBCL.EXE"
                                                    "C:\\PROGRA~1\\STEELB~1\\1.0.51\\SBCL.EXE"))))
@@ -2405,7 +2475,7 @@ Operation is limited to region if a region is active."
                         (if (not (funcall-interactively #'yas-expand))
                             (funcall-interactively #'yas-insert-snippet))))
                   (global-set-key (kbd "C-c m") 'MJR-expand)))
-        (require 'yasnippet))))
+        (require 'yasnippet nil 't))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: ESS")
@@ -2424,7 +2494,8 @@ Operation is limited to region if a region is active."
                                      ("vignettes"        . ess-display-vignettes)))
           (progn (ess-toggle-underscore 't)
                  (ess-toggle-underscore nil))
-          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
+          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/Rterm.exe"
+                                                        "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
@@ -2460,6 +2531,7 @@ Operation is limited to region if a region is active."
                       (progn (ess-toggle-underscore 't)
                              (ess-toggle-underscore nil))
                       (ess-set-style 'mjr-ess-style)))))
+(require 'ess-site nil 't)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: comint")
@@ -2572,6 +2644,8 @@ Operation is limited to region if a region is active."
 (customize-set-variable  'LaTeX-item-indent               0)
 (customize-set-variable  'TeX-PDF-mode                    t)
 (customize-set-variable  'TeX-auto-save                   t)
+(customize-set-variable  'mouse-wheel-follow-mouse        t)
+(customize-set-variable  'mouse-autoselect-window         t)
 (customize-set-variable  'TeX-parse-self                  t)
 (customize-set-variable  'ansi-color-faces-vector         [default default default italic underline success warning error])
 (customize-set-variable  'ansi-color-names-vector         ["#212526" "#ff4b4b" "#b4fa70" "#fce94f" "#729fcf" "#e090d7" "#8cc4ff" "#eeeeec"])
