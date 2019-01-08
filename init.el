@@ -1602,7 +1602,7 @@ the function always returns all statistics in an alist regardless of what stats 
                                 (if (not (server-running-p))
                                     (server-start))
                                 (setenv "PAGER" "cat")
-                                (setenv "EDITOR" (format "emacsclient -s %s" server-name)))))))
+                                (setenv "EDITOR" (format "emacsclient -f %s" server-name)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
