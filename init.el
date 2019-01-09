@@ -253,6 +253,7 @@ so it gets picked up."
                          (progn (message "MJR-adjust-for-dpi-change: Windows font size set to %d for display (dpi change from %f to %f)" fnt-new-size MJR-startup-dpi now-dpi)
                                 (set-face-attribute 'default nil :family MJR-windows-font-family :height fnt-new-size)))))))))
 
+;; On I like: (set-face-attribute 'default nil :family "Consolas" :height 130)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-dired-flag-latex-junk (&optional zap-extra-hard)
   "Flag LaTeX temp files/directories for deletion.
@@ -1603,7 +1604,36 @@ the function always returns all statistics in an alist regardless of what stats 
                                     (server-start))
                                 (setenv "PAGER" "cat")
                                 (setenv "EDITOR" (format "emacsclient -f %s" server-name)))))))
-
+(if (string-match MJR-platform "WINDOWS-MGW")
+    (eval-after-load "esh-ext"
+      '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: esh-ext!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+              (defun MJR-eshell-shebang-msys64-fixer (eshell-script-interpreter-result)
+                (or (and eshell-script-interpreter-result
+                         (let ((intrp (first eshell-script-interpreter-result))
+                               (file  (second eshell-script-interpreter-result)))
+                           (dolist (rule
+                                    (list (lambda (f) f)
+                                          (lambda (f)  (replace-regexp-in-string "^/"               "c:/msys64/"               intrp 't 't))
+                                          (lambda (f)  (replace-regexp-in-string "^/bin/"           "c:/msys64/usr/bin/"       intrp 't 't)) ;; Some stuff that should be in /bin is in /usr/bin
+                                          (lambda (f)  (replace-regexp-in-string "^/bin/"           "c:/msys64/usr/local/bin/" intrp 't 't)) ;; Do wei have it in /usr/local/bin
+                                          (lambda (f)  (replace-regexp-in-string "^/usr/bin/"       "c:/msys64/usr/local/bin/" intrp 't 't))
+                                          (lambda (f)  (replace-regexp-in-string "^/bin/"           "c:/msys64/mingw64/bin/"   intrp 't 't)) ;; See if we can find it in mingw64/bin
+                                          (lambda (f)  (replace-regexp-in-string "^/usr/bin/"       "c:/msys64/mingw64/bin/"   intrp 't 't))
+                                          (lambda (f)  (replace-regexp-in-string "^/usr/local/bin/" "c:/msys64/mingw64/bin/"   intrp 't 't))
+                                          (lambda (f)  (replace-regexp-in-string "^/bin/"           "c:/msys64/mingw32/bin/"   intrp 't 't)) ;; See if we can find it in mingw32/bin
+                                          (lambda (f)  (replace-regexp-in-string "^/usr/bin/"       "c:/msys64/mingw32/bin/"   intrp 't 't))
+                                          (lambda (f)  (replace-regexp-in-string "^/usr/local/bin/" "c:/msys64/mingw32/bin/"   intrp 't 't)))
+                                    nil)
+                             (let ((intrp-new (funcall rule intrp)))
+                               (if (file-exists-p intrp-new)
+                                   (progn (message "MJR: MJR-eshell-shebang-msys64-fixer: Changed binary '%s' to '%s'" intrp intrp-new)
+                                          (return (list intrp-new file)))
+                                   (let ((intrp-new-exe (concat intrp-new ".exe")))
+                                     (if (file-exists-p intrp-new-exe)           
+                                         (progn (message "MJR: MJR-eshell-shebang-msys64-fixer: Changed binary '%s' to '%s'" intrp intrp-new-exe)
+                                                (return (list intrp-new-exe file))))))))))
+                    eshell-script-interpreter-result))
+              (advice-add 'eshell-script-interpreter :filter-return #'MJR-eshell-shebang-msys64-fixer))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (if (string-match MJR-platform "WINDOWS-MGW")
