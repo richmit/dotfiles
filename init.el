@@ -334,7 +334,9 @@ Interaction with options:
                                         * for 'elisp' .. like calling eval-expression        -- i.e. M-:
                                         * for 'lisp' ... like calling slime-interactive-eval -- i.e. C-: (in a slime buffer)"
         (interactive (list (if (require 'ido nil :noerror)
-                               (ido-completing-read "Eval how: " '("calc" "elisp" "lisp"))
+                               (ido-completing-read "Eval how: " (if (and (functionp 'slime-eval-save) (functionp 'slime-interactive-eval))
+                                                                     '("calc" "elisp" "lisp")
+                                                                     '("calc" "elisp")))
                                (read-string "Eval how: " "calc"))))
         (if (or (null transient-mark-mode) (region-active-p))
             (let* ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
@@ -1793,136 +1795,138 @@ Operation is limited to region if a region is active."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: org-mode setup...")
-(if 't ;; The big if is here so we can disable org-mode configuration before we do an ELPA package install of org...
-    (progn
-      (let ((org-path (MJR-find-newest-core-package "org")))
-        (if org-path
-            (add-to-list 'load-path (concat org-path "lisp"))))
+(if (not MJR-pookie-mode)
+    (if 't ;; The big if is here so we can disable org-mode configuration before we do an ELPA package install of org...
+        (progn
+          (let ((org-path (MJR-find-newest-core-package "org")))
+            (if org-path
+                (add-to-list 'load-path (concat org-path "lisp"))))
 
-      (require 'org-install)
-      ;;(require 'org-habit)
+          (require 'org-install)
+          ;;(require 'org-habit)
 
-      (setq org-replace-disputed-keys t)  ;; Don't override S-<arrow> keys
+          (setq org-replace-disputed-keys t)  ;; Don't override S-<arrow> keys
 
-      (if (not (require 'htmlize nil :noerror))
-          (MJR-quiet-message "MJR: INIT: PKG SETUP: htmlize: WARNING: Could not load package in init."))
+          (if (not (require 'htmlize nil :noerror))
+              (MJR-quiet-message "MJR: INIT: PKG SETUP: htmlize: WARNING: Could not load package in init."))
 
-      (org-babel-do-load-languages
-       'org-babel-load-languages
-       '((awk         . t)
-         (C           . t)
-         (css         . t)
-         (dot         . t)
-         (emacs-lisp  . t)
-         (eval        . t)
-         (fortran     . t)
-         (gnuplot     . t)
-         (java        . t)
-         (js          . t)
-         (latex       . t)
-         (lisp        . t)
-         (matlab      . t)
-         (maxima      . t)
-         (octave      . t)
-         (perl        . t)
-         (python      . t)
-         (R           . t)
-         (ruby        . t)
-         (shell       . t)
-         (sql         . t)
-         (sqlite      . t)))
+          (org-babel-do-load-languages
+           'org-babel-load-languages
+           '((awk         . t)
+             (C           . t)
+             (css         . t)
+             (dot         . t)
+             (emacs-lisp  . t)
+             (eval        . t)
+             (fortran     . t)
+             (gnuplot     . t)
+             (java        . t)
+             (js          . t)
+             (latex       . t)
+             (lisp        . t)
+             (matlab      . t)
+             (maxima      . t)
+             (octave      . t)
+             (perl        . t)
+             (python      . t)
+             (R           . t)
+             (ruby        . t)
+             (shell       . t)
+             (sql         . t)
+             (sqlite      . t)))
 
-      ;; (require 'ob)
-      ;; (require 'ob-awk)
-      ;; (require 'ob-C)
-      ;; (require 'ob-css)
-      ;; (require 'ob-dot)
-      ;; (require 'ob-emacs-lisp)
-      ;; (require 'ob-eval)
-      ;; (require 'ob-fortran)
-      ;; (require 'ob-gnuplot)
-      ;; (require 'ob-java)
-      ;; (require 'ob-js)
-      ;; (require 'ob-latex)
-      ;; (require 'ob-lisp)
-      ;; (require 'ob-matlab)
-      ;; (require 'ob-maxima)
-      ;; (require 'ob-octave)
-      ;; (require 'ob-perl)
-      ;; (require 'ob-python)
-      ;; (require 'ob-R)
-      ;; (require 'ob-ruby)
-      ;; (require 'ob-shell)
-      ;; (require 'ob-sql)
-      ;; (require 'ob-sqlite)
+          ;; (require 'ob)
+          ;; (require 'ob-awk)
+          ;; (require 'ob-C)
+          ;; (require 'ob-css)
+          ;; (require 'ob-dot)
+          ;; (require 'ob-emacs-lisp)
+          ;; (require 'ob-eval)
+          ;; (require 'ob-fortran)
+          ;; (require 'ob-gnuplot)
+          ;; (require 'ob-java)
+          ;; (require 'ob-js)
+          ;; (require 'ob-latex)
+          ;; (require 'ob-lisp)
+          ;; (require 'ob-matlab)
+          ;; (require 'ob-maxima)
+          ;; (require 'ob-octave)
+          ;; (require 'ob-perl)
+          ;; (require 'ob-python)
+          ;; (require 'ob-R)
+          ;; (require 'ob-ruby)
+          ;; (require 'ob-shell)
+          ;; (require 'ob-sql)
+          ;; (require 'ob-sqlite)
 
-      (defun MJR-org-babel-execute-src-block ()
-        "Wrap org-babel-execute-src-block"
-        (interactive)
-        (let ((org-confirm-babel-evaluate nil))
-          (funcall-interactively #'org-babel-execute-src-block)))
+          (defun MJR-org-babel-execute-src-block ()
+            "Wrap org-babel-execute-src-block"
+            (interactive)
+            (let ((org-confirm-babel-evaluate nil))
+              (funcall-interactively #'org-babel-execute-src-block)))
 
-      (defun MJR-org-babel-execute-subtree ()
-        "Wrap org-babel-execute-subtree"
-        (interactive)
-        (let ((org-confirm-babel-evaluate nil))
-          (funcall-interactively #'org-babel-execute-subtree)))
+          (defun MJR-org-babel-execute-subtree ()
+            "Wrap org-babel-execute-subtree"
+            (interactive)
+            (let ((org-confirm-babel-evaluate nil))
+              (funcall-interactively #'org-babel-execute-subtree)))
 
-      (setq org-html-head-extra "<style>pre {background-color: #0f0f0f; color: #f0f0f0;}</style>") ;; Dark background for code.
-      (setq org-html-postamble "Created with %c")
-      (setq org-src-fontify-natively t)                         ;; Prety colors
-      (setq org-src-tab-acts-natively t)                        ;; tab as in source mode
-      (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))  ;; Make sure *.org files use org-mode
-      (setq org-log-done 'time)                                 ;; Log timestamps on done TODO items
-      (setq org-indent-mode t)                                  ;; Indent stuff
-      (setq org-startup-folded nil)                             ;; Start with un-folded view
-      (setq org-export-with-sub-superscripts nil)               ;; "_" and "^" are not special
-      (setq org-confirm-babel-evaluate 't)                      ;; Ask about evals
-      (setq org-export-babel-evaluate nil)                      ;; Do NOT eval on export
-      (setq org-log-into-drawer "LOGBOOK")                      ;; Put TODO changes and notes in LOGBOOK drawer
-      (setq org-agenda-files
-            (let* ((tdp (concat MJR-home "/TODO/")))
-              (if (file-directory-p tdp)
-                  (directory-files tdp 't "\.org$"))))          ;; My generic TODO file
-      (setq org-babel-min-lines-for-block-output 0)             ;; Always put babel results in blocks
-      (add-hook 'org-mode-hook                                  ;; Get my favorite keys back
-                (lambda ()
-                  (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: org-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                  (turn-on-font-lock)
-                  (local-set-key  (kbd "C-c C-v C-s")    'MJR-org-babel-execute-subtree)   ;; use "C-c C-v s" to eval with confirmation prompts
-                  (local-set-key  (kbd "C-c C-v C-e")    'MJR-org-babel-execute-src-block) ;; use "C-c C-v e" to eval with confirmation prompts
-                  (local-set-key  (kbd "C-c a")          'org-agenda)
-                  ))
-      ;; Need to set the R path on Windows...
-      (if (string-equal MJR-platform "WINDOWS-MGW")
-          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/Rterm.exe"
-                                                        "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
-                                                        "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
-                                                        "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
-                                                        "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
-                                                        "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
-            (setq org-babel-R-command found-r)))
+          (setq org-html-head-extra "<style>pre {background-color: #0f0f0f; color: #f0f0f0;}</style>") ;; Dark background for code.
+          (setq org-html-postamble "Created with %c")
+          (setq org-src-fontify-natively t)                         ;; Prety colors
+          (setq org-src-tab-acts-natively t)                        ;; tab as in source mode
+          (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))  ;; Make sure *.org files use org-mode
+          (setq org-log-done 'time)                                 ;; Log timestamps on done TODO items
+          (setq org-indent-mode t)                                  ;; Indent stuff
+          (setq org-startup-folded nil)                             ;; Start with un-folded view
+          (setq org-export-with-sub-superscripts nil)               ;; "_" and "^" are not special
+          (setq org-confirm-babel-evaluate 't)                      ;; Ask about evals
+          (setq org-export-babel-evaluate nil)                      ;; Do NOT eval on export
+          (setq org-log-into-drawer "LOGBOOK")                      ;; Put TODO changes and notes in LOGBOOK drawer
+          (setq org-agenda-files
+                (let* ((tdp (concat MJR-home "/TODO/")))
+                  (if (file-directory-p tdp)
+                      (directory-files tdp 't "\.org$"))))          ;; My generic TODO file
+          (setq org-babel-min-lines-for-block-output 0)             ;; Always put babel results in blocks
+          (add-hook 'org-mode-hook                                  ;; Get my favorite keys back
+                    (lambda ()
+                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: org-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (turn-on-font-lock)
+                      (local-set-key  (kbd "C-c C-v C-s")    'MJR-org-babel-execute-subtree)   ;; use "C-c C-v s" to eval with confirmation prompts
+                      (local-set-key  (kbd "C-c C-v C-e")    'MJR-org-babel-execute-src-block) ;; use "C-c C-v e" to eval with confirmation prompts
+                      (local-set-key  (kbd "C-c a")          'org-agenda)
+                      ))
+          ;; Need to set the R path on Windows...
+          (if (string-equal MJR-platform "WINDOWS-MGW")
+              (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/Rterm.exe"
+                                                            "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
+                                                            "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
+                                                            "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
+                                                            "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
+                                                            "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
+                (setq org-babel-R-command found-r)))
 
-      ;; Setup orgtbl in other modes
-      (if nil
-          (dolist (m '(emacs-lisp-mode-hook
-                       fortran-mode-hook
-                       perl-mode-hook
-                       cperl-mode-hook
-                       lisp-mode-hook
-                       ess-mode-hook
-                       sh-mode-hook
-                       c++-mode-hook
-                       java-mode-hook
-                       js-mode-hook
-                       python-mode-hook
-                       ruby-mode-hook
-                       text-mode-hook
-                       html-mode-hook
-                       c-mode-hook))
-            (add-hook m (lambda ()
-                          (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: +orgtbl-mode" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                          (turn-on-orgtbl)))))))
+          ;; Setup orgtbl in other modes
+          (if nil
+              (dolist (m '(emacs-lisp-mode-hook
+                           fortran-mode-hook
+                           perl-mode-hook
+                           cperl-mode-hook
+                           lisp-mode-hook
+                           ess-mode-hook
+                           sh-mode-hook
+                           c++-mode-hook
+                           java-mode-hook
+                           js-mode-hook
+                           python-mode-hook
+                           ruby-mode-hook
+                           text-mode-hook
+                           html-mode-hook
+                           c-mode-hook))
+                (add-hook m (lambda ()
+                              (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: +orgtbl-mode" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                              (turn-on-orgtbl)))))))
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: org-mode setup suppressed in pookie-mode"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: calender (solar stuff)")
@@ -2294,9 +2298,6 @@ Operation is limited to region if a region is active."
              (autoload 'processing-mode "processing-mode" "Processing mode" t))
       (MJR-quiet-message "MJR: INIT: PKG SETUP: Processing Mode Not Found...")))
 
-;;slime-eval-save slime-interactive-eval
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: HYPERSPEC...")
 (eval-after-load "hyperspec"
@@ -2314,61 +2315,72 @@ Operation is limited to region if a region is active."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME...")
-(if (require 'slime-autoloads nil :noerror)
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: slime found in non-core...")
-    (let ((slime-path (MJR-find-newest-core-package "slime")))
-      (if slime-path
-          (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: slime found in core... %s" slime-path)
-                 (add-to-list 'load-path slime-path)
-                 (require 'slime-autoloads)))))
-(if (require 'slime-autoloads nil :noerror)
-    (eval-after-load "slime"
-      '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: slime!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-              (let ((slime-lisp-bin (find-if #'file-exists-p
-                                             (list "/usr/local/big/sbcl/1.3.11/bin/sbcl"
-                                                   "/usr/local/big/sbcl/1.3.4/bin/sbcl"
-                                                   "/usr/local/big/sbcl/1.2.14/bin/sbcl"
-                                                   "/usr/local/big/sbcl/1.2.11/bin/sbcl"
-                                                   "/home/richmit/s/linux/local/bin/sbcl"
-                                                   "/usr/local/bin/sbcl-run"
-                                                   "/usr/local/bin/sbcl"
-                                                   "/opt/local/bin/sbcl"
-                                                   "/usr/bin/sbcl"
-                                                   "C:\\PROGRA~1\\STEELB~1\\1.4.14\\SBCL.EXE"
-                                                   "C:\\PROGRA~1\\STEELB~1\\1.3.18\\SBCL.EXE"
-                                                   "C:\\PROGRA~1\\STEELB~1\\1.3.12\\SBCL.EXE"
-                                                   "C:\\PROGRA~1\\STEELB~1\\1.0.51\\SBCL.EXE"))))
-                (if slime-lisp-bin
-                    (setq inferior-lisp-program slime-lisp-bin)
-                    (MJR-quiet-message "MJR INIT: WARNING: No working lisp found"))
-                (slime-setup '(slime-repl)) ; Setup (use SLIME-REPL)
-                (setq lisp-simple-loop-indentation  1
-                      lisp-loop-keyword-indentation 6
-                      lisp-loop-forms-indentation   6)
-                (setq slime-net-coding-system 'utf-8-unix)
-                (add-hook 'lisp-mode-hook
-                          (lambda ()
-                            (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: lisp-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                            (setq slime-net-coding-system 'utf-8-unix)))
-                ;; REPL bindings
-                (define-key slime-repl-mode-map "\M-."            'slime-edit-definition-with-etags) ;; A somewhat slimey version of find-tag
-                (define-key slime-repl-mode-map "\M-,"            'tags-loop-continue)               ;; Use  tags contineu for M,
-                (define-key slime-repl-mode-map (kbd "ESC ESC .") 'slime-edit-definition)            ;; Put SLIMEy M. on MM.
-                (define-key slime-repl-mode-map (kbd "ESC ESC ,") 'slime-pop-find-definition-stack)  ;; Put SLIMEy M, on MM,
-                (define-key slime-repl-mode-map (kbd "C-p")       'slime-repl-backward-input)        ;; Previous history on C-p
-                (define-key slime-repl-mode-map (kbd "C-n")       'slime-repl-forward-input)         ;; Previous history on C-p
-                (define-key slime-repl-mode-map (kbd "C-c s")     'slime-selector)                   ;; Slime Selector
-                ;; CODE bindings
-                (define-key slime-mode-map "\M-."                 'slime-edit-definition-with-etags) ;; A somewhat slimey version of find-tag
-                (define-key slime-mode-map "\M-,"                 'tags-loop-continue)               ;; Use  tags contineu for M,
-                (define-key slime-mode-map (kbd "ESC ESC .")      'slime-edit-definition)            ;; Put SLIMEy M. on MM.
-                (define-key slime-mode-map (kbd "ESC ESC ,")      'slime-pop-find-definition-stack)  ;; Put SLIMEy M, on MM,
-                (define-key slime-mode-map (kbd "C-c s")          'slime-selector)                   ;; Slime Selector
-                ;;(define-key slime-mode-map "\M-." 'find-tag)
-                ;; M-x slime-who-calls       Show function callers.
-                ;; M-x slime-who-references  Show references to global variable.
-)))
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME Not Found..."))
+(if (not MJR-pookie-mode)
+    (progn (if (require 'slime-autoloads nil :noerror)
+               (MJR-quiet-message "MJR: INIT: PKG SETUP: slime found in non-core...")
+               (let ((slime-path (MJR-find-newest-core-package "slime")))
+                 (if slime-path
+                     (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: slime found in core... %s" slime-path)
+                            (add-to-list 'load-path slime-path)
+                            (require 'slime-autoloads)))))
+           (if (require 'slime-autoloads nil :noerror)
+               (eval-after-load "slime"
+                 '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: slime!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                         (defun MJR-slime-selector-or-run-slime (start-if-not-running)
+                           "Run slime-selector if we ahve an active connection, otherwise run slime"
+                           (interactive "P")
+                           (if (not (zerop (length slime-net-processes)))
+                               (slime-selector)
+                               (if start-if-not-running
+                                   (slime)
+                                   (message "SLIME is not running.  Run with prefix to start."))))
+                         (let ((slime-lisp-bin (find-if #'file-exists-p
+                                                        (list "/usr/local/big/sbcl/1.3.11/bin/sbcl"
+                                                              "/usr/local/big/sbcl/1.3.4/bin/sbcl"
+                                                              "/usr/local/big/sbcl/1.2.14/bin/sbcl"
+                                                              "/usr/local/big/sbcl/1.2.11/bin/sbcl"
+                                                              "/home/richmit/s/linux/local/bin/sbcl"
+                                                              "/usr/local/bin/sbcl-run"
+                                                              "/usr/local/bin/sbcl"
+                                                              "/opt/local/bin/sbcl"
+                                                              "/usr/bin/sbcl"
+                                                              "C:\\PROGRA~1\\STEELB~1\\1.4.14\\SBCL.EXE"
+                                                              "C:\\PROGRA~1\\STEELB~1\\1.3.18\\SBCL.EXE"
+                                                              "C:\\PROGRA~1\\STEELB~1\\1.3.12\\SBCL.EXE"
+                                                              "C:\\PROGRA~1\\STEELB~1\\1.0.51\\SBCL.EXE"))))
+                           (if slime-lisp-bin
+                               (setq inferior-lisp-program slime-lisp-bin)
+                               (MJR-quiet-message "MJR INIT: WARNING: No working lisp found"))
+                           (slime-setup '(slime-repl)) ; Setup (use SLIME-REPL)
+                           (setq lisp-simple-loop-indentation  1
+                                 lisp-loop-keyword-indentation 6
+                                 lisp-loop-forms-indentation   6)
+                           (setq slime-net-coding-system 'utf-8-unix)
+                           (add-hook 'lisp-mode-hook
+                                     (lambda ()
+                                       (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: lisp-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                       (setq slime-net-coding-system 'utf-8-unix)))
+                           ;;(define-key slime-mode-map "\M-." 'find-tag)
+                           ;; M-x slime-who-calls       Show function callers.
+                           ;; M-x slime-who-references  Show references to global variable.
+                           ;; REPL bindings
+                           (define-key slime-repl-mode-map "\M-."            'slime-edit-definition-with-etags) ;; A somewhat slimey version of find-tag
+                           (define-key slime-repl-mode-map "\M-,"            'tags-loop-continue)               ;; Use  tags contineu for M,
+                           (define-key slime-repl-mode-map (kbd "ESC ESC .") 'slime-edit-definition)            ;; Put SLIMEy M. on MM.
+                           (define-key slime-repl-mode-map (kbd "ESC ESC ,") 'slime-pop-find-definition-stack)  ;; Put SLIMEy M, on MM,
+                           (define-key slime-repl-mode-map (kbd "C-p")       'slime-repl-backward-input)        ;; Previous history on C-p
+                           (define-key slime-repl-mode-map (kbd "C-n")       'slime-repl-forward-input)         ;; Previous history on C-p
+                           (define-key slime-repl-mode-map (kbd "C-c r")     'MJR-slime-selector-or-run-slime)  ;; Slime Selector
+                           ;; CODE bindings
+                           (define-key slime-mode-map "\M-."                 'slime-edit-definition-with-etags) ;; A somewhat slimey version of find-tag
+                           (define-key slime-mode-map "\M-,"                 'tags-loop-continue)               ;; Use  tags contineu for M,
+                           (define-key slime-mode-map (kbd "ESC ESC .")      'slime-edit-definition)            ;; Put SLIMEy M. on MM.
+                           (define-key slime-mode-map (kbd "ESC ESC ,")      'slime-pop-find-definition-stack)  ;; Put SLIMEy M, on MM,
+                           (define-key slime-mode-map (kbd "C-c r")          'MJR-slime-selector-or-run-slime)  ;; Slime Selector
+                           ;; GLOBAL bindings
+                           (global-set-key (kbd "C-c r")     'MJR-slime-selector-or-run-slime))))
+               (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME Not Found...")))
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME setup suppressed in pookie-mode"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: ido...")
@@ -2472,40 +2484,42 @@ Operation is limited to region if a region is active."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet")
-(let ((yasnippet-snip-path (remove-if-not #'file-exists-p (list (concat MJR-home-cor   "/yasnippets")
-                                                                (concat MJR-home-cor   "/yasnippet")))))
-  (if yasnippet-snip-path
-      (progn
-        (MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet snippet directory found... %s" yasnippet-snip-path)
-        (eval-after-load "yasnippet"
-          '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: yasnippet!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                  (setq yas-snippet-dirs yasnippet-snip-path)
-                  ;; Nix the default tab binding..
-                  (define-key yas-minor-mode-map (kbd "<tab>") nil)
-                  (define-key yas-minor-mode-map (kbd "TAB")   nil)
-                  ;; Add in-key-map binding for my own expand
-                  (define-key yas-minor-mode-map (kbd "ESC ESC TAB") 'MJR-expand)
-                  ;; Nix yas-fallback behaviour so C-c m won't complain when expand fails
-                  (setq yas-fallback-behavior nil)
-                  ;; How we get some global templates
-                  (add-hook 'yas-minor-mode-hook
-                            (lambda ()
-                              (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: yas-minor-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                              (yas-activate-extra-mode 'fundamental-mode)))
-                  ;; Make yas work everyplace
-                  (yas-global-mode 1)
-                  ;; Call yas-expand or yas-insert-snippet depending on if region is active
-                  (defun MJR-expand ()
-                    "If no region is active, use yas-expand to attempt yasnippet expantion; otherwise call yas-insert-snippet."
-                    (interactive)
-                    ;; (if (not (find 'fundamental-mode minor-mode-list))
-                    ;;     (yas-activate-extra-mode 'fundamental-mode))
-                    (if (and transient-mark-mode (region-active-p))
-                        (funcall-interactively #'yas-insert-snippet)
-                        (if (not (funcall-interactively #'yas-expand))
-                            (funcall-interactively #'yas-insert-snippet))))
-                  (global-set-key (kbd "C-c m") 'MJR-expand)))
-        (require 'yasnippet nil 't))))
+(if (not MJR-pookie-mode)
+    (let ((yasnippet-snip-path (remove-if-not #'file-exists-p (list (concat MJR-home-cor   "/yasnippets")
+                                                                    (concat MJR-home-cor   "/yasnippet")))))
+      (if yasnippet-snip-path
+          (progn
+            (MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet snippet directory found... %s" yasnippet-snip-path)
+            (eval-after-load "yasnippet"
+              '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: yasnippet!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (setq yas-snippet-dirs yasnippet-snip-path)
+                      ;; Nix the default tab binding..
+                      (define-key yas-minor-mode-map (kbd "<tab>") nil)
+                      (define-key yas-minor-mode-map (kbd "TAB")   nil)
+                      ;; Add in-key-map binding for my own expand
+                      (define-key yas-minor-mode-map (kbd "ESC ESC TAB") 'MJR-expand)
+                      ;; Nix yas-fallback behaviour so C-c m won't complain when expand fails
+                      (setq yas-fallback-behavior nil)
+                      ;; How we get some global templates
+                      (add-hook 'yas-minor-mode-hook
+                                (lambda ()
+                                  (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: yas-minor-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                  (yas-activate-extra-mode 'fundamental-mode)))
+                      ;; Make yas work everyplace
+                      (yas-global-mode 1)
+                      ;; Call yas-expand or yas-insert-snippet depending on if region is active
+                      (defun MJR-expand ()
+                        "If no region is active, use yas-expand to attempt yasnippet expantion; otherwise call yas-insert-snippet."
+                        (interactive)
+                        ;; (if (not (find 'fundamental-mode minor-mode-list))
+                        ;;     (yas-activate-extra-mode 'fundamental-mode))
+                        (if (and transient-mark-mode (region-active-p))
+                            (funcall-interactively #'yas-insert-snippet)
+                            (if (not (funcall-interactively #'yas-expand))
+                                (funcall-interactively #'yas-insert-snippet))))
+                      (global-set-key (kbd "C-c m") 'MJR-expand)))
+            (require 'yasnippet nil 't))))
+    (MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet setup suppressed in pookie-mode"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: ESS")
@@ -2634,6 +2648,13 @@ Operation is limited to region if a region is active."
       ((require 'git   nil 't) (global-set-key (kbd "C-c g") 'git-status))
       ('t                      ((MJR-quiet-message "MJR INIT: WARNING: Unable to bind C-c g to #'magit-status or #'git-status"))))
 
+;; Start Slime or run slime-selector  --  R is for REPL.
+(if (not MJR-pookie-mode)
+    (if (require 'slime-autoloads nil :noerror)
+        (if (functionp 'MJR-slime-selector-or-run-slime)
+            (global-set-key (kbd "C-c r") 'MJR-slime-selector-or-run-slime)
+            (global-set-key (kbd "C-c r") (lambda (p) (interactive "P") (if p (slime) (message "SLIME not loaded.  Run again with prefix arg to start SLIME")))))))
+
 ;; Random key bindings
 (global-set-key (kbd "C-x r a")   'append-to-register)
 (global-set-key (kbd "ESC ESC y") '(lambda () (interactive) (popup-menu 'yank-menu)))
@@ -2653,10 +2674,8 @@ Operation is limited to region if a region is active."
 (global-set-key (kbd "C-c v")     'MJR-view-file-or-url-at-point)
 (global-set-key (kbd "M-<f11>")   'toggle-frame-fullscreen) ;; This is the same binding used by mintty. ;)
 ;global-set-key (kbd "C-c m")     'MJR-expand        ;;; Set in mode code: yasnippet
-;global-set-key (kbd "C-c s")     'slime-selector    ;;; Set in mode code: slime
 ;global-set-key (kbd "C-c h")     'MJR-hs-toggle     ;;; Set in mode code: hs-minor-mode
 (global-set-key (kbd "C-t")       'yank) ;; For split keyboards...
-
 ;; Not global, but the mini-buffer is kinda everyplace...
 (define-key minibuffer-local-map (kbd "C-p") 'previous-history-element)
 (define-key minibuffer-local-map (kbd "C-n") 'next-history-element)
