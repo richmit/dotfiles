@@ -2655,6 +2655,9 @@ Operation is limited to region if a region is active."
             (global-set-key (kbd "C-c r") 'MJR-slime-selector-or-run-slime)
             (global-set-key (kbd "C-c r") (lambda (p) (interactive "P") (if p (slime) (message "SLIME not loaded.  Run again with prefix arg to start SLIME")))))))
 
+(if (not MJR-pookie-mode)
+    (global-set-key (kbd "C-c a")     'org-agenda))
+
 ;; Random key bindings
 (global-set-key (kbd "C-x r a")   'append-to-register)
 (global-set-key (kbd "ESC ESC y") '(lambda () (interactive) (popup-menu 'yank-menu)))
@@ -2662,8 +2665,8 @@ Operation is limited to region if a region is active."
 (global-set-key (kbd "ESC ESC ;") 'MJR-quick-code-comment)
 (global-set-key (kbd "ESC ESC :") 'MJR-eval-region)
 (global-set-key (kbd "ESC =")     'MJR-describe-region-or-char)
-(global-set-key (kbd "C-c a")     'org-agenda)
 (global-set-key (kbd "C-c b")     'browse-url)
+(global-set-key (kbd "C-c s")     (lambda () (interactive) (kill-buffer) (delete-frame))) ;; Close buffer and delete frame
 (global-set-key (kbd "C-c c")     'compile)
 (global-set-key (kbd "C-c d")     'MJR-date)
 (global-set-key (kbd "C-c e")     'MJR-open-cwd)
