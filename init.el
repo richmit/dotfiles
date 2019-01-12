@@ -2658,6 +2658,9 @@ Operation is limited to region if a region is active."
 (if (not MJR-pookie-mode)
     (global-set-key (kbd "C-c a")     'org-agenda))
 
+(if MJR-pookie-mode
+    (global-set-key (kbd "C-c x")     (lambda () (interactive) (kill-buffer) (delete-frame)))) ;; Close buffer and delete frame
+
 ;; Random key bindings
 (global-set-key (kbd "C-x r a")   'append-to-register)
 (global-set-key (kbd "ESC ESC y") '(lambda () (interactive) (popup-menu 'yank-menu)))
@@ -2666,7 +2669,6 @@ Operation is limited to region if a region is active."
 (global-set-key (kbd "ESC ESC :") 'MJR-eval-region)
 (global-set-key (kbd "ESC =")     'MJR-describe-region-or-char)
 (global-set-key (kbd "C-c b")     'browse-url)
-(global-set-key (kbd "C-c s")     (lambda () (interactive) (kill-buffer) (delete-frame))) ;; Close buffer and delete frame
 (global-set-key (kbd "C-c c")     'compile)
 (global-set-key (kbd "C-c d")     'MJR-date)
 (global-set-key (kbd "C-c e")     'MJR-open-cwd)
@@ -2679,6 +2681,7 @@ Operation is limited to region if a region is active."
 ;global-set-key (kbd "C-c m")     'MJR-expand        ;;; Set in mode code: yasnippet
 ;global-set-key (kbd "C-c h")     'MJR-hs-toggle     ;;; Set in mode code: hs-minor-mode
 (global-set-key (kbd "C-t")       'yank) ;; For split keyboards...
+
 ;; Not global, but the mini-buffer is kinda everyplace...
 (define-key minibuffer-local-map (kbd "C-p") 'previous-history-element)
 (define-key minibuffer-local-map (kbd "C-n") 'next-history-element)
