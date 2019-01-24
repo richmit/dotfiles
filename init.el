@@ -1362,9 +1362,12 @@ the function always returns all statistics in an alist regardless of what stats 
 (MJR-quiet-message "MJR: INIT: PKG SETUP: epa-file")
 (eval-after-load "epa-file"
   '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: epa-file!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-          (let ((sepath (find-if #'file-exists-p '("c:Program Files (x86)/GnuPG/bin/gpg.exe"))))
-            (if sepath
-                (custom-set-variables '(epg-gpg-program  "c:Program Files (x86)/GnuPG/bin/gpg.exe"))))))
+          (if (string-match MJR-platform "WINDOWS-MGW")
+              (let ((gpgpath (find-if #'file-exists-p '("C:\\PROGRA~2\\GnuPG\\bin"
+                                                        "C:\\PROGRA~1\\GnuPG\\bin"))))
+                (if gpgpath  (progn (custom-set-variables '(epg-gpg-program  (concat gpgpath "\\gpg.exe")))
+                                    (setenv "PATH" (concat gpgpath ":" (getenv "PATH")))
+                                    (setq exec-path (append (list gpgpath) exec-path))))))))
 ;;(require 'epa-file nil :noerror)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1444,7 +1447,8 @@ the function always returns all statistics in an alist regardless of what stats 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: cmake")
 (let ((cmake-path (find-if (lambda (p) (file-exists-p (concat p "/cmake-mode.el")))
-                           (list "C:\\msys64\\mingw64\\share\\cmake-3.11\\editors\\emacs"
+                           (list "C:\\msys64\\usr\\share\\cmake-3.13.2\\editors\\emacs"
+                                 "C:\\msys64\\mingw64\\share\\cmake-3.11\\editors\\emacs"
                                  "/usr/local/big/cmake/3.6.2/share/cmake-3.6/editors/emacs"
                                  "/usr/local/big/cmake/3.3.2/share/cmake-3.3/editors/emacs"
                                  "/usr/share/cmake-3.0/editors/emacs"))))
@@ -2042,7 +2046,7 @@ Operation is limited to region if a region is active."
                                      (c-offsets-alist (inclass         . ++)
                                                       (namespace-open  . 0)
                                                       (namespace-close . 0)
-                                                      (innamespace     . 0)
+                                                      (innamespace     . 2)
                                                       (arglist-close   . c-lineup-close-paren)
                                                       (access-label    . -)
                                                       (case-label      . +)
@@ -2067,6 +2071,24 @@ Operation is limited to region if a region is active."
                       (setq fortran-comment-indent-char " ")
                       (setq fortran-blink-matching-if   t)
                       (setq fortran-comment-region      "c     "))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "MJR: INIT: SETUP: Meta Windows TeX Live setup...")
+(if (not (or (string-equal MJR-platform "WINDOWS-MGW")
+             (string-equal MJR-platform "WINDOWS-CYG")))
+    (MJR-quiet-message "MJR: INIT: Meta Windows TeX Live setup: NOP. Not on windows. ")
+    (if (let ((case-fold-search 't))
+          (string-match "texlive" (getenv "PATH")))
+        (MJR-quiet-message "MJR: INIT: Meta Windows TeX Live setup: NOP. PATH appears to already have TeX")
+        (let ((texlive-path (find-if #'file-exists-p
+                                     (list "C:/texlive/2018/bin/win32/"
+                                           "C:/texlive/2017/bin/win32/"))))
+          (if (not texlive-path)
+              (MJR-quiet-message "MJR: INIT: Meta Windows TeX Live setup: NOP. Couldn't find TeX")
+              (progn (MJR-quiet-message "MJR: INIT: Meta Windows TeX Live setup: Adjusting PATH for TeX")
+                     (setenv "PATH" (concat texlive-path ":" (getenv "PATH")))
+                     (setq exec-path (append (list texlive-path) exec-path)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: perl-mode setup...")
