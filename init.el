@@ -2047,7 +2047,8 @@ Operation is limited to region if a region is active."
                                                       (namespace-open  . 0)
                                                       (namespace-close . 0)
                                                       (innamespace     . 2)
-                                                      (arglist-close   . c-lineup-close-paren)
+                                                      (arglist-close    . c-lineup-close-paren)
+                                                      (brace-list-close . c-lineup-close-paren)
                                                       (access-label    . -)
                                                       (case-label      . +)
                                                       (c               . (lambda (langelem) ;; For doxygen do c-lineup-dont-change, else do c-lineup-C-comments
