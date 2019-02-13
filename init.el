@@ -937,6 +937,17 @@ The 'MJR' comments come in one of two forms:
             #'symbol-at-point
             (list (lambda (thingy) (hyperspec-lookup (symbol-name thingy)))))
       MJR-thingy-lookeruper-methods)
+;; Lookup a symbol in an interactive SLIME REPL or common lisp buffer in the hyperspec
+(push (list "cl-symbol"
+            (list "^slime-repl-mode$" "^lisp-mode$")
+            (lambda () (let ((sym-thingy (symbol-at-point)))
+                         (if (and sym-thingy (not (zerop (length slime-net-processes))))
+                             (let ((str-thingy (substring-no-properties (symbol-name sym-thingy))))
+                               (if (string-match "^[:']" str-thingy)
+                                   (substring str-thingy 1)
+                                   str-thingy)))))
+            (list (lambda (thingy) (slime-describe-symbol thingy))))
+      MJR-thingy-lookeruper-methods)
 ;; Lookup a symbol via devdocs.io for ruby, perl, & python buffers
 (push (list "devdocs.io"
             (list "^ruby-mode$" "^perl-mode$" "^python-mode$" "^c\\+\\+-mode$")
@@ -2030,38 +2041,49 @@ Operation is limited to region if a region is active."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: c-mode setup...")
-(add-hook 'c-mode-common-hook
-          (function (lambda ()
-                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: c-mode-common-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                      (setq c-inhibit-startup-warnings-p   t)
-                      (setq c-echo-syntactic-information-p nil)
-                      (setq c-progress-interval            1)
-                      (c-add-style "MJR"
-                                   `("k&r"
-                                     (c-doc-comment-style        . 'javadoc)
-                                     (c-tab-always-indent        . t)
-                                     (c-recognize-knr-p          . nil)
-                                     (c-basic-offset             . 2)
-                                     (c-comment-only-line-offset . 0)
-                                     (c-offsets-alist (inclass         . ++)
-                                                      (namespace-open  . 0)
-                                                      (namespace-close . 0)
-                                                      (innamespace     . 2)
-                                                      (arglist-close    . c-lineup-close-paren)
-                                                      (brace-list-close . c-lineup-close-paren)
-                                                      (access-label    . -)
-                                                      (case-label      . +)
-                                                      (c               . (lambda (langelem) ;; For doxygen do c-lineup-dont-change, else do c-lineup-C-comments
-                                                                           (let* ((root-pos (c-langelem-pos langelem))
-                                                                                  (root-col (c-langelem-col langelem 't))
-                                                                                  (root-str (substring-no-properties (buffer-substring root-pos
-                                                                                                                                       (min (+ root-pos 4)
-                                                                                                                                            (point-max))))))
-                                                                             (if (string-equal root-str "/**\n") ;; Doxygen comments match this EXACT string...
-                                                                                 (c-lineup-dont-change langelem)
-                                                                                 (c-lineup-C-comments langelem))))))))
-                      (c-set-style "MJR")
-                      (local-set-key "\C-c\C-c" 'compile))))
+(add-hook 'c-initialization-hook
+          (lambda ()
+            (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: c-initialization-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+            (c-add-style "MJR"
+                         `("k&r"
+                           (c-doc-comment-style        . 'javadoc)
+                           (c-tab-always-indent        . t)
+                           (c-recognize-knr-p          . nil)
+                           (c-basic-offset             . 2)
+                           (c-comment-only-line-offset . 0)
+                           (c-offsets-alist (inclass         . ++)
+                                            (namespace-open  . 0)
+                                            (namespace-close . 0)
+                                            (innamespace     . 2)
+                                            (arglist-close    . c-lineup-close-paren)
+                                            (brace-list-close . c-lineup-close-paren)
+                                            (access-label    . -)
+                                            (case-label      . +)
+                                            (c               . (lambda (langelem) ;; For doxygen do c-lineup-dont-change, else do c-lineup-C-comments
+                                                                 (let* ((root-pos (c-langelem-pos langelem))
+                                                                        (root-col (c-langelem-col langelem 't))
+                                                                        (root-str (substring-no-properties (buffer-substring root-pos
+                                                                                                                             (min (+ root-pos 4)
+                                                                                                                                  (point-max))))))
+                                                                   (if (string-equal root-str "/**\n") ;; Doxygen comments match this EXACT string...
+                                                                       (c-lineup-dont-change langelem)
+                                                                       (c-lineup-C-comments langelem))))))))
+            (add-hook 'c-mode-common-hook
+                      (function (lambda ()
+                                  (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: c-mode-common-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                  (setq c-inhibit-startup-warnings-p   t)
+                                  (setq c-echo-syntactic-information-p nil)
+                                  (setq c-progress-interval            1)
+                                  ;; A little hack for cmake projects using my typical project directory structure
+                                  (if (and (file-exists-p "../build")
+                                           (file-exists-p "../CMakeLists.txt")
+                                           (or (file-exists-p "../build/Makefile")
+                                               (file-exists-p "../build/makefile"))
+                                           (buffer-file-name))
+                                      (set (make-local-variable 'compile-command)
+	                                       (concat "make -C ../build " (shell-quote-argument (file-name-sans-extension  (file-name-nondirectory (buffer-file-name)))))))
+                                  (c-set-style "MJR")
+                                  (local-set-key "\C-c\C-c" 'compile))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: PKG SETUP: fortran-mode setup...")
@@ -2072,7 +2094,6 @@ Operation is limited to region if a region is active."
                       (setq fortran-comment-indent-char " ")
                       (setq fortran-blink-matching-if   t)
                       (setq fortran-comment-region      "c     "))))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "MJR: INIT: SETUP: Meta Windows TeX Live setup...")
