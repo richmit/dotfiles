@@ -44,10 +44,10 @@
 (custom-theme-set-faces
  'mjr-dark
  '(default                                    ((t (:background "black" :foreground "WhiteSmoke"))))
- '(fixed-pitch                                ((t :inherit 'default)))
- 
+ '(fixed-pitch                                ((t :inherit 'default))) 
  '(font-lock-builtin-face                     ((t (:foreground "LightSteelBlue"))))
  '(font-lock-constant-face                    ((t (:foreground "LightSlateBlue"    :bold t))))
+ '(font-lock-reference-face                   ((t (:foreground "LightSlateBlue"    :bold t))))
  '(font-lock-preprocessor-face                ((t (:foreground "CornFlowerBlue"                            :italic n :slant normal))))
  '(font-lock-keyword-face                     ((t (:foreground "cyan1"))))
  '(font-lock-type-face                        ((t (:foreground "SteelBlue1"))))

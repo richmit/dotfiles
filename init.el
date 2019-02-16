@@ -2172,6 +2172,7 @@ Operation is limited to region if a region is active."
                                "/usr/share/maxima/5.38.1/emacs/"                                    ;; Standard location for Debian 9
                                "/usr/share/maxima/5.34.1/emacs/"                                    ;; Standard location for Debian 8
                                "/usr/share/maxima/5.21.1/emacs"                                     ;; Standard location for Ubuntu 11.04
+                               "C:/maxima-5.42.1/share/maxima/5.42.1/emacs/"                        ;; Standard location on Windows 10
                                "C:/maxima-5.40.0/share/maxima/5.40.0/emacs/"))))                    ;; Standard location on Windows 10
   (if max-path
       (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: Specific version of maxima.el found...")
@@ -2191,6 +2192,7 @@ Operation is limited to region if a region is active."
                                                       "/opt/local/bin/maxima"                               ;; Typical MacOS X with macports
                                                       "/usr/local/bin/maxima"                               ;; Typical place
                                                       "/usr/bin/maxima"                                     ;; Standard place for Debian & Ubuntu
+                                                      "C:/maxima-5.42.1/bin/maxima.bat"                     ;; Standard location on Windows 10                                                      
                                                       "C:/maxima-5.40.0/bin/maxima.bat"))))                 ;; Standard location on Windows 10
                          (if max-cmd
                              (progn
