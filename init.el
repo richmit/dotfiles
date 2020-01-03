@@ -86,21 +86,21 @@
 (require 'cl)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun MJR-quiet-message (&rest rest)
+(defun MJR-quiet-message (fmt &rest rest)
   "Log a message to the *Messages* buffer, but do not display the message"
   (let ((inhibit-message 't))
-    (apply #'message rest)))
+    (apply #'message (concat "MJRM(" (format-time-string "%Y-%m-%d_%H:%M:%S.%3N" (current-time)) "): " fmt) rest)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Pre-Customizing Emacs (performance tweaks)....")
+(MJR-quiet-message "INIT: STAGE: Pre-Customizing Emacs (performance tweaks)....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq gc-cons-threshold 50000000)
 (add-hook 'emacs-startup-hook (lambda ()
-                                (message "MJR: POST-INIT: HOOK: emacs-startup-hook")
+                                (message "POST-INIT: HOOK: emacs-startup-hook")
                                 (setq gc-cons-threshold 800000)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config...")
+(MJR-quiet-message "INIT: STAGE: Manual-Meta-Config...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Set to "auto-config" and the values will be set to a best guess, or hard-wire the value to something here.
@@ -114,18 +114,18 @@
 (defvar MJR-location    "auto-config")
 (defvar MJR-platform    "auto-config")
 
-(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-expert-mode: %s" MJR-expert-mode)
-(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-pookie-mode: %s" MJR-pookie-mode)
-(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-uname:       %s" MJR-uname)
-(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home:        %s" MJR-home)
-(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-bin:    %s" MJR-home-bin)
-(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-cor:    %s" MJR-home-cor)
-(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: MJR-home-dot:    %s" MJR-home-dot)
-(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: LOCATION:        %s" MJR-location)
-(MJR-quiet-message "MJR: INIT: STAGE: Manual-Meta-Config: PLATFORM:        %s" MJR-platform)
+(MJR-quiet-message "INIT: STAGE: Manual-Meta-Config: MJR-expert-mode: %s" MJR-expert-mode)
+(MJR-quiet-message "INIT: STAGE: Manual-Meta-Config: MJR-pookie-mode: %s" MJR-pookie-mode)
+(MJR-quiet-message "INIT: STAGE: Manual-Meta-Config: MJR-uname:       %s" MJR-uname)
+(MJR-quiet-message "INIT: STAGE: Manual-Meta-Config: MJR-home:        %s" MJR-home)
+(MJR-quiet-message "INIT: STAGE: Manual-Meta-Config: MJR-home-bin:    %s" MJR-home-bin)
+(MJR-quiet-message "INIT: STAGE: Manual-Meta-Config: MJR-home-cor:    %s" MJR-home-cor)
+(MJR-quiet-message "INIT: STAGE: Manual-Meta-Config: MJR-home-dot:    %s" MJR-home-dot)
+(MJR-quiet-message "INIT: STAGE: Manual-Meta-Config: LOCATION:        %s" MJR-location)
+(MJR-quiet-message "INIT: STAGE: Manual-Meta-Config: PLATFORM:        %s" MJR-platform)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config...")
+(MJR-quiet-message "INIT: STAGE: Auto-Meta-Config...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (cl-flet ((set-if-auto-config (var val)
                            (if (string-equal (symbol-value var) "auto-config")
@@ -179,38 +179,38 @@
                                           ((string-match "darwin"    system-configuration) "DARWIN")
                                           ('t                                              "UNKNOWN"))))
 
-(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-expert-mode: %s" MJR-expert-mode)
-(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-pookie-mode: %s" MJR-pookie-mode)
-(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-uname:       %s" MJR-uname)
-(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home:        %s" MJR-home)
-(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home-bin:    %s" MJR-home-bin)
-(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home-cor:    %s" MJR-home-cor)
-(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: MJR-home-dot:    %s" MJR-home-dot)
-(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: LOCATION:        %s" MJR-location)
-(MJR-quiet-message "MJR: INIT: STAGE: Auto-Meta-Config: PLATFORM:        %s" MJR-platform)
+(MJR-quiet-message "INIT: STAGE: Auto-Meta-Config: MJR-expert-mode: %s" MJR-expert-mode)
+(MJR-quiet-message "INIT: STAGE: Auto-Meta-Config: MJR-pookie-mode: %s" MJR-pookie-mode)
+(MJR-quiet-message "INIT: STAGE: Auto-Meta-Config: MJR-uname:       %s" MJR-uname)
+(MJR-quiet-message "INIT: STAGE: Auto-Meta-Config: MJR-home:        %s" MJR-home)
+(MJR-quiet-message "INIT: STAGE: Auto-Meta-Config: MJR-home-bin:    %s" MJR-home-bin)
+(MJR-quiet-message "INIT: STAGE: Auto-Meta-Config: MJR-home-cor:    %s" MJR-home-cor)
+(MJR-quiet-message "INIT: STAGE: Auto-Meta-Config: MJR-home-dot:    %s" MJR-home-dot)
+(MJR-quiet-message "INIT: STAGE: Auto-Meta-Config: LOCATION:        %s" MJR-location)
+(MJR-quiet-message "INIT: STAGE: Auto-Meta-Config: PLATFORM:        %s" MJR-platform)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: initializing package manager packages...")
+(MJR-quiet-message "INIT: STAGE: initializing package manager packages...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq package-enable-at-startup nil)
 (package-initialize)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Require Section...")
+(MJR-quiet-message "INIT: STAGE: Require Section...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'compile)
 (require 'paren)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Autoloads for things in init file...")
+(MJR-quiet-message "INIT: STAGE: Autoloads for things in init file...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (autoload 'thing-at-point-looking-at "thingatpt"  "Return non-nil if point is in or just after a match for REGEXP." t)
 (autoload 'thing-at-point            "thingatpt"  "Return string for thing at point."                               t)
 (autoload 'image-mode-as-text        "image-mode" "Load image as text")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions..")
+(MJR-quiet-message "INIT: STAGE: Define MJR Functions..")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -240,7 +240,7 @@ so it gets picked up."
                  MJR-windows-font-family      "Consolas" ;; Good fonts: Consolas, Courier New, Lucida Console
                  MJR-windows-font-target-size 120)
            (set-face-attribute 'default nil :family MJR-windows-font-family :height MJR-windows-font-target-size)
-           (MJR-quiet-message "MJR: INIT: STAGE: Windows font setup (%s at %d for %d DPI display!" MJR-windows-font-family MJR-windows-font-target-size MJR-startup-dpi)
+           (MJR-quiet-message "INIT: STAGE: Windows font setup (%s at %d for %d DPI display!" MJR-windows-font-family MJR-windows-font-target-size MJR-startup-dpi)
            (defun MJR-adjust-for-dpi-change ()
              "On Windows: If the DPI changes after Emacs startup, this function will attmpt adjust the font size accordingly."
              (interactive)
@@ -380,12 +380,12 @@ Interaction with options:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-bin "/curl"))
     (progn
-      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-insert-from-web: DEFINED!")
+      (MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-insert-from-web: DEFINED!")
       (defun MJR-insert-from-web (url)
         "Insert snippet from web."
         (interactive (list (read-string "URL: " "https://www.mitchr.me/")))
         (call-process-shell-command (concat MJR-home-bin "/curl -s" url) nil 't nil)))
-    (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-insert-from-web: NOT defined!  We could not find the curl command"))
+    (MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-insert-from-web: NOT defined!  We could not find the curl command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-describe-region-or-char ()
@@ -416,9 +416,9 @@ Intended to be bound to M-=.  When mark=point or no mar, call describe-char.  Ot
                                                                                                                                  (cons "PNG"  "mjrimgview"))))
                                                                             "xdg-open")))
                                                                (start-process-shell-command ttr ttr (concat ttr " " fap))))
-                  ('t                                        (message "MJR: MJR-view-file-or-url-at-point: ERROR: Found a file, but patform is unknown")))
-            (message "MJR: MJR-view-file-or-url-at-point: ERROR: File a name at point, but it did not exist in the filesystem: %s" fap))
-        (message "MJR: MJR-view-file-or-url-at-point: ERROR: Cound not find a filename name at point!"))))
+                  ('t                                        (message "MJR-view-file-or-url-at-point: ERROR: Found a file, but patform is unknown")))
+            (message "MJR-view-file-or-url-at-point: ERROR: File a name at point, but it did not exist in the filesystem: %s" fap))
+        (message "MJR-view-file-or-url-at-point: ERROR: Cound not find a filename name at point!"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-follow-mode ()
@@ -443,10 +443,10 @@ The number of verical windows will be min(8, max(2, prefix-arg))"
         ((string-equal MJR-platform "LINUX")       (let ((fme (find-if #'executable-find (list "dolphin" "nautilus"))))
                                                      (if fme
                                                          (start-process "file-explorer" nil fme (expand-file-name "."))
-                                                         (message "MJR: MJR-open-cwd: ERROR: Could not find file manager binary"))))))
+                                                         (message "MJR-open-cwd: ERROR: Could not find file manager binary"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-unfill: DEFINED!")
+(MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-unfill: DEFINED!")
 (defun MJR-unfill ()
   "Unfill paragraph or region."
   (interactive "*")
@@ -454,7 +454,7 @@ The number of verical windows will be min(8, max(2, prefix-arg))"
     (fill-paragraph nil (region-active-p))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-date: DEFINED!")
+(MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-date: DEFINED!")
 (defun MJR-date (date-stamp-format)
   "Insert the date at the point when called interactively
 
@@ -516,7 +516,7 @@ When not called interactively, this function returns the time as a string.  The 
              'self-insert-uses-region-functions))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-quick-code-comment: DEFINED!")
+(MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-quick-code-comment: DEFINED!")
 (defun MJR-quick-code-comment (lab-tag date-stamp-format)
   "Add 'MJR' comment at point/around region.  Time stamp determined by prefix argument (See: MJR-date).
 
@@ -579,7 +579,7 @@ The 'MJR' comments come in one of two forms:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-cor "/codeBits/cheaderSTD.txt"))
     (progn
-      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-fix-c-includes: DEFINED!")
+      (MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-fix-c-includes: DEFINED!")
       (defun MJR-fix-c-includes ()
         "Fixes C/C++ #include lines to match my standard header format.
 
@@ -631,12 +631,12 @@ The 'MJR' comments come in one of two forms:
                 line-change-count)
               (save-excursion
                 (funcall proc-buffer))))))
-    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-fix-c-includes: NOT defined!  We could not find the codeBits/cheaderSTD.txt file!"))
+    (message "INIT: STAGE: Define MJR Functions: MJR-fix-c-includes: NOT defined!  We could not find the codeBits/cheaderSTD.txt file!"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-cor "/codeBits/"))
     (progn
-      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-prepend-header: DEFINED!")
+      (MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-prepend-header: DEFINED!")
       (defun MJR-prepend-header (cat-str file-type)
         "Determine the buffer file type, and populate the buffer with an appropriate header and, if the buffer is empty, a template.
 
@@ -688,17 +688,17 @@ The 'MJR' comments come in one of two forms:
                             (if do-template
                                 (if  (file-readable-p tpl-file-name)
                                      (insert-file-contents tpl-file-name)
-                                     (MJR-quiet-message "MJR: MJR-prepend-header: ERROR: Could not find TEMPLATE file for this file type")))
-                            (message "MJR: MJR-prepend-header: INFO: Header prepended"))
-                          (message "MJR: MJR-prepend-header: ERROR: Found TOP file, but can not read it"))
-                      (message "MJR: MJR-prepend-header: ERROR: Could not find TOP file for this file type")))
-                (message "MJR: MJR-prepend-header: ERROR: Could not figure out file type"))))))
-    (message "MJR: INIT: STAGE: Define MJR Functions: MJR-prepend-header: NOT defined!  We could not find the codeBits directory!"))
+                                     (MJR-quiet-message "MJR-prepend-header: ERROR: Could not find TEMPLATE file for this file type")))
+                            (message "MJR-prepend-header: INFO: Header prepended"))
+                          (message "MJR-prepend-header: ERROR: Found TOP file, but can not read it"))
+                      (message "MJR-prepend-header: ERROR: Could not find TOP file for this file type")))
+                (message "MJR-prepend-header: ERROR: Could not figure out file type"))))))
+    (message "INIT: STAGE: Define MJR Functions: MJR-prepend-header: NOT defined!  We could not find the codeBits directory!"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-bin "/latexit.rb"))
     (progn
-      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-latexit: DEFINED!")
+      (MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-latexit: DEFINED!")
       (defun MJR-latexit ()
         "This function runs latex on the highlighted region, and displays the result with xpdf.
 
@@ -708,14 +708,14 @@ The 'MJR' comments come in one of two forms:
                (reg-max  (if (mark) (max (point) (mark)) (point-max))))
           (if (file-exists-p (concat MJR-home-bin "/latexit.rb"))
               (shell-command-on-region reg-min reg-max (concat MJR-home-bin "/latexit.rb -"))
-              (message "MJR: MJR-latexit: ERROR: Could not find the latexit.rb command!")))))
-    (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-latexit: NOT defined!  We could not find the latexit.rb command"))
+              (message "MJR-latexit: ERROR: Could not find the latexit.rb command!")))))
+    (MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-latexit: NOT defined!  We could not find the latexit.rb command"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (and (string-equal MJR-location "WORK:TI")
          (file-exists-p "/usr/local/bin/de"))
     (progn
-      (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-de: DEFINED!")
+      (MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-de: DEFINED!")
       (defun MJR-de (at-2-get pfx-arg srch-str)
         "Lookup the people in LDAP
 
@@ -769,10 +769,10 @@ The 'MJR' comments come in one of two forms:
                     (message "MJR-de: ERROR: The 'de' utility was not found!"))
                 (message "MJR-de: ERROR: The search string is probably wrong: %s" srch-str))
             (message "MJR-de: ERROR: Could not figure out what to surch for.  Try marking some text."))))
-    (MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-de: ERROR: Not defined!  Not at TI"))
+    (MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-de: ERROR: Not defined!  Not at TI"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-thingy-lookeruper: DEFINED!")
+(MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-thingy-lookeruper: DEFINED!")
 
 (defvar MJR-thingy-lookeruper-methods nil
   "A list defineing various things that may be looked up via MJR-thingy-lookeruper.  Each entry is a list containing three values:
@@ -1042,7 +1042,7 @@ gid, host name, dictionary word, and Google search."
         (message "MJR-thingy-lookeruper: Unable to find working lookup command for %s!" lookup-method))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;g
-(MJR-quiet-message "MJR: INIT: STAGE: Define MJR Functions: MJR-stats-numbers-in-column: DEFINED!")
+(MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-stats-numbers-in-column: DEFINED!")
 (defun MJR-stats-numbers-in-column (start end &optional prefix-or-stats-wanted)
   "Compute statistics for numbers in a column.  Rsults are  put on the kill ring.
 
@@ -1110,7 +1110,7 @@ the function always returns all statistics in an alist regardless of what stats 
     stat-alist))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Generic Global Emacs Config Stuff...")
+(MJR-quiet-message "INIT: STAGE: Generic Global Emacs Config Stuff...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (if MJR-pookie-mode
@@ -1280,22 +1280,22 @@ the function always returns all statistics in an alist regardless of what stats 
                                   " "))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Built-in Mode Config...")
+(MJR-quiet-message "INIT: STAGE: Built-in Mode Config...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: man")
+(MJR-quiet-message "INIT: PKG SETUP: man")
 (if (string-equal MJR-platform "WINDOWS-MGW")
     (eval-after-load "man"
-      '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: man" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+      '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: man")
               (if (file-exists-p "/msys64/usr/share/man")
                   (setenv "MANPATH" "/usr/share/man")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: vc")
+(MJR-quiet-message "INIT: PKG SETUP: vc")
 ;; Use ediff for = binding
 (eval-after-load "vc-hooks"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: vc-hooks" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: vc-hooks")
           (define-key vc-prefix-map "=" 'vc-ediff)))
 ;; No confirmation for C-x v v and C-x v i, and C-x v u
 (setq vc-suppress-confirm 't)
@@ -1309,27 +1309,27 @@ the function always returns all statistics in an alist regardless of what stats 
 (setq ediff-merge-split-window-function 'split-window-vertically)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (MJR-quiet-message "MJR: INIT: PKG SETUP: semantic")
+;; (MJR-quiet-message "INIT: PKG SETUP: semantic")
 ;; (require 'semantic)
 ;; (setq semantic-decoration-styles nil)
 ;; (semantic-mode 1)
 ;; (require 'semantic/sb)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: rmail")
+(MJR-quiet-message "INIT: PKG SETUP: rmail")
 (eval-after-load "rmail"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: rmail!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: rmail!")
           (let ((sepath (find-if #'file-exists-p '("/Users/Shared/mail/"))))
             (if sepath
                 (setq rmail-secondary-file-directory sepath)))
           (setq rmail-secondary-file-regexp "\\.")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: browse-url")
+(MJR-quiet-message "INIT: PKG SETUP: browse-url")
 ;; Need this if we support %B in MJR-thingy-lookeruper
 ;(autoload 'browse-url-encode-url "browse-url" "Escape annoying characters in URL that will confuse a web browser." t)
 (eval-after-load "browse-url"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: browse-url!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: browse-url!")
           ;; Use firefox
           (setq browse-url-browser-function
                 (list (cons "hyperspec"                  #'eww-browse-url)
@@ -1370,9 +1370,9 @@ the function always returns all statistics in an alist regardless of what stats 
                   (setq browse-url-firefox-program (concat MJR-home-bin "/browser"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: epa-file")
+(MJR-quiet-message "INIT: PKG SETUP: epa-file")
 (eval-after-load "epa-file"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: epa-file!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: epa-file!")
           (if (string-match MJR-platform "WINDOWS-MGW")
               (let ((gpgpath (find-if #'file-exists-p '("C:\\PROGRA~2\\GnuPG\\bin"
                                                         "C:\\PROGRA~1\\GnuPG\\bin"))))
@@ -1382,7 +1382,7 @@ the function always returns all statistics in an alist regardless of what stats 
 ;;(require 'epa-file nil :noerror)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: time")
+(MJR-quiet-message "INIT: PKG SETUP: time")
 (if (require 'time nil :noerror)
     (progn
       ;; Time zone list for display-time-world
@@ -1409,20 +1409,20 @@ the function always returns all statistics in an alist regardless of what stats 
                                       ("Europe/Paris"         "Nice")
                                       ("Asia/Calcutta"        "Bangalore")
                                       ("Asia/Tokyo"           "Tokyo"))))
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: time: WARNING: Could not load package"))
+    (MJR-quiet-message "INIT: PKG SETUP: time: WARNING: Could not load package"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: server")
+(MJR-quiet-message "INIT: PKG SETUP: server")
 (eval-after-load "server"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: server" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: server")
           ;; Set a default name for the server each emacs instance will create
           (setq server-name (format "mjr-emacs-server-%d" (emacs-pid)))))
 (autoload 'server-running-p "server" "Test whether server NAME is running." t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: speedbar")
+(MJR-quiet-message "INIT: PKG SETUP: speedbar")
 (eval-after-load "speedbar"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: speedbar!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: speedbar!")
           (dolist (ext '(".lisp" ".clisp" ".rb" ".f90" ".sql" ".f95" ".f08" ".f03" ".f2008"
                          ".f2003" ".F95" ".F08" ".F03" ".F2008" ".F2003" ".for" ".FOR" ".ps" "m2" "maple" "bash" "sh" ))
             (speedbar-add-supported-extension ext))))
@@ -1430,35 +1430,36 @@ the function always returns all statistics in an alist regardless of what stats 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (not MJR-pookie-mode)
     (if (string-greaterp emacs-version "26")
-        (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: global-display-line-numbers-mode")
+        (progn (MJR-quiet-message "INIT: PKG SETUP: global-display-line-numbers-mode")
                (customize-set-variable  'global-display-line-numbers-mode nil)
                (customize-set-variable  'display-line-numbers-widen       't)
                (dolist (m '(ess-mode-hook
                             text-mode-hook
                             prog-mode-hook))
                  (add-hook m (lambda ()
-                               (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: +display-line-numbers-mode(%s)" (MJR-date "%Y-%m-%d_%H:%M:%S") major-mode)
+                               (MJR-quiet-message "POST-INIT: HOOK: +display-line-numbers-mode(%s)" major-mode)
                                (display-line-numbers-mode 1))))
                (dolist (m '(lisp-interaction-mode-hook))
                  (add-hook m (lambda ()
-                               (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: -display-line-numbers-mode(%s)" (MJR-date "%Y-%m-%d_%H:%M:%S") major-mode)
+                               (MJR-quiet-message "POST-INIT: HOOK: -display-line-numbers-mode(%s)" major-mode)
                                (display-line-numbers-mode -1)))))
-        (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: linum")
+        (progn (MJR-quiet-message "INIT: PKG SETUP: linum")
                (if (require 'linum nil :noerror)
                    (progn (global-linum-mode -1)
                           (dolist (m '(ess-mode-hook
                                        text-mode-hook
                                        prog-mode-hook))
                             (add-hook m (lambda ()
-                                          (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: +linum-mode" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                          (MJR-quiet-message "POST-INIT: HOOK: +linum-mode")
                                           (linum-mode 1)))))
-                   (MJR-quiet-message "MJR: INIT: PKG SETUP: linum: WARNING: Could not load package"))
-               (MJR-quiet-message "MJR: INIT: PKG SETUP: linum: WARNING: SKIP: pookie mode!"))))
+                   (MJR-quiet-message "INIT: PKG SETUP: linum: WARNING: Could not load package"))
+               (MJR-quiet-message "INIT: PKG SETUP: linum: WARNING: SKIP: pookie mode!"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: cmake")
+(MJR-quiet-message "INIT: PKG SETUP: cmake")
 (let ((cmake-path (find-if (lambda (p) (file-exists-p (concat p "/cmake-mode.el")))
-                           (list "C:\\msys64\\usr\\share\\cmake-3.13.2\\editors\\emacs"
+                           (list "C:\\msys64\\usr\\share\\cmake-3.14.3\\editors\\emacs"
+                                 "C:\\msys64\\usr\\share\\cmake-3.13.2\\editors\\emacs"
                                  "C:\\msys64\\mingw64\\share\\cmake-3.11\\editors\\emacs"
                                  "/usr/local/big/cmake/3.6.2/share/cmake-3.6/editors/emacs"
                                  "/usr/local/big/cmake/3.3.2/share/cmake-3.3/editors/emacs"
@@ -1470,17 +1471,17 @@ the function always returns all statistics in an alist regardless of what stats 
         (add-to-list 'auto-mode-alist '("CMakeLists.txt\\'" . cmake-mode))
         (autoload 'cmake-mode "cmake-mode" "CMake mode" t)
         (eval-after-load "cmake-mode"
-          '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: cmake!" (MJR-date "%Y-%m-%d_%H:%M:%S"))))
+          '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: cmake!")))
         ;;(require 'cmake-mode)
         )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: dired")
+(MJR-quiet-message "INIT: PKG SETUP: dired")
 (eval-after-load "dired"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: dired!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: dired!")
           (add-hook 'dired-mode-hook
                     (lambda ()
-                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: diredc-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "POST-INIT: HOOK: diredc-mode-hook")
                       (if (boundp 'ido-enable-replace-completing-read)
                           (setq ido-enable-replace-completing-read nil))))  ;; If ido is loaded, make sure we don't use it in dired
           (define-key dired-mode-map (kbd "<mouse-3>") (lambda (event)
@@ -1499,7 +1500,7 @@ the function always returns all statistics in an alist regardless of what stats 
                                                            (find-file (file-name-sans-versions file t)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (MJR-quiet-message "MJR: INIT: PKG SETUP: git")
+;; (MJR-quiet-message "INIT: PKG SETUP: git")
 (let ((git-el-files (find-if (lambda (pl) (every #'file-exists-p pl))
                              (mapcar (lambda (p) (mapcar (lambda (f) (concat (file-name-as-directory p) f))
                                                          '("git.el" "git-blame.el")))
@@ -1521,21 +1522,21 @@ the function always returns all statistics in an alist regardless of what stats 
         ;;              (add-to-list 'exec-path               path-to-git)
         ;;              )
           )
-      (MJR-quiet-message "MJR: INIT: PKG SETUP: git: WARNING: Could not find custom git package")))
+      (MJR-quiet-message "INIT: PKG SETUP: git: WARNING: Could not find custom git package")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: sh-mode")
+(MJR-quiet-message "INIT: PKG SETUP: sh-mode")
 (eval-after-load "sh-script"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: sh-script!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: sh-script!")
           (add-hook 'sh-mode-hook (lambda ()
-                                    (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: sh-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                    (MJR-quiet-message "POST-INIT: HOOK: sh-mode-hook")
                                     (setq sh-basic-offset 2
                                           sh-indentation 2)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: term/ansi-term")
+(MJR-quiet-message "INIT: PKG SETUP: term/ansi-term")
 (eval-after-load "term"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: term!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: term!")
           ;; Note eshell-destroy-buffer-when-process-dies set to non-NIL will kill term sessions wehn over, but we want more.  What we do here is pause before
           ;; we destroy a term buffer if it has existed for 1 second or less.
           (advice-add 'term-handle-exit :after (lambda (&rest rest) (let ((dt buffer-display-time)
@@ -1546,9 +1547,9 @@ the function always returns all statistics in an alist regardless of what stats 
                                                                       (kill-buffer))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: eshell")
+(MJR-quiet-message "INIT: PKG SETUP: eshell")
 (eval-after-load "em-term"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: em-term!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: em-term!")
           (mapc (lambda (i) (add-to-list 'eshell-visual-commands i)) '("s" "sn" "sscreen" "sscreen.sh"
                                                                        "t" "tn" "td" "tnn" "stmux" "stmux.sh"
                                                                        "hexDump.rb" "hexDump"
@@ -1559,7 +1560,7 @@ the function always returns all statistics in an alist regardless of what stats 
                                                                        ))
           (mapcar (lambda (i) (add-to-list 'eshell-visual-subcommands i)) '(("git" "help" "log" "l" "ll" "diff" "show")))))
 (eval-after-load "esh-mode"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: esh-mode!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: esh-mode!")
           (defun MJR-eshell-insert-last-word (n)
             (interactive "p")
             (insert (car (reverse (split-string (eshell-previous-input-string (- n 1)))))))
@@ -1609,8 +1610,8 @@ the function always returns all statistics in an alist regardless of what stats 
           (setq eshell-history-size 1048576)
           (add-hook 'eshell-mode-hook
                     (function (lambda ()
-                                (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: eshell-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                                (MJR-try-theme)  ;; Duno why, but eshell needs to have the theme reapplied after it starts...
+                                (MJR-quiet-message "POST-INIT: HOOK: eshell-mode-hook")
+                                ;;(MJR-try-theme)  ;; Duno why, but eshell needs to have the theme reapplied after it starts...
                                 (setq pcomplete-cycle-completions nil)
                                 (local-set-key "\M-."          'MJR-eshell-insert-last-word)
                                 (local-set-key (kbd "<up>")    'previous-line)
@@ -1623,7 +1624,7 @@ the function always returns all statistics in an alist regardless of what stats 
                                 (setenv "EDITOR" (format "emacsclient -f %s" server-name)))))))
 (if (string-match MJR-platform "WINDOWS-MGW")
     (eval-after-load "esh-ext"
-      '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: esh-ext!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+      '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: esh-ext!")
               (defun MJR-eshell-shebang-msys64-fixer (eshell-script-interpreter-result)
                 (or (and eshell-script-interpreter-result
                          (let ((intrp (first eshell-script-interpreter-result))
@@ -1643,11 +1644,11 @@ the function always returns all statistics in an alist regardless of what stats 
                                     nil)
                              (let ((intrp-new (funcall rule intrp)))
                                (if (file-exists-p intrp-new)
-                                   (progn (message "MJR: MJR-eshell-shebang-msys64-fixer: Changed binary '%s' to '%s'" intrp intrp-new)
+                                   (progn (message "MJR-eshell-shebang-msys64-fixer: Changed binary '%s' to '%s'" intrp intrp-new)
                                           (return (list intrp-new file)))
                                    (let ((intrp-new-exe (concat intrp-new ".exe")))
                                      (if (file-exists-p intrp-new-exe)           
-                                         (progn (message "MJR: MJR-eshell-shebang-msys64-fixer: Changed binary '%s' to '%s'" intrp intrp-new-exe)
+                                         (progn (message "MJR-eshell-shebang-msys64-fixer: Changed binary '%s' to '%s'" intrp intrp-new-exe)
                                                 (return (list intrp-new-exe file))))))))))
                     eshell-script-interpreter-result))
               (advice-add 'eshell-script-interpreter :filter-return #'MJR-eshell-shebang-msys64-fixer))))
@@ -1750,13 +1751,59 @@ Operation is limited to region if a region is active."
                         (replace-match (elt rotate-list (mod (1+ (position (match-string-no-properties 0) rotate-list :test #'string-equal)) rl-len))))))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: mail-mode setup...")
+(defun MJR-grep (file-name-or-list-of-same regex)
+  "Search the file, or list of files, for the given REGEX.  
+
+Results are presented in an xref buffer if xref is available, and in a grep-mode buffer otherwise.
+Will automatically ignore non-regular (directories, special, etc) and non-readable files.
+This function is 100% pure Emacs lisp -- no external tools are required"
+  (interactive "FFile: \nsRegular Expression: ")  
+  (let ((good-file-names (remove-if (lambda (file-name)
+                                      (or (if (not (file-exists-p   file-name)) (message "MJR-grep: File not found: %s" file-name))
+                                          (if (not (file-regular-p  file-name)) (message "MJR-grep: File not regular: %s" file-name))
+                                          (if (not (file-readable-p file-name)) (message "MJR-grep: File not readable: %s" file-name))))
+                                    (mapcar #'expand-file-name
+                                            (mapcan (lambda (wildcard)
+                                                      (let ((file-list (file-expand-wildcards wildcard)))
+                                                        (or file-list
+                                                            (null (message "MJR-grep: Did not match any files: %s" wildcard)))))
+                                                    (if (listp file-name-or-list-of-same)
+                                                        file-name-or-list-of-same
+                                                        (list file-name-or-list-of-same)))))))
+    (if good-file-names
+        (let ((hits (mapcan (lambda (file-name)
+                              (loop for line-str in (ignore-errors
+                                                      (with-temp-buffer
+                                                        (insert-file-contents file-name)
+                                                        (split-string (buffer-string) "\\(\r\n\\|\n\\|\r\\)")))
+                                    for line-num from 1
+                                    when (string-match-p regex line-str)
+                                    collect (list line-num file-name line-str)))
+                            good-file-names)))
+          (if hits
+              (if (and (fboundp 'xref--show-xrefs)
+                       (fboundp 'xref--convert-hits))
+                  (xref--show-xrefs (xref--convert-hits hits regex) nil 't)
+                  (progn (if (version< emacs-version "25.2")
+                             (message "MJR-grep: Falling back to grep-mode. Emacs is too old to use xref.  ")
+                             (message "MJR-grep: Falling back to grep-mode. Emacs is new enough it should have xref, so something is probably broken."))
+                         (switch-to-buffer (generate-new-buffer "MJR-grep"))
+                         (dolist (hit hits)
+                           (destructuring-bind (line-num file-name line-str) hit
+                             (insert (format "%s:%d:%s\n" file-name line-num line-str))))
+                         (grep-mode)
+                         (goto-char 0)))
+              (message "MJR-grep: No matches found")))
+        (message "MJR-grep: No searchable files found"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "INIT: PKG SETUP: mail-mode setup...")
 (eval-after-load "sendmail"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: mail-mode!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: mail-mode!")
           (setq compose-mail-user-agent-warnings nil)
           (add-hook 'mail-mode-hook
                     (lambda ()
-                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: mail-mode-hook(1)" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "POST-INIT: HOOK: mail-mode-hook(1)")
                       (if (string-equal (substring (buffer-name) 0 5) "mutt-")
                           (let ((da-frames (frame-list)))
                             (mail-to)
@@ -1784,7 +1831,7 @@ Operation is limited to region if a region is active."
             :group 'basic-faces)
           (add-hook 'mail-mode-hook
                     (lambda ()
-                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: mail-mode-hook (2)" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "POST-INIT: HOOK: mail-mode-hook (2)")
                       (font-lock-add-keywords nil
                                               '(("^[ \t]*>[^>\n].*$"          (0 'message-odd-quoted-text-face))
                                                 ("^[ \t]*>$"                  (0 'message-odd-quoted-text-face))
@@ -1809,7 +1856,7 @@ Operation is limited to region if a region is active."
                                                 ("^[ \t]*>.*$"                (0 'message-odd-quoted-text-face))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: org-mode setup...")
+(MJR-quiet-message "INIT: PKG SETUP: org-mode setup...")
 (if (not MJR-pookie-mode)
     (if 't ;; The big if is here so we can disable org-mode configuration before we do an ELPA package install of org...
         (progn
@@ -1823,7 +1870,7 @@ Operation is limited to region if a region is active."
           (setq org-replace-disputed-keys t)  ;; Don't override S-<arrow> keys
 
           (if (not (require 'htmlize nil :noerror))
-              (MJR-quiet-message "MJR: INIT: PKG SETUP: htmlize: WARNING: Could not load package in init."))
+              (MJR-quiet-message "INIT: PKG SETUP: htmlize: WARNING: Could not load package in init."))
 
           (org-babel-do-load-languages
            'org-babel-load-languages
@@ -1905,7 +1952,7 @@ Operation is limited to region if a region is active."
           (setq org-babel-min-lines-for-block-output 0)             ;; Always put babel results in blocks
           (add-hook 'org-mode-hook                                  ;; Get my favorite keys back
                     (lambda ()
-                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: org-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "POST-INIT: HOOK: org-mode-hook")
                       (turn-on-font-lock)
                       (local-set-key  (kbd "C-c C-v C-s")    'MJR-org-babel-execute-subtree)   ;; use "C-c C-v s" to eval with confirmation prompts
                       (local-set-key  (kbd "C-c C-v C-e")    'MJR-org-babel-execute-src-block) ;; use "C-c C-v e" to eval with confirmation prompts
@@ -1913,7 +1960,8 @@ Operation is limited to region if a region is active."
                       ))
           ;; Need to set the R path on Windows...
           (if (string-equal MJR-platform "WINDOWS-MGW")
-              (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/Rterm.exe"
+              (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.3/bin/x64/Rterm.exe"
+                                                            "c:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/Rterm.exe"
                                                             "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
                                                             "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
                                                             "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
@@ -1939,51 +1987,51 @@ Operation is limited to region if a region is active."
                            html-mode-hook
                            c-mode-hook))
                 (add-hook m (lambda ()
-                              (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: +orgtbl-mode" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                              (MJR-quiet-message "POST-INIT: HOOK: +orgtbl-mode")
                               (turn-on-orgtbl)))))))
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: org-mode setup suppressed in pookie-mode"))
+    (MJR-quiet-message "INIT: PKG SETUP: org-mode setup suppressed in pookie-mode"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: calender (solar stuff)")
+(MJR-quiet-message "INIT: PKG SETUP: calender (solar stuff)")
 (eval-after-load "solar"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: solar!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: solar!")
           (if (version<= "23.1" emacs-version) (calendar-set-date-style 'iso))
           (setq calendar-location-name "Dallas, TX")
           (setq calendar-latitude 32.00)
           (setq calendar-longitude -96.00)))
 (eval-after-load "cal-dst"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: cal-dst!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: cal-dst!")
           (setq calendar-time-zone -360)
           (setq calendar-standard-time-zone-name "CST")
           (setq calendar-daylight-time-zone-name "CDT")))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: root-help setup...")
+(MJR-quiet-message "INIT: PKG SETUP: root-help setup...")
 (if (file-exists-p "/usr/share/emacs/site-lisp/root-help.el")
     (progn (autoload 'root-shell "root-help" "Run ROOT (the C++ Data Analysis Framework) shell" t)
            ;; Put any pre-load root config stuff here...
            (eval-after-load "root-help"
-             '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: root-help!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+             '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: root-help!")
                      ;; Put any post-load root config stuff here...
                      ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: gdb-mode (GUD) setup...")
+(MJR-quiet-message "INIT: PKG SETUP: gdb-mode (GUD) setup...")
 (add-hook 'gdb-mode-hook
           (function (lambda ()
-                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: gdb-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "POST-INIT: HOOK: gdb-mode-hook")
                       (setq gdb-many-windows           't)   ;; Use lots of windows for gdb
                       (setq gdb-use-separate-io-buffer nil)  ;; No I/O window
                       (tool-bar-mode 1)                      ;; Start up the tool-bar when we start up gdb
                       (add-hook 'kill-buffer-hook            ;; Set a kill-buffer-hook to get rid of the tool-bar when we leave.
                                 (function (lambda ()
-                                            (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: kill-buffer-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                            (MJR-quiet-message "POST-INIT: HOOK: kill-buffer-hook")
                                             (tool-bar-mode -1)))
                                 't 't))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: tramp-mode setup...")
+(MJR-quiet-message "INIT: PKG SETUP: tramp-mode setup...")
 (if (require 'tramp nil :noerror)
     (progn (if (and (string-equal MJR-location "WORK:TI")
                     (string-equal MJR-platform "WINDOWS-MGW"))
@@ -2004,12 +2052,12 @@ Operation is limited to region if a region is active."
            (add-to-list 'directory-abbrev-alist '("^/rut"       . "/root@localhost:/"))
            (if (file-exists-p (concat MJR-home-dot "/.tramp.el"))
                (load-file (concat MJR-home-dot "/.tramp.el"))))
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: tramp: WARNING: Could not load package"))
+    (MJR-quiet-message "INIT: PKG SETUP: tramp: WARNING: Could not load package"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: aspell setup...")
+(MJR-quiet-message "INIT: PKG SETUP: aspell setup...")
 (eval-after-load "ispell"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: ispell!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: ispell!")
           (if (and nil (file-exists-p "c:/Program Files (x86)/hunspell-1.3.2-3/bin/hunspell.exe"))  ;; Perminatly turned off -- I use msys2 for emacs now
               (progn ;; Windows with hunspell
                 (setq ispell-program-name "c:/Program Files (x86)/hunspell-1.3.2-3/bin/hunspell.exe")
@@ -2030,20 +2078,20 @@ Operation is limited to region if a region is active."
                     (setq-default ispell-program-name "ispell"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: emacs-lisp-mode setup...")
+(MJR-quiet-message "INIT: PKG SETUP: emacs-lisp-mode setup...")
 ;; Don't indent the third argument if the if form differently...
 (put 'if 'lisp-indent-function nil)
 (add-hook 'emacs-lisp-mode-hook
           (function (lambda ()
-                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: emacs-lisp-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "POST-INIT: HOOK: emacs-lisp-mode-hook")
                       (local-set-key "\C-c\C-c" 'byte-recompile-directory)
                       (local-set-key "\C-c\C-b" 'byte-compile-file))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: c-mode setup...")
+(MJR-quiet-message "INIT: PKG SETUP: c-mode setup...")
 (add-hook 'c-initialization-hook
           (lambda ()
-            (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: c-initialization-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+            (MJR-quiet-message "POST-INIT: HOOK: c-initialization-hook")
             (c-add-style "MJR"
                          `("k&r"
                            (c-doc-comment-style        . 'javadoc)
@@ -2070,7 +2118,7 @@ Operation is limited to region if a region is active."
                                                                        (c-lineup-C-comments langelem))))))))
             (add-hook 'c-mode-common-hook
                       (function (lambda ()
-                                  (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: c-mode-common-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                  (MJR-quiet-message "POST-INIT: HOOK: c-mode-common-hook")
                                   (setq c-inhibit-startup-warnings-p   t)
                                   (setq c-echo-syntactic-information-p nil)
                                   (setq c-progress-interval            1)
@@ -2086,68 +2134,73 @@ Operation is limited to region if a region is active."
                                   (local-set-key "\C-c\C-c" 'compile))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: fortran-mode setup...")
+(MJR-quiet-message "INIT: PKG SETUP: fortran-mode setup...")
 (add-hook 'fortran-mode-hook
           (function (lambda ()
-                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: fortran-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "POST-INIT: HOOK: fortran-mode-hook")
                       (setq comment-start               "c")
                       (setq fortran-comment-indent-char " ")
                       (setq fortran-blink-matching-if   t)
                       (setq fortran-comment-region      "c     "))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: SETUP: Meta Windows TeX Live setup...")
+(MJR-quiet-message "INIT: SETUP: Meta Windows TeX Live setup...")
 (if (not (or (string-equal MJR-platform "WINDOWS-MGW")
              (string-equal MJR-platform "WINDOWS-CYG")))
-    (MJR-quiet-message "MJR: INIT: Meta Windows TeX Live setup: NOP. Not on windows. ")
+    (MJR-quiet-message "INIT: Meta Windows TeX Live setup: NOP. Not on windows. ")
     (if (let ((case-fold-search 't))
           (string-match "texlive" (getenv "PATH")))
-        (MJR-quiet-message "MJR: INIT: Meta Windows TeX Live setup: NOP. PATH appears to already have TeX")
+        (MJR-quiet-message "INIT: Meta Windows TeX Live setup: NOP. PATH appears to already have TeX")
         (let ((texlive-path (find-if #'file-exists-p
                                      (list "C:/texlive/2018/bin/win32/"
                                            "C:/texlive/2017/bin/win32/"))))
           (if (not texlive-path)
-              (MJR-quiet-message "MJR: INIT: Meta Windows TeX Live setup: NOP. Couldn't find TeX")
-              (progn (MJR-quiet-message "MJR: INIT: Meta Windows TeX Live setup: Adjusting PATH for TeX")
+              (MJR-quiet-message "INIT: Meta Windows TeX Live setup: NOP. Couldn't find TeX")
+              (progn (MJR-quiet-message "INIT: Meta Windows TeX Live setup: Adjusting PATH for TeX")
                      (setenv "PATH" (concat texlive-path ":" (getenv "PATH")))
                      (setq exec-path (append (list texlive-path) exec-path)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: perl-mode setup...")
+(MJR-quiet-message "INIT: PKG SETUP: perl-mode setup...")
 (add-hook 'perl-mode-hook
           (function (lambda ()
-                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: perl-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "POST-INIT: HOOK: perl-mode-hook")
                       (setq perl-indent-level 2))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: auctex setup...")
-(if (locate-library "auctex")
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: auctex found in non-core...")
-    (let ((core-atex-base (MJR-find-newest-core-package "auctex")))
-      (if core-atex-base
-          (progn
-            (MJR-quiet-message "MJR: INIT: PKG SETUP: auctex found in core... %s" core-atex-base)
-            (add-to-list 'load-path core-atex-base)
-            (load "auctex.el" t)))))
+(MJR-quiet-message "INIT: PKG SETUP: auctex setup...")
+(if (member 'auctex package-activated-list)
+    (MJR-quiet-message "INIT: PKG SETUP: auctex found and loaded via package manager...")
+    (if (locate-library "auctex")
+        (progn  (MJR-quiet-message "INIT: PKG SETUP: auctex found on system...")
+                (load "auctex-autoloads.el" t))
+        (let ((core-atex-base (MJR-find-newest-core-package "auctex")))
+          (if core-atex-base
+              (progn (MJR-quiet-message "INIT: PKG SETUP: auctex found in core... %s" core-atex-base)
+                     (add-to-list 'load-path core-atex-base)
+                     (load "auctex-autoloads.el" t))))))
+(eval-after-load "auctex-autoloads"
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: auctex!")
+          (setq font-latex-fontify-script nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: TeX-mode setup...")
+(MJR-quiet-message "INIT: PKG SETUP: TeX-mode setup...")
 (if (or (string-equal MJR-platform "WINDOWS-MGW")
         (string-equal MJR-platform "WINDOWS-CYG"))
     (add-hook 'TeX-mode-hook
               (function (lambda ()
-                          (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: TeX-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                          (MJR-quiet-message "POST-INIT: HOOK: TeX-mode-hook")
                           (setq ispell-parser 'nroff)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: latex-mode setup...")
+(MJR-quiet-message "INIT: PKG SETUP: latex-mode setup...")
 (add-hook 'latex-mode-hook
           (function (lambda ()
-                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: latex-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "POST-INIT: HOOK: latex-mode-hook")
                       (setq tex-font-script-display 0))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: Macaulay 2 setup...")
+(MJR-quiet-message "INIT: PKG SETUP: Macaulay 2 setup...")
 (let ((mac-path (find-if #'file-exists-p
                          (list "/usr/local/big/Macaulay2/1.7/share/emacs/site-lisp"
                                "/Applications/Macaulay2-1.2/share/emacs/site-lisp/"
@@ -2157,10 +2210,10 @@ Operation is limited to region if a region is active."
   (if (and mac-path (file-exists-p (concat mac-path "/M2-init.el")))
       (progn (add-to-list 'load-path mac-path)
              (load "M2-init" t)) ;; M2-init is a list of autoloads
-      (MJR-quiet-message "MJR: INIT: PKG SETUP: Macaulay 2 not found...")))
+      (MJR-quiet-message "INIT: PKG SETUP: Macaulay 2 not found...")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: Maxima setup...")
+(MJR-quiet-message "INIT: PKG SETUP: Maxima setup...")
 (let ((max-path (find-if (lambda (p) (file-exists-p (concat p "/maxima.el")))
                          (list "/usr/local/big/maxima-5.40.0_sbcl-1.3.19/share/maxima/5.40.0/emacs" ;; Custom build on Debian 9
                                "/usr/local/big/maxima/5.38.1_sbcl-1.3.11/share/maxima/5.38.1/emacs" ;; Custom build on Debian 8
@@ -2175,13 +2228,13 @@ Operation is limited to region if a region is active."
                                "C:/maxima-5.42.1/share/maxima/5.42.1/emacs/"                        ;; Standard location on Windows 10
                                "C:/maxima-5.40.0/share/maxima/5.40.0/emacs/"))))                    ;; Standard location on Windows 10
   (if max-path
-      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: Specific version of maxima.el found...")
+      (progn (MJR-quiet-message "INIT: PKG SETUP: Specific version of maxima.el found...")
              (add-to-list 'load-path max-path)
              (autoload 'maxima      "maxima" "Run Maxima in a window" t)
              (autoload 'maxima-mode "maxima" "Edit Maxima code" t)
              (add-to-list 'auto-mode-alist '("\\.mac$" . maxima-mode))
              (eval-after-load "maxima"
-               '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: maxima!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+               '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: maxima!")
                        (let ((max-cmd  (find-if #'file-exists-p
                                                 (list "/usr/local/big/maxima-5.40.0_sbcl-1.3.19/bin/maxima" ;; Custom build on Debian 9 @ home
                                                       "/usr/local/big/maxima/5.38.1_sbcl-1.3.11/bin/maxima" ;; Custom build on Debian 8 @ home
@@ -2190,28 +2243,29 @@ Operation is limited to region if a region is active."
                                                       "/usr/local/big/maxima/5.36.0_sbcl-1.2.11/bin/maxima" ;; Custom build on Debian 8 @ home
                                                       "/home/richmit/s/linux/local/bin/maxima"              ;; Custom biuld on linux @ TI
                                                       "/opt/local/bin/maxima"                               ;; Typical MacOS X with macports
+                                                      "/usr/local/share/maxima/5.41.0/emacs/"               ;; Location on ITOPS VDT 2019-04-01
                                                       "/usr/local/bin/maxima"                               ;; Typical place
                                                       "/usr/bin/maxima"                                     ;; Standard place for Debian & Ubuntu
                                                       "C:/maxima-5.42.1/bin/maxima.bat"                     ;; Standard location on Windows 10                                                      
                                                       "C:/maxima-5.40.0/bin/maxima.bat"))))                 ;; Standard location on Windows 10
                          (if max-cmd
                              (progn
-                               (MJR-quiet-message "MJR: INIT: PKG SETUP: Specific Maxima binary found...")
+                               (MJR-quiet-message "INIT: PKG SETUP: Specific Maxima binary found...")
                                (setq maxima-command (or max-cmd "maxima"))))
                          (cond ((file-exists-p "/usr/lib/maxima/5.21.1/binary-gcl")  (setq maxima-args "-l gcl")) ;; old format for ubuntu 10.xx
                                ((file-exists-p "/usr/lib/maxima/5.27.0/binary-gcl")  nil)
                                ('t                                                   (setq maxima-args '("-l" "sbcl"))))
                          (add-hook 'inferior-maxima-mode-hook
                                    (lambda ()
-                                     (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-maxima-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                     (MJR-quiet-message "POST-INIT: HOOK: inferior-maxima-mode-hook")
                                      (font-lock-mode 1)
                                      (local-set-key (kbd "TAB") 'inferior-maxima-complete)))))))
-      (MJR-quiet-message "MJR: INIT: PKG SETUP: Maxima not found...")))
+      (MJR-quiet-message "INIT: PKG SETUP: Maxima not found...")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: bookmarks setup...")
+(MJR-quiet-message "INIT: PKG SETUP: bookmarks setup...")
 (eval-after-load "bookmark"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: bookmarks!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: bookmarks!")
           (bookmark-maybe-load-default-file)
           (setq bookmark-save-flag 0) ;; Save bookmark file after each change to the bookmark list.
           ;; Make sure some bookmarks exist and point to the right thing.
@@ -2265,12 +2319,12 @@ Operation is limited to region if a region is active."
                         (if (assoc bmk-name bookmark-alist)
                             (setcdr (assoc bmk-name bookmark-alist) bmkl)
                             (add-to-list 'bookmark-alist bmkl))))))
-              (MJR-quiet-message "MJR: INIT: PKG SETUP: bookmarks: SKIP: Pookie mode"))))
+              (MJR-quiet-message "INIT: PKG SETUP: bookmarks: SKIP: Pookie mode"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: iMaxima setup...")
+(MJR-quiet-message "INIT: PKG SETUP: iMaxima setup...")
 (eval-after-load "imaxima"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: imaxima!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: imaxima!")
           ;; The type size used in LaTeX. Options: 9, 10, 11, 12
           (setq imaxima-pt-size 9)
           ;; Default size of font. Options: "small", "normalsize", "large", "Large", "LARGE", "huge", "Huge"
@@ -2282,96 +2336,91 @@ Operation is limited to region if a region is active."
 (autoload 'imaxima "imaxima" "Maxima mode with typeset results" t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: MapleV")
+(MJR-quiet-message "INIT: PKG SETUP: MapleV")
 (let ((maplev-base-path (MJR-find-newest-core-package "maplev")))
   (if maplev-base-path
       (let ((maplev-path (concat maplev-base-path "lisp/")))
         (if (file-exists-p (concat maplev-path "maplev.el"))
-            (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: MAPLEV found... %s" maplev-path)
+            (progn (MJR-quiet-message "INIT: PKG SETUP: MAPLEV found... %s" maplev-path)
                    (add-to-list 'load-path maplev-path)
                    (autoload 'maplev "maplev" "Maple editing mode" t)
                    (autoload 'cmaple "maplev" "Interactive Maple session" t)
                    (add-to-list 'auto-mode-alist '("\\.mpl$" . maplev-mode))
                    (eval-after-load "maplev"
-                     `(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: maplev!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                     `(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: maplev!")
                              (setq maplev-include-path (list ,maplev-base-path ,(concat maplev-base-path "/maple")))
                              (setq maplev-copyright-owner "Mitch J. Richling")
-                             (setq maplev-default-release "2018")
-                             (setq maplev-release "2018")
-                             (setq maplev-executable-alist '(("2018" . ("c:/Program Files/Maple 2018/bin.X86_64_WINDOWS/cmaple.exe"
-                                                                        nil
-                                                                        "c:/Program Files/Maple 2018/bin.X86_64_WINDOWS/mint.exe"))
-                                                             ("2017" . ("c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/cmaple.exe"
-                                                                        nil
-                                                                        "c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/mint.exe"))))
-
-
-
+                             (setq maplev-default-release "2019")
+                             (setq maplev-release "2019")
+                             (setq maplev-executable-alist '(("2019" . ("c:/Program Files/Maple 2019/bin.X86_64_WINDOWS/cmaple.exe" nil "c:/Program Files/Maple 2019/bin.X86_64_WINDOWS/mint.exe"))
+                                                             ("2018" . ("c:/Program Files/Maple 2018/bin.X86_64_WINDOWS/cmaple.exe" nil "c:/Program Files/Maple 2018/bin.X86_64_WINDOWS/mint.exe"))
+                                                             ("2017" . ("c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/cmaple.exe" nil "c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/mint.exe"))))
                              (setq maplev-mint-query nil)
                              (setq maplev-description-quote-char ?\"))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: OCTAVE setup...")
+(MJR-quiet-message "INIT: PKG SETUP: OCTAVE setup...")
 (if (not (string-equal MJR-platform "WINDOWS-MGW"))
     (let ((octave-base-path (MJR-find-newest-core-package "octave")))
       (if octave-base-path
-          (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: OCTAVE found... %s" octave-base-path)
+          (progn (MJR-quiet-message "INIT: PKG SETUP: OCTAVE found... %s" octave-base-path)
                  (add-to-list 'load-path (concat MJR-home-cor octave-base-path))
                  (autoload 'octave-mode  "octave-mod" "Octave editing mode" t)
                  (setq auto-mode-alist
                        (cons '("\\.m$" . octave-mode) auto-mode-alist))
                  (add-hook 'octave-mode-hook
                            (lambda ()
-                             (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: octave-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                             (MJR-quiet-message "POST-INIT: HOOK: octave-mode-hook")
                              (abbrev-mode 1)
                              (auto-fill-mode 1)
                              (font-lock-mode 1)))
                  (autoload 'run-octave   "octave-inf" "Interactive Octave" t)
                  (add-hook 'inferior-octave-mode-hook
                            (lambda ()
-                             (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-octave-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                             (MJR-quiet-message "POST-INIT: HOOK: inferior-octave-mode-hook")
                              (font-lock-mode 1))))
-          (MJR-quiet-message "MJR: INIT: PKG SETUP: OCTAVE Not Found...")))
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: octave: WARNING: Setup suppressed on windows"))
+          (MJR-quiet-message "INIT: PKG SETUP: OCTAVE Not Found...")))
+    (MJR-quiet-message "INIT: PKG SETUP: octave: WARNING: Setup suppressed on windows"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: procesing mode setup...")
+(MJR-quiet-message "INIT: PKG SETUP: procesing mode setup...")
 (let ((processing-path (MJR-find-newest-core-package "processing")))
   (if processing-path
-      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: processing found... %s" processing-path)
+      (progn (MJR-quiet-message "INIT: PKG SETUP: processing found... %s" processing-path)
              (add-to-list 'load-path processing-path)
              (add-to-list 'auto-mode-alist '("\\.pde$" . processing-mode))
              (autoload 'processing-mode "processing-mode" "Processing mode" t))
-      (MJR-quiet-message "MJR: INIT: PKG SETUP: Processing Mode Not Found...")))
+      (MJR-quiet-message "INIT: PKG SETUP: Processing Mode Not Found...")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: HYPERSPEC...")
+(MJR-quiet-message "INIT: PKG SETUP: HYPERSPEC...")
 (eval-after-load "hyperspec"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: hyperspec!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: hyperspec!")
           (let ((spec-to-use (find-if #'file-exists-p
                                       (list "/usr/share/doc/hyperspec/"
                                             "/Users/Shared/Doc2/software-dev/LISP/hyperspec/"
                                             "/media/sf_D_DRIVE/Doc2/software-dev/LISP/hyperspec/"
-                                            "d:/Doc2/software-dev/LISP/hyperspec/Body"
+                                            "/Users/richmit/Documents/Doc2/software-dev/LISP/hyperspec/"
+                                            "d:/Doc2/software-dev/LISP/hyperspec/"
                                             "/opt/local/share/doc/lisp/HyperSpec-7-0/HyperSpec/"))))
             (if spec-to-use
-                (setq common-lisp-hyperspec-root (concat "file:" spec-to-use))
+                (setq common-lisp-hyperspec-root (concat "file://" spec-to-use))
                 (MJR-quiet-message "MJR INIT: WARNING: Using remote hyperspec: %s"
                                    (setq common-lisp-hyperspec-root "http://www.lispworks.com/reference/HyperSpec/"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME...")
+(MJR-quiet-message "INIT: PKG SETUP: SLIME...")
 (if (not MJR-pookie-mode)
     (progn (if (require 'slime-autoloads nil :noerror)
-               (MJR-quiet-message "MJR: INIT: PKG SETUP: slime found in non-core...")
+               (MJR-quiet-message "INIT: PKG SETUP: slime found in non-core...")
                (let ((slime-path (MJR-find-newest-core-package "slime")))
                  (if slime-path
-                     (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: slime found in core... %s" slime-path)
+                     (progn (MJR-quiet-message "INIT: PKG SETUP: slime found in core... %s" slime-path)
                             (add-to-list 'load-path slime-path)
                             (require 'slime-autoloads)))))
            (if (require 'slime-autoloads nil :noerror)
                (eval-after-load "slime"
-                 '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: slime!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                 '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: slime!")
                          (defun MJR-slime-selector-or-run-slime (start-if-not-running)
                            "Run slime-selector if we ahve an active connection, otherwise run slime"
                            (interactive "P")
@@ -2380,6 +2429,13 @@ Operation is limited to region if a region is active."
                                (if start-if-not-running
                                    (slime)
                                    (message "SLIME is not running.  Run with prefix to start."))))
+                         (defun MJR-find-symbol-def ()
+                           "Use slime-edit-definition if connected to slime, or slime-edit-definition-with-etags otherwise"
+                           (interactive)
+                           (if (not (zerop (length slime-net-processes)))
+                               (call-interactively #'slime-edit-definition)
+                               (progn (message "MJR-find-symbol-def: SLIME is not running.  Falling back to ETAGS")
+                                      (call-interactively #'slime-edit-definition-with-etags))))
                          (let ((slime-lisp-bin (find-if #'file-exists-p
                                                         (list "/usr/local/big/sbcl/1.3.11/bin/sbcl"
                                                               "/usr/local/big/sbcl/1.3.4/bin/sbcl"
@@ -2398,38 +2454,33 @@ Operation is limited to region if a region is active."
                                (setq inferior-lisp-program slime-lisp-bin)
                                (MJR-quiet-message "MJR INIT: WARNING: No working lisp found"))
                            (slime-setup '(slime-repl)) ; Setup (use SLIME-REPL)
+                           ;;(setq slime-repl-auto-right-margin 't)
                            (setq lisp-simple-loop-indentation  1
                                  lisp-loop-keyword-indentation 6
                                  lisp-loop-forms-indentation   6)
                            (setq slime-net-coding-system 'utf-8-unix)
                            (add-hook 'lisp-mode-hook
                                      (lambda ()
-                                       (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: lisp-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                                       (MJR-quiet-message "POST-INIT: HOOK: lisp-mode-hook")
                                        (setq slime-net-coding-system 'utf-8-unix)))
                            ;;(define-key slime-mode-map "\M-." 'find-tag)
                            ;; M-x slime-who-calls       Show function callers.
                            ;; M-x slime-who-references  Show references to global variable.
                            ;; REPL bindings
-                           (define-key slime-repl-mode-map "\M-."            'slime-edit-definition-with-etags) ;; A somewhat slimey version of find-tag
-                           (define-key slime-repl-mode-map "\M-,"            'tags-loop-continue)               ;; Use  tags contineu for M,
-                           (define-key slime-repl-mode-map (kbd "ESC ESC .") 'slime-edit-definition)            ;; Put SLIMEy M. on MM.
-                           (define-key slime-repl-mode-map (kbd "ESC ESC ,") 'slime-pop-find-definition-stack)  ;; Put SLIMEy M, on MM,
+                           (define-key slime-repl-mode-map "\M-."            'MJR-find-symbol-def)
                            (define-key slime-repl-mode-map (kbd "C-p")       'slime-repl-backward-input)        ;; Previous history on C-p
                            (define-key slime-repl-mode-map (kbd "C-n")       'slime-repl-forward-input)         ;; Previous history on C-p
                            (define-key slime-repl-mode-map (kbd "C-c r")     'MJR-slime-selector-or-run-slime)  ;; Slime Selector
                            ;; CODE bindings
-                           (define-key slime-mode-map "\M-."                 'slime-edit-definition-with-etags) ;; A somewhat slimey version of find-tag
-                           (define-key slime-mode-map "\M-,"                 'tags-loop-continue)               ;; Use  tags contineu for M,
-                           (define-key slime-mode-map (kbd "ESC ESC .")      'slime-edit-definition)            ;; Put SLIMEy M. on MM.
-                           (define-key slime-mode-map (kbd "ESC ESC ,")      'slime-pop-find-definition-stack)  ;; Put SLIMEy M, on MM,
+                           (define-key slime-mode-map "\M-."                 'MJR-find-symbol-def)
                            (define-key slime-mode-map (kbd "C-c r")          'MJR-slime-selector-or-run-slime)  ;; Slime Selector
                            ;; GLOBAL bindings
                            (global-set-key (kbd "C-c r")     'MJR-slime-selector-or-run-slime))))
-               (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME Not Found...")))
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: SLIME setup suppressed in pookie-mode"))
+               (MJR-quiet-message "INIT: PKG SETUP: SLIME Not Found...")))
+    (MJR-quiet-message "INIT: PKG SETUP: SLIME setup suppressed in pookie-mode"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: ido...")
+(MJR-quiet-message "INIT: PKG SETUP: ido...")
 (if (require 'ido nil :noerror)
     (progn (if MJR-pookie-mode
                (setq ido-use-filename-at-point nil)                                              ;; Disable ffap in pookie mode
@@ -2476,16 +2527,16 @@ Operation is limited to region if a region is active."
            (define-key ido-common-completion-map (kbd "<M-backspace>") #'MJR-wack-back-to-slash) ;; Bind MJR-wack-back-to-slash
            (define-key ido-common-completion-map (kbd "<M-DEL>")       #'MJR-wack-back-to-slash)
            )
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: ido: WARNING: Could not load ido package"))
+    (MJR-quiet-message "INIT: PKG SETUP: ido: WARNING: Could not load ido package"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: package...")
+(MJR-quiet-message "INIT: PKG SETUP: package...")
 (if (require 'package nil :noerror)
     (progn
       (and 't  (add-to-list 'package-archives '("melpa"        . "http://melpa.org/packages/")        t))
       (and nil (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/") t))
       (package-initialize))
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: package: WARNING: Could not load package package"))
+    (MJR-quiet-message "INIT: PKG SETUP: package: WARNING: Could not load package package"))
 
 ;; * To refresh package contents: M-x package-refresh-contents
 ;; * To install a package:        M-x package-install
@@ -2495,22 +2546,22 @@ Operation is limited to region if a region is active."
 ;;             (package-install "magit"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: sunrise-commander")
+(MJR-quiet-message "INIT: PKG SETUP: sunrise-commander")
 (let ((sunrise-commander-path (MJR-find-newest-core-package "sunrise-commander")))
   (if sunrise-commander-path
-      (progn (MJR-quiet-message "MJR: INIT: PKG SETUP: sunrise-commander found... %s" sunrise-commander-path)
+      (progn (MJR-quiet-message "INIT: PKG SETUP: sunrise-commander found... %s" sunrise-commander-path)
              (eval-after-load "sunrise-commander"
-               '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: sunrise-commander!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+               '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: sunrise-commander!")
                        ))
              (add-to-list 'load-path sunrise-commander-path)
              (autoload 'sunrise "sunrise-commander" "Sunrise Commander" t)
              (require 'sunrise-x-tree))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: hs-minor-mode")
+(MJR-quiet-message "INIT: PKG SETUP: hs-minor-mode")
 (progn
   (eval-after-load "hideshow"
-    '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: hs-minor-mode!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+    '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: hs-minor-mode!")
             (add-hook 'c-mode-common-hook   'hs-minor-mode)
             (add-hook 'emacs-lisp-mode-hook 'hs-minor-mode)
             (add-hook 'fortran-mode-hook    'hs-minor-mode)
@@ -2529,30 +2580,15 @@ Operation is limited to region if a region is active."
   (require 'hideshow))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet")
+(MJR-quiet-message "INIT: PKG SETUP: yasnippet")
 (if (not MJR-pookie-mode)
     (let ((yasnippet-snip-path (remove-if-not #'file-exists-p (list (concat MJR-home-cor   "/yasnippets")
                                                                     (concat MJR-home-cor   "/yasnippet")))))
       (if yasnippet-snip-path
           (progn
-            (MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet snippet directory found... %s" yasnippet-snip-path)
+            (MJR-quiet-message "INIT: PKG SETUP: yasnippet snippet directory found... %s" yasnippet-snip-path)
             (eval-after-load "yasnippet"
-              '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: yasnippet!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                      (setq yas-snippet-dirs yasnippet-snip-path)
-                      ;; Nix the default tab binding..
-                      (define-key yas-minor-mode-map (kbd "<tab>") nil)
-                      (define-key yas-minor-mode-map (kbd "TAB")   nil)
-                      ;; Add in-key-map binding for my own expand
-                      (define-key yas-minor-mode-map (kbd "ESC ESC TAB") 'MJR-expand)
-                      ;; Nix yas-fallback behaviour so C-c m won't complain when expand fails
-                      (setq yas-fallback-behavior nil)
-                      ;; How we get some global templates
-                      (add-hook 'yas-minor-mode-hook
-                                (lambda ()
-                                  (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: yas-minor-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                                  (yas-activate-extra-mode 'fundamental-mode)))
-                      ;; Make yas work everyplace
-                      (yas-global-mode 1)
+              '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: yasnippet!")
                       ;; Call yas-expand or yas-insert-snippet depending on if region is active
                       (defun MJR-expand ()
                         "If no region is active, use yas-expand to attempt yasnippet expantion; otherwise call yas-insert-snippet."
@@ -2563,14 +2599,31 @@ Operation is limited to region if a region is active."
                             (funcall-interactively #'yas-insert-snippet)
                             (if (not (funcall-interactively #'yas-expand))
                                 (funcall-interactively #'yas-insert-snippet))))
-                      (global-set-key (kbd "C-c m") 'MJR-expand)))
+                      ;; Fix the snipped dirs
+                      (setq yas-snippet-dirs yasnippet-snip-path)
+                      ;; Nix the default tab binding..
+                      (define-key yas-minor-mode-map (kbd "<tab>") nil)
+                      (define-key yas-minor-mode-map (kbd "TAB")   nil)
+                      ;; Add in-key-map binding for my own expand
+                      (define-key yas-minor-mode-map (kbd "ESC ESC TAB") 'MJR-expand)
+                      ;; Add global binding for my own expand
+                      (global-set-key (kbd "C-c m") 'MJR-expand)
+                      ;; Nix yas-fallback behaviour so C-c m won't complain when expand fails
+                      (setq yas-fallback-behavior nil)
+                      ;; How we get some global templates
+                      (add-hook 'yas-minor-mode-hook
+                                (lambda ()
+                                  (MJR-quiet-message "POST-INIT: HOOK: yas-minor-mode-hook")
+                                  (yas-activate-extra-mode 'fundamental-mode)))
+                      ;; Make yas work everyplace
+                      (yas-global-mode 1)))
             (require 'yasnippet nil 't))))
-    (MJR-quiet-message "MJR: INIT: PKG SETUP: yasnippet setup suppressed in pookie-mode"))
+    (MJR-quiet-message "INIT: PKG SETUP: yasnippet setup suppressed in pookie-mode"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: ESS")
+(MJR-quiet-message "INIT: PKG SETUP: ESS")
 (eval-after-load "ess-site"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: ess!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: ess!")
           (customize-set-variable  'ess-use-flymake nil)
           (customize-set-variable  'ess-fancy-comments nil)
           (customize-set-variable  'ess-history-file nil)
@@ -2582,9 +2635,9 @@ Operation is limited to region if a region is active."
                                      ("help-object"      . ess-display-help-on-object)
                                      ("search"           . ess-execute-search)
                                      ("vignettes"        . ess-display-vignettes)))
-          (progn (ess-toggle-underscore 't)
-                 (ess-toggle-underscore nil))
-          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/Rterm.exe"
+          (define-key ess-mode-map (kbd "_") #'self-insert-command)
+          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.3/bin/x64/Rterm.exe"
+                                                        "c:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
                                                         "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
@@ -2609,13 +2662,12 @@ Operation is limited to region if a region is active."
           (setq ess-default-style 'mjr-ess-style)
           (add-hook 'ess-mode-hook
                     (lambda ()
-                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
-                      (progn (ess-toggle-underscore 't)
-                             (ess-toggle-underscore nil))
+                      (MJR-quiet-message "POST-INIT: HOOK: ess-mode-hook")
+                      ;;(define-key ess-mode-map (kbd "_") #'self-insert-command)
                       (ess-set-style 'mjr-ess-style)))
           (add-hook 'inferior-ess-mode-hook
                     (lambda ()
-                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: inferior-ess-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "POST-INIT: HOOK: inferior-ess-mode-hook")
                                         ;(local-set-key (kbd "C-p") 'comint-previous-input) ;; Don't need.  Set in comint-mode-hook
                                         ;(local-set-key (kbd "C-n") 'comint-next-input)      ;; Don't need.  Set in comint-mode-hook
                       (progn (ess-toggle-underscore 't)
@@ -2624,25 +2676,25 @@ Operation is limited to region if a region is active."
 (require 'ess-site nil 't)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: comint")
+(MJR-quiet-message "INIT: PKG SETUP: comint")
 (eval-after-load "comint"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: comint!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: comint!")
           (add-hook 'comint-mode-hook
                     (lambda ()
-                      (MJR-quiet-message "MJR: POST-INIT(%s): HOOK: comint-mode-hook" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+                      (MJR-quiet-message "POST-INIT: HOOK: comint-mode-hook")
                       (local-set-key (kbd "C-p") 'comint-previous-input)
                       (local-set-key (kbd "C-n") 'comint-next-input)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: PKG SETUP: dos-w32")
+(MJR-quiet-message "INIT: PKG SETUP: dos-w32")
 (eval-after-load "dos-w32"
-  '(progn (MJR-quiet-message "MJR: POST-INIT(%s): EVAL-AFTER: dos-w32!" (MJR-date "%Y-%m-%d_%H:%M:%S"))
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: dos-w32!")
           ;; I use a bash shell not DOS.  On DOS the value should be "NUL", but for base I need to reset it back to "/dev/null"
           (setq null-device "/dev/null")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Theme....")
+(MJR-quiet-message "INIT: STAGE: Theme....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2651,15 +2703,15 @@ Operation is limited to region if a region is active."
   (if MJR-pookie-mode
       nil
       (if (load-theme 'mjr-dark 't  )
-          (MJR-quiet-message "MJR: INIT: THEME: Loaded mjr-dark!")
-          (progn (MJR-quiet-message "MJR: INIT: THEME: Failed to load mjr-dark!  Trying manjo-dark")
+          (MJR-quiet-message "INIT: THEME: Loaded mjr-dark!")
+          (progn (MJR-quiet-message "INIT: THEME: Failed to load mjr-dark!  Trying manjo-dark")
                  (if (load-theme 'manjo-dark 't)
-                     (MJR-quiet-message "MJR: INIT: THEME: manjo-dark!")
-                     (MJR-quiet-message "MJR: INIT: THEME: Failed to load mjr-dark!"))))))
+                     (MJR-quiet-message "INIT: THEME: manjo-dark!")
+                     (MJR-quiet-message "INIT: THEME: Failed to load mjr-dark!"))))))
 (MJR-try-theme)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Setup global aliases....")
+(MJR-quiet-message "INIT: STAGE: Setup global aliases....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defalias 'sipell                      'ispell)                         ;; typo optimization
 (defalias 'sipell-comments-and-strings 'ispell-comments-and-strings)    ;; typo optimization
@@ -2668,7 +2720,7 @@ Operation is limited to region if a region is active."
 (defalias 'code-indent                 'indent-region)                  ;; better name
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Setup global keys....")
+(MJR-quiet-message "INIT: STAGE: Setup global keys....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Git rid of the suspend
@@ -2710,6 +2762,7 @@ Operation is limited to region if a region is active."
 ;; Random key bindings
 (global-set-key (kbd "C-x r a")   'append-to-register)
 (global-set-key (kbd "ESC ESC y") '(lambda () (interactive) (popup-menu 'yank-menu)))
+(global-set-key (kbd "ESC ESC q") 'MJR-unfill)
 (global-set-key (kbd "ESC ESC g") 'goto-line)
 (global-set-key (kbd "ESC ESC ;") 'MJR-quick-code-comment)
 (global-set-key (kbd "ESC ESC :") 'MJR-eval-region)
@@ -2733,7 +2786,7 @@ Operation is limited to region if a region is active."
 (define-key minibuffer-local-map (kbd "C-n") 'next-history-element)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Emacs Customization System....")
+(MJR-quiet-message "INIT: STAGE: Emacs Customization System....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (customize-set-variable  'shell-command-dont-erase-buffer 'beg-last-out)  ;; Just keep tacking on shell-command output, but put point at top of last command output
@@ -2757,7 +2810,7 @@ Operation is limited to region if a region is active."
     (load custom-file))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "MJR: INIT: STAGE: Done Customizing Emacs....")
+(MJR-quiet-message "INIT: STAGE: Done Customizing Emacs....")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
