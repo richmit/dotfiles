@@ -1227,11 +1227,11 @@ the function always returns all statistics in an alist regardless of what stats 
 ;; (setq prettify-symbols-unprettify-at-point 't)
 ;; (global-prettify-symbols-mode t)
 (if (string-equal MJR-platform "WINDOWS-MGW")
-    (let ((found-shell (find-if #'file-exists-p (list "c:/msys64/usr/bin/bash.exe"
+    (let ((shell-path (find-if #'file-exists-p (list "c:/msys64/usr/bin/bash.exe"
                                                       ))))
-      (if found-shell
-          (progn (setq shell-file-name          found-shell)
-                 (setq explicit-shell-file-name found-shell)
+      (if shell-path
+          (progn (setq shell-file-name          shell-path)
+                 (setq explicit-shell-file-name shell-path)
                  (setq explicit-bash.exe-args '("--noediting" "--login" "-i"))))))
 ;; In *scratch* buffers, print everything
 (setq eval-expression-print-length nil
@@ -1282,6 +1282,11 @@ the function always returns all statistics in an alist regardless of what stats 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: STAGE: Built-in Mode Config...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "INIT: PKG SETUP: ffap")
+(eval-after-load "ffap"
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: ffap")
+          (setq ffap-url-regexp "\\(zotero:\\|mailto:\\|file:\\|ftp\\|http\\|https://\\)")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: man")
@@ -1894,32 +1899,9 @@ This function is 100% pure Emacs lisp -- no external tools are required"
              (R           . t)
              (ruby        . t)
              (shell       . t)
+             (calc        . t)
              (sql         . t)
              (sqlite      . t)))
-
-          ;; (require 'ob)
-          ;; (require 'ob-awk)
-          ;; (require 'ob-C)
-          ;; (require 'ob-css)
-          ;; (require 'ob-dot)
-          ;; (require 'ob-emacs-lisp)
-          ;; (require 'ob-eval)
-          ;; (require 'ob-fortran)
-          ;; (require 'ob-gnuplot)
-          ;; (require 'ob-java)
-          ;; (require 'ob-js)
-          ;; (require 'ob-latex)
-          ;; (require 'ob-lisp)
-          ;; (require 'ob-matlab)
-          ;; (require 'ob-maxima)
-          ;; (require 'ob-octave)
-          ;; (require 'ob-perl)
-          ;; (require 'ob-python)
-          ;; (require 'ob-R)
-          ;; (require 'ob-ruby)
-          ;; (require 'ob-shell)
-          ;; (require 'ob-sql)
-          ;; (require 'ob-sqlite)
 
           (defun MJR-org-babel-execute-src-block ()
             "Wrap org-babel-execute-src-block"
@@ -1933,8 +1915,13 @@ This function is 100% pure Emacs lisp -- no external tools are required"
             (let ((org-confirm-babel-evaluate nil))
               (funcall-interactively #'org-babel-execute-subtree)))
 
-          (setq org-html-head-extra "<style>pre {background-color: #0f0f0f; color: #f0f0f0;}</style>") ;; Dark background for code.
-          (setq org-html-postamble "Created with %c")
+          (defun MJR-org-babel-execute-buffer ()
+            "Wrap org-babel-execute-buffer"
+            (interactive)
+            (let ((org-confirm-babel-evaluate nil))
+              (funcall-interactively #'org-babel-execute-buffer)))          
+
+          (setq org-html-postamble "Created by %a <%e>.  Rendered on %T via %c")
           (setq org-src-fontify-natively t)                         ;; Prety colors
           (setq org-src-tab-acts-natively t)                        ;; tab as in source mode
           (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))  ;; Make sure *.org files use org-mode
@@ -1954,41 +1941,34 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                     (lambda ()
                       (MJR-quiet-message "POST-INIT: HOOK: org-mode-hook")
                       (turn-on-font-lock)
+                      (local-set-key  (kbd "C-c C-v C-b")    'MJR-org-babel-execute-buffer)    ;; use "C-c C-v b" to eval with confirmation prompts
                       (local-set-key  (kbd "C-c C-v C-s")    'MJR-org-babel-execute-subtree)   ;; use "C-c C-v s" to eval with confirmation prompts
                       (local-set-key  (kbd "C-c C-v C-e")    'MJR-org-babel-execute-src-block) ;; use "C-c C-v e" to eval with confirmation prompts
                       (local-set-key  (kbd "C-c a")          'org-agenda)
                       ))
           ;; Need to set the R path on Windows...
           (if (string-equal MJR-platform "WINDOWS-MGW")
-              (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.3/bin/x64/Rterm.exe"
-                                                            "c:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/Rterm.exe"
-                                                            "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
-                                                            "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
-                                                            "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
-                                                            "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
-                                                            "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
-                (setq org-babel-R-command found-r)))
-
-          ;; Setup orgtbl in other modes
-          (if nil
-              (dolist (m '(emacs-lisp-mode-hook
-                           fortran-mode-hook
-                           perl-mode-hook
-                           cperl-mode-hook
-                           lisp-mode-hook
-                           ess-mode-hook
-                           sh-mode-hook
-                           c++-mode-hook
-                           java-mode-hook
-                           js-mode-hook
-                           python-mode-hook
-                           ruby-mode-hook
-                           text-mode-hook
-                           html-mode-hook
-                           c-mode-hook))
-                (add-hook m (lambda ()
-                              (MJR-quiet-message "POST-INIT: HOOK: +orgtbl-mode")
-                              (turn-on-orgtbl)))))))
+              (let ((r-path (find-if #'file-exists-p (list "C:/PROGRA~1/MICROS~1/ROPEN~1/R-35~1.3/bin/x64/R.exe"
+                                                           "C:/PROGRA~1/MICROS~2/ROPEN~1/R-35~1.3/bin/x64/R.exe"           
+                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-35~1.1/bin/x64/R.exe"
+                                                           "C:/PROGRA~1/MICROS~2/ROPEN~1/R-35~1.1/bin/x64/R.exe"
+                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-35~1.0/bin/x64/R.exe"
+                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-34~1.4/bin/x64/R.exe"
+                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-34~1.3/bin/x64/R.exe"
+                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-34~1.2/bin/x64/R.exe"
+                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-34~1.1/bin/x64/R.exe"
+                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-34~1.0/bin/x64/R.exe"))))             
+                (if r-path
+                    (setq org-babel-R-command (concat r-path " --slave --no-save"))
+                    (MJR-quiet-message "Error: Could not find R.exe binary for babel in org-mode on Windows"))))
+          ;; Need to set the maxima path on Windows...
+          (if (string-equal MJR-platform "WINDOWS-MGW")
+              (let ((max-path (find-if #'file-exists-p (list "C:/maxima-5.42.1/bin/maxima.bat"
+                                                             "C:/maxima-5.40.0/bin/maxima.bat"))))
+                (if max-path
+                    (setq org-babel-maxima-command max-path)
+                    (MJR-quiet-message "Error: Could not find maxima.bat batch file for babel in org-mode on Windows"))))
+          ))
     (MJR-quiet-message "INIT: PKG SETUP: org-mode setup suppressed in pookie-mode"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2530,6 +2510,9 @@ This function is 100% pure Emacs lisp -- no external tools are required"
     (MJR-quiet-message "INIT: PKG SETUP: ido: WARNING: Could not load ido package"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(if (equal emacs-version "26.2") ;; Bug in Emacs 26.2
+    (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
+
 (MJR-quiet-message "INIT: PKG SETUP: package...")
 (if (require 'package nil :noerror)
     (progn
@@ -2538,12 +2521,20 @@ This function is 100% pure Emacs lisp -- no external tools are required"
       (package-initialize))
     (MJR-quiet-message "INIT: PKG SETUP: package: WARNING: Could not load package package"))
 
-;; * To refresh package contents: M-x package-refresh-contents
-;; * To install a package:        M-x package-install
-;; * To list packages:            M-x package-list-packages
-;; * The only thing I currently add is magit.  This is how you install it without the UI:
-;;      (progn (package-refresh-contents)
-;;             (package-install "magit"))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MJR-install-favorite-packages (&optional FORCE-REINSTALL)
+  "Install my favorite packages if they are missing.
+With prefix argument, force reinstall of already installed packages."
+  (interactive "P")
+  (ignore-errors (package-refresh-contents))
+  (dolist (package-name '(auctex htmlize inf-ruby magit org slime yasnippet ess-view))
+    (if (package-installed-p package-name)
+        (if FORCE-REINSTALL
+            (unless (ignore-errors (package-reinstall package-name))
+              (MJR-quiet-message "MJR-install-favorite-packages: Package %s already installed.  Reinstalling now." package-name))
+            (MJR-quiet-message "MJR-install-favorite-packages: Package %s already installed.  Skipping.  Use FORCE-REINSTALL to reinstall." package-name))
+        (unless (ignore-errors (package-install package-name))
+          (MJR-quiet-message "MJR-install-favorite-packages: Package %s was not installed.  Installing now." package-name)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: sunrise-commander")
@@ -2636,35 +2627,25 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                                      ("search"           . ess-execute-search)
                                      ("vignettes"        . ess-display-vignettes)))
           (define-key ess-mode-map (kbd "_") #'self-insert-command)
-          (let ((found-r (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.3/bin/x64/Rterm.exe"
-                                                        "c:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/Rterm.exe"
-                                                        "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
-                                                        "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
-                                                        "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
-                                                        "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
-                                                        "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
-            (if found-r
-                (setq inferior-R-program-name found-r)))
-          (add-to-list 'ess-style-alist
-                       '(mjr-ess-style
-                         (ess-indent-level . 2)                       ;; * (ess-indent-level . 4)
-                         (ess-first-continued-statement-offset . 2)   ;; * (ess-first-continued-statement-offset . 0)
-                         (ess-continued-statement-offset . 2)         ;; * (ess-continued-statement-offset . 4)
-                         (ess-brace-offset . -2)                      ;; * (ess-brace-offset .  0)
-                         (ess-expression-offset . 2)                  ;; * (ess-expression-offset . 4)
-                         (ess-else-offset . 0)                        ;; = (ess-else-offset . 0)
-                         (ess-close-brace-offset . 0)                 ;; = (ess-close-brace-offset . 0))
-                         (ess-brace-imaginary-offset . 0)             ;; ?
-                         (ess-continued-brace-offset . 0)             ;; ?
-                         (ess-arg-function-offset . nil)              ;; * (ess-arg-function-offset . 4)
-                         (ess-arg-function-offset-new-line . nil)     ;; * (ess-arg-function-offset-new-line '(4))
-                         ))
-          (setq ess-default-style 'mjr-ess-style)
+          (let ((r-path (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.3/bin/x64/Rterm.exe"
+                                                       "c:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/Rterm.exe"
+                                                       "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
+                                                       "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
+                                                       "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
+                                                       "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
+                                                       "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
+            (if r-path
+                (setq inferior-R-program-name r-path)))
+          (setq ess-default-style 'OWN)
+
           (add-hook 'ess-mode-hook
                     (lambda ()
                       (MJR-quiet-message "POST-INIT: HOOK: ess-mode-hook")
                       ;;(define-key ess-mode-map (kbd "_") #'self-insert-command)
-                      (ess-set-style 'mjr-ess-style)))
+                      (ess-set-style 'OWN)
+                      (setq ess-indent-level 2) 
+                      (setq ess-indent-with-fancy-comments nil)
+                      ))
           (add-hook 'inferior-ess-mode-hook
                     (lambda ()
                       (MJR-quiet-message "POST-INIT: HOOK: inferior-ess-mode-hook")
@@ -2672,7 +2653,10 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                                         ;(local-set-key (kbd "C-n") 'comint-next-input)      ;; Don't need.  Set in comint-mode-hook
                       (progn (ess-toggle-underscore 't)
                              (ess-toggle-underscore nil))
-                      (ess-set-style 'mjr-ess-style)))))
+                      (ess-set-style 'OWN)
+                      (setq ess-indent-level 2) 
+                      (setq ess-indent-with-fancy-comments nil)
+                      ))))
 (require 'ess-site nil 't)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
