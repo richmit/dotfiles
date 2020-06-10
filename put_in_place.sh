@@ -7,7 +7,7 @@ if [ -e README.md ] ; then
 
   echo ' '
   
-  for f in ~/.emacs ~/.emacs.d/mjr-dark-theme.el ~/.emacs.d/init.el; do
+  for f in ~/.Rprofile ~/.emacs ~/.emacs.d/mjr-dark-theme.el ~/.emacs.d/init.el; do
     if [ -e "$f" ] ; then
       echo BACKUP "$f" to "$f$BAKEXT"
       cp "$f" "$f$BAKEXT"
@@ -28,6 +28,13 @@ if [ -e README.md ] ; then
 
   echo "INSTALL: mjr-dark-theme.el"
   cp mjr-dark-theme.el ~/.emacs.d/mjr-dark-theme.el
+
+  echo "INSTALL: Rprofile"
+  cp Rprofile ~/.Rprofile
+  # Put a copy in the windows home directory so R works outside of Emacs
+  if [ -e ~/winHome ]; then
+    cp Rprofile ~/winHome/.Rprofile
+  fi
   
 else
   echo "RUN THIS SCRIPT FROM INSIDE THE GIT REPO!!!"

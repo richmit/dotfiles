@@ -1381,10 +1381,16 @@ the function always returns all statistics in an alist regardless of what stats 
           (if (string-match MJR-platform "WINDOWS-MGW")
               (let ((gpgpath (find-if #'file-exists-p '("C:\\PROGRA~2\\GnuPG\\bin"
                                                         "C:\\PROGRA~1\\GnuPG\\bin"))))
-                (if gpgpath  (progn (custom-set-variables '(epg-gpg-program  (concat gpgpath "\\gpg.exe")))
+                (if gpgpath  (progn (custom-set-variables (list 'epg-gpg-program  (concat gpgpath "\\gpg.exe")))
                                     (setenv "PATH" (concat gpgpath ":" (getenv "PATH")))
                                     (setq exec-path (append (list gpgpath) exec-path))))))))
 ;;(require 'epa-file nil :noerror)
+(eval-after-load "epg"
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: epg!")
+          (if (string-match MJR-platform "WINDOWS-MGW")
+              (let ((gpgpath (find-if #'file-exists-p '("C:\\PROGRA~2\\GnuPG\\bin"
+                                                        "C:\\PROGRA~1\\GnuPG\\bin"))))
+                (if gpgpath (custom-set-variables (list 'epg-gpg-program  (concat gpgpath "\\gpg.exe"))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: time")
@@ -1948,7 +1954,9 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                       ))
           ;; Need to set the R path on Windows...
           (if (string-equal MJR-platform "WINDOWS-MGW")
-              (let ((r-path (find-if #'file-exists-p (list "C:/PROGRA~1/MICROS~1/ROPEN~1/R-35~1.3/bin/x64/R.exe"
+              (let ((r-path (find-if #'file-exists-p (list "C:/PROGRA~1/R/R-40~1.1/bin/x64/R.exe"
+                                                           "C:/PROGRA~1/R/R-36~1.3/bin/x64/R.exe"
+                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-35~1.3/bin/x64/R.exe"
                                                            "C:/PROGRA~1/MICROS~2/ROPEN~1/R-35~1.3/bin/x64/R.exe"           
                                                            "C:/PROGRA~1/MICROS~1/ROPEN~1/R-35~1.1/bin/x64/R.exe"
                                                            "C:/PROGRA~1/MICROS~2/ROPEN~1/R-35~1.1/bin/x64/R.exe"
@@ -1984,7 +1992,6 @@ This function is 100% pure Emacs lisp -- no external tools are required"
           (setq calendar-time-zone -360)
           (setq calendar-standard-time-zone-name "CST")
           (setq calendar-daylight-time-zone-name "CDT")))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: root-help setup...")
@@ -2180,66 +2187,156 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                       (setq tex-font-script-display 0))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "INIT: PKG SETUP: MapleV")
+(if 't
+    (let ((maplev-base-path (MJR-find-newest-core-package "maplev")))
+      (if maplev-base-path
+          (let ((maplev-path (concat maplev-base-path "lisp/")))
+            (if (file-exists-p (concat maplev-path "maplev.el"))
+                (progn (MJR-quiet-message "INIT: PKG SETUP: MAPLEV found... %s" maplev-path)
+                       (add-to-list 'load-path maplev-path)
+                       (autoload 'maplev "maplev" "Maple editing mode" t)
+                       (autoload 'cmaple "maplev" "Interactive Maple session" t)
+                       (add-to-list 'auto-mode-alist '("\\.mpl$" . maplev-mode))
+                       (eval-after-load "maplev"
+                         `(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: maplev!")
+                                 (setq maplev-include-path (list ,maplev-base-path ,(concat maplev-base-path "/maple")))
+                                 (setq maplev-copyright-owner "Mitch J. Richling")
+                                 (setq maplev-default-release "2020")
+                                 (setq maplev-release "2020")
+                                 (setq maplev-executable-alist '(("2020" . ("c:/Program Files/Maple 2020/bin.X86_64_WINDOWS/cmaple.exe" nil "c:/Program Files/Maple 2020/bin.X86_64_WINDOWS/mint.exe"))
+                                                                 ("2019" . ("c:/Program Files/Maple 2019/bin.X86_64_WINDOWS/cmaple.exe" nil "c:/Program Files/Maple 2019/bin.X86_64_WINDOWS/mint.exe"))
+                                                                 ("2018" . ("c:/Program Files/Maple 2018/bin.X86_64_WINDOWS/cmaple.exe" nil "c:/Program Files/Maple 2018/bin.X86_64_WINDOWS/mint.exe"))
+                                                                 ("2017" . ("c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/cmaple.exe" nil "c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/mint.exe"))))
+                                 (setq maplev-mint-query nil)
+                                 (setq maplev-description-quote-char ?\"))))))
+          (MJR-quiet-message "INIT: PKG SETUP: MapleV not found...")))
+    (MJR-quiet-message "INIT: PKG SETUP: MapleV skipped..."))
+;; interface(prettyprint=1,verboseproc=2,errorbreak=0,warnlevel=2,errorcursor=false,screenheight=infinity,screenwidth=200,paging=false);
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "INIT: PKG SETUP: OCTAVE setup...")
+(if 't
+    (if (not (string-equal MJR-platform "WINDOWS-MGW"))
+        (let ((octave-base-path (MJR-find-newest-core-package "octave")))
+          (if octave-base-path
+              (progn (MJR-quiet-message "INIT: PKG SETUP: OCTAVE found... %s" octave-base-path)
+                     (add-to-list 'load-path (concat MJR-home-cor octave-base-path))
+                     (autoload 'octave-mode  "octave-mod" "Octave editing mode" t)
+                     (setq auto-mode-alist
+                           (cons '("\\.m$" . octave-mode) auto-mode-alist))
+                     (add-hook 'octave-mode-hook
+                               (lambda ()
+                                 (MJR-quiet-message "POST-INIT: HOOK: octave-mode-hook")
+                                 (abbrev-mode 1)
+                                 (auto-fill-mode 1)
+                                 (font-lock-mode 1)))
+                     (autoload 'run-octave   "octave-inf" "Interactive Octave" t)
+                     (add-hook 'inferior-octave-mode-hook
+                               (lambda ()
+                                 (MJR-quiet-message "POST-INIT: HOOK: inferior-octave-mode-hook")
+                                 (font-lock-mode 1))))
+              (MJR-quiet-message "INIT: PKG SETUP: OCTAVE Not Found...")))
+        (MJR-quiet-message "INIT: PKG SETUP: octave: WARNING: Setup suppressed on windows"))
+    (MJR-quiet-message "INIT: PKG SETUP: octave skipped..."))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: Macaulay 2 setup...")
-(let ((mac-path (find-if #'file-exists-p
-                         (list "/usr/local/big/Macaulay2/1.7/share/emacs/site-lisp"
-                               "/Applications/Macaulay2-1.2/share/emacs/site-lisp/"
-                               "/Applications/Macaulay2-1.1/share/emacs/site-lisp/"
-                               "/usr/local/share/emacs/site-lisp"
-                               "/usr/share/emacs/site-lisp"))))
-  (if (and mac-path (file-exists-p (concat mac-path "/M2-init.el")))
-      (progn (add-to-list 'load-path mac-path)
-             (load "M2-init" t)) ;; M2-init is a list of autoloads
-      (MJR-quiet-message "INIT: PKG SETUP: Macaulay 2 not found...")))
+(if nil
+    (let ((mac-path (find-if #'file-exists-p
+                             (list "/usr/local/big/Macaulay2/1.7/share/emacs/site-lisp"
+                                   "/Applications/Macaulay2-1.2/share/emacs/site-lisp/"
+                                   "/Applications/Macaulay2-1.1/share/emacs/site-lisp/"
+                                   "/usr/local/share/emacs/site-lisp"
+                                   "/usr/share/emacs/site-lisp"))))
+      (if (and mac-path (file-exists-p (concat mac-path "/M2-init.el")))
+          (progn (add-to-list 'load-path mac-path)
+                 (load "M2-init" t)) ;; M2-init is a list of autoloads
+          (MJR-quiet-message "INIT: PKG SETUP: Macaulay 2 not found...")))
+    (MJR-quiet-message "INIT: PKG SETUP: Macaulay 2 skipped..."))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "INIT: PKG SETUP: CoCoA5 setup...")
+(if 't
+    (let ((coco-dir "/cocoa-5.2/"))
+      (if  (file-exists-p "/cocoa-5.2/")
+           (progn (setq cocoa5-emacs-dir  (concat coco-dir "emacs/"))
+                  (add-to-list 'load-path cocoa5-emacs-dir)
+                  (setq cocoa5-executable (concat coco-dir "CoCoAInterpreter.exe"))  ;; Windows
+                  (setq cocoa5-packages   (concat coco-dir "packages"))              ;; Windows
+                  (setq cocoa5-wordlist-default-file (concat coco-dir "CoCoAManual/wordlist.txt"))
+                  (setq cocoa5-dir "~/CoCoA/")
+                  (setq  cocoa5-default-prompt "/* */") ;; FOR MICROSOFT WINDOWS
+                  ;; AUTO-LOAD cocoa5.el for running CoCoA5 and cocoa5-mode for files with CoCoA5 extensions
+                  (autoload 'c5           "cocoa5.el" "CoCoA5 running mode" 't)
+                  (autoload 'cpkg5        "cocoa5.el" "CoCoA5 running mode" 't)
+                  (autoload 'cocoa5       "cocoa5.el" "CoCoA5 running mode" 't)
+                  (autoload 'cocoa5server "cocoa5.el" "CoCoA5 running mode" 't)
+                  (autoload 'cocoa5-mode  "cocoa5.el" "CoCoA5 editing mode" 't)
+                  (setq auto-mode-alist  (append auto-mode-alist '(("\\.\\(cpkg5\\|cocoa5\\|cocoa5rc\\|c5\\)\\'" . cocoa5-mode) )))
+                  (setq cocoa5-auto-load-wordlist 't)
+                  ;;(defvar cocoa5-tab-is-completion 't)
+                  )
+           (MJR-quiet-message "INIT: PKG SETUP: Cocoa5 not found...")))
+    (MJR-quiet-message "INIT: PKG SETUP: Cocoa5 2 skipped..."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: Maxima setup...")
-(let ((max-path (find-if (lambda (p) (file-exists-p (concat p "/maxima.el")))
-                         (list "/usr/local/big/maxima-5.40.0_sbcl-1.3.19/share/maxima/5.40.0/emacs" ;; Custom build on Debian 9
-                               "/usr/local/big/maxima/5.38.1_sbcl-1.3.11/share/maxima/5.38.1/emacs" ;; Custom build on Debian 8
-                               "/usr/local/big/maxima/5.38.0_sbcl-1.3.4/share/maxima/5.36.0/emacs"  ;; Custom build on Debian 8
-                               "/usr/local/big/maxima/5.36.0_sbcl-1.2.11/share/maxima/5.36.0/emacs" ;; Custom build on Debian 8
-                               "/usr/local/big/maxima/5.37.0_sbcl-1.2.14/share/maxima/5.37.0/emacs" ;; Custom build on Debian 8
-                               "/home/richmit/s/linux/local/share/maxima/5.29.1/emacs"              ;; Custom biuld on linux
-                               "/opt/local/share/maxima/5.16.3/emacs"                               ;; Typical MacOS X with macports
-                               "/usr/share/maxima/5.38.1/emacs/"                                    ;; Standard location for Debian 9
-                               "/usr/share/maxima/5.34.1/emacs/"                                    ;; Standard location for Debian 8
-                               "/usr/share/maxima/5.21.1/emacs"                                     ;; Standard location for Ubuntu 11.04
-                               "C:/maxima-5.42.1/share/maxima/5.42.1/emacs/"                        ;; Standard location on Windows 10
-                               "C:/maxima-5.40.0/share/maxima/5.40.0/emacs/"))))                    ;; Standard location on Windows 10
-  (if max-path
+(multiple-value-bind (found-maxima-emacs-path found-maxima-bin-file found-maxima-image-file)
+    (dolist (pv (list (list "C:/maxima-5.42.1"                          "5.42.1") ;; Standard location on Windows 10
+                      (list "C:/maxima-5.40.0"                          "5.40.0") ;; Standard location on Windows 10
+                      (list "/usr/local/big/maxima-5.40.0_sbcl-1.3.19"  "5.40.0") ;; Custom build on Debian 9
+                      (list "/usr/local/big/maxima/5.38.1_sbcl-1.3.11"  "5.38.1") ;; Custom build on Debian 8
+                      (list "/usr/local/big/maxima/5.38.0_sbcl-1.3.4"   "5.36.0") ;; Custom build on Debian 8
+                      (list "/usr/local/big/maxima/5.36.0_sbcl-1.2.11"  "5.36.0") ;; Custom build on Debian 8
+                      (list "/usr/local/big/maxima/5.37.0_sbcl-1.2.14"  "5.37.0") ;; Custom build on Debian 8
+                      (list "/opt/local"                                "5.16.3") ;; Typical MacOS X with macports
+                      (list "/usr/local"                                "5.41.0") ;; Custom build in /usr/local
+                      (list "/home/richmit/s/linux/local"               "5.29.1") ;; Custom biuld in linux home directory
+                      (list "/usr"                                      "5.41.0") ;; Disto Location: RHEL 7
+                      (list "/usr"                                      "5.38.1") ;; Disto Location: Debian 9
+                      (list "/usr"                                      "5.34.1") ;; Disto Location: Debian 8
+                      (list "/usr"                                      "5.21.1") ;; Disto Location: Ubuntu 11
+                      )) 
+      (multiple-value-bind (p  v) pv
+        (let ((ep (concat p "/share/maxima/" v "/emacs")))
+          (if (file-exists-p (concat ep "/maxima.el"))
+              (return (list ep
+                            (find-if #'file-exists-p (list (concat p "/bin/maxima.bat")
+                                                           (concat p "/bin/maxima.exe")
+                                                           (concat p "/bin/maxima")))
+                            (find-if #'file-exists-p (list (concat p "/lib/maxima/" v "binary-" "gcl")
+                                                           (concat p "/lib/maxima/" v "binary-" "sbcl")))))))))
+  (if found-maxima-emacs-path
       (progn (MJR-quiet-message "INIT: PKG SETUP: Specific version of maxima.el found...")
-             (add-to-list 'load-path max-path)
+             (add-to-list 'load-path found-maxima-emacs-path)
              (autoload 'maxima      "maxima" "Run Maxima in a window" t)
              (autoload 'maxima-mode "maxima" "Edit Maxima code" t)
              (add-to-list 'auto-mode-alist '("\\.mac$" . maxima-mode))
              (eval-after-load "maxima"
-               '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: maxima!")
-                       (let ((max-cmd  (find-if #'file-exists-p
-                                                (list "/usr/local/big/maxima-5.40.0_sbcl-1.3.19/bin/maxima" ;; Custom build on Debian 9 @ home
-                                                      "/usr/local/big/maxima/5.38.1_sbcl-1.3.11/bin/maxima" ;; Custom build on Debian 8 @ home
-                                                      "/usr/local/big/maxima/5.38.0_sbcl-1.3.4/bin/maxima"  ;; Custom build on Debian 8 @ home
-                                                      "/usr/local/big/maxima/5.37.0_sbcl-1.2.14/bin/maxima" ;; Custom build on Debian 8 @ home
-                                                      "/usr/local/big/maxima/5.36.0_sbcl-1.2.11/bin/maxima" ;; Custom build on Debian 8 @ home
-                                                      "/home/richmit/s/linux/local/bin/maxima"              ;; Custom biuld on linux @ TI
-                                                      "/opt/local/bin/maxima"                               ;; Typical MacOS X with macports
-                                                      "/usr/local/share/maxima/5.41.0/emacs/"               ;; Location on ITOPS VDT 2019-04-01
-                                                      "/usr/local/bin/maxima"                               ;; Typical place
-                                                      "/usr/bin/maxima"                                     ;; Standard place for Debian & Ubuntu
-                                                      "C:/maxima-5.42.1/bin/maxima.bat"                     ;; Standard location on Windows 10                                                      
-                                                      "C:/maxima-5.40.0/bin/maxima.bat"))))                 ;; Standard location on Windows 10
-                         (if max-cmd
-                             (progn
-                               (MJR-quiet-message "INIT: PKG SETUP: Specific Maxima binary found...")
-                               (setq maxima-command (or max-cmd "maxima"))))
-                         (cond ((file-exists-p "/usr/lib/maxima/5.21.1/binary-gcl")  (setq maxima-args "-l gcl")) ;; old format for ubuntu 10.xx
-                               ((file-exists-p "/usr/lib/maxima/5.27.0/binary-gcl")  nil)
-                               ('t                                                   (setq maxima-args '("-l" "sbcl"))))
-                         (add-hook 'inferior-maxima-mode-hook
-                                   (lambda ()
-                                     (MJR-quiet-message "POST-INIT: HOOK: inferior-maxima-mode-hook")
-                                     (font-lock-mode 1)
-                                     (local-set-key (kbd "TAB") 'inferior-maxima-complete)))))))
+               `(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: maxima!")
+                       (if ,found-maxima-bin-file
+                           (progn (MJR-quiet-message "INIT: PKG SETUP: Specific Maxima binary found...")
+                                  (setq maxima-command (or ,found-maxima-bin-file "maxima"))))
+                       (if ,found-maxima-image-file
+                           (cond (((string-match ".*-gcl$"  ,found-maxima-image-file) (setq maxima-args "-l gcl")))
+                                 (((string-match ".*-sbcl$" ,found-maxima-image-file) (setq maxima-args '("-l" "sbcl"))))))
+                       (add-hook 'inferior-maxima-mode-hook
+                                 (lambda ()
+                                   (MJR-quiet-message "POST-INIT: HOOK: inferior-maxima-mode-hook")
+                                   (font-lock-mode 1)
+                                   (local-set-key (kbd "TAB") 'inferior-maxima-complete)))))
+             (eval-after-load "imaxima"
+               '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: imaxima!")
+                       ;; The type size used in LaTeX. Options: 9, 10, 11, 12
+                       (setq imaxima-pt-size 9)
+                       ;; Default size of font. Options: "small", "normalsize", "large", "Large", "LARGE", "huge", "Huge"
+                       (setq imaxima-fnt-size "small")
+                       ;; Scale all images by this factor. Default: 1.0
+                       (setq imaxima-scale-factor 2.0)
+                       ;; Use maxima mode
+                       (setq imaxima-use-maxima-mode-flag 't)))
+             (autoload 'imaxima "imaxima" "Maxima mode with typeset results" t))
       (MJR-quiet-message "INIT: PKG SETUP: Maxima not found...")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2249,7 +2346,7 @@ This function is 100% pure Emacs lisp -- no external tools are required"
           (bookmark-maybe-load-default-file)
           (setq bookmark-save-flag 0) ;; Save bookmark file after each change to the bookmark list.
           ;; Make sure some bookmarks exist and point to the right thing.
-          (if (not MJR-pookie-mode)
+          (if (not MJR-pookie-mode)imaxima
               (dolist (bp (list (cons "templates-tex"      (concat MJR-home-cor "/texinputs/"))                 ;; Templates and input files: TeX/LaTeX
                                 (cons "templates-org"      (concat MJR-home-cor "/org-mode/"))                  ;; Templates and input files: org-mode
                                 (cons "lispy-prod"         (concat MJR-home-cor "/lispy/"))                     ;; *mjrcalc*: Production copy
@@ -2300,67 +2397,6 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                             (setcdr (assoc bmk-name bookmark-alist) bmkl)
                             (add-to-list 'bookmark-alist bmkl))))))
               (MJR-quiet-message "INIT: PKG SETUP: bookmarks: SKIP: Pookie mode"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "INIT: PKG SETUP: iMaxima setup...")
-(eval-after-load "imaxima"
-  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: imaxima!")
-          ;; The type size used in LaTeX. Options: 9, 10, 11, 12
-          (setq imaxima-pt-size 9)
-          ;; Default size of font. Options: "small", "normalsize", "large", "Large", "LARGE", "huge", "Huge"
-          (setq imaxima-fnt-size "small")
-          ;; Scale all images by this factor. Default: 1.0
-          (setq imaxima-scale-factor 2.0)
-          ;; Use maxima mode
-          (setq imaxima-use-maxima-mode-flag 't)))
-(autoload 'imaxima "imaxima" "Maxima mode with typeset results" t)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "INIT: PKG SETUP: MapleV")
-(let ((maplev-base-path (MJR-find-newest-core-package "maplev")))
-  (if maplev-base-path
-      (let ((maplev-path (concat maplev-base-path "lisp/")))
-        (if (file-exists-p (concat maplev-path "maplev.el"))
-            (progn (MJR-quiet-message "INIT: PKG SETUP: MAPLEV found... %s" maplev-path)
-                   (add-to-list 'load-path maplev-path)
-                   (autoload 'maplev "maplev" "Maple editing mode" t)
-                   (autoload 'cmaple "maplev" "Interactive Maple session" t)
-                   (add-to-list 'auto-mode-alist '("\\.mpl$" . maplev-mode))
-                   (eval-after-load "maplev"
-                     `(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: maplev!")
-                             (setq maplev-include-path (list ,maplev-base-path ,(concat maplev-base-path "/maple")))
-                             (setq maplev-copyright-owner "Mitch J. Richling")
-                             (setq maplev-default-release "2019")
-                             (setq maplev-release "2019")
-                             (setq maplev-executable-alist '(("2019" . ("c:/Program Files/Maple 2019/bin.X86_64_WINDOWS/cmaple.exe" nil "c:/Program Files/Maple 2019/bin.X86_64_WINDOWS/mint.exe"))
-                                                             ("2018" . ("c:/Program Files/Maple 2018/bin.X86_64_WINDOWS/cmaple.exe" nil "c:/Program Files/Maple 2018/bin.X86_64_WINDOWS/mint.exe"))
-                                                             ("2017" . ("c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/cmaple.exe" nil "c:/Program Files/Maple 2017/bin.X86_64_WINDOWS/mint.exe"))))
-                             (setq maplev-mint-query nil)
-                             (setq maplev-description-quote-char ?\"))))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "INIT: PKG SETUP: OCTAVE setup...")
-(if (not (string-equal MJR-platform "WINDOWS-MGW"))
-    (let ((octave-base-path (MJR-find-newest-core-package "octave")))
-      (if octave-base-path
-          (progn (MJR-quiet-message "INIT: PKG SETUP: OCTAVE found... %s" octave-base-path)
-                 (add-to-list 'load-path (concat MJR-home-cor octave-base-path))
-                 (autoload 'octave-mode  "octave-mod" "Octave editing mode" t)
-                 (setq auto-mode-alist
-                       (cons '("\\.m$" . octave-mode) auto-mode-alist))
-                 (add-hook 'octave-mode-hook
-                           (lambda ()
-                             (MJR-quiet-message "POST-INIT: HOOK: octave-mode-hook")
-                             (abbrev-mode 1)
-                             (auto-fill-mode 1)
-                             (font-lock-mode 1)))
-                 (autoload 'run-octave   "octave-inf" "Interactive Octave" t)
-                 (add-hook 'inferior-octave-mode-hook
-                           (lambda ()
-                             (MJR-quiet-message "POST-INIT: HOOK: inferior-octave-mode-hook")
-                             (font-lock-mode 1))))
-          (MJR-quiet-message "INIT: PKG SETUP: OCTAVE Not Found...")))
-    (MJR-quiet-message "INIT: PKG SETUP: octave: WARNING: Setup suppressed on windows"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: procesing mode setup...")
@@ -2527,7 +2563,7 @@ This function is 100% pure Emacs lisp -- no external tools are required"
 With prefix argument, force reinstall of already installed packages."
   (interactive "P")
   (ignore-errors (package-refresh-contents))
-  (dolist (package-name '(auctex htmlize inf-ruby magit org slime yasnippet ess-view))
+  (dolist (package-name '(auctex htmlize inf-ruby magit org slime yasnippet ess-view powershell))
     (if (package-installed-p package-name)
         (if FORCE-REINSTALL
             (unless (ignore-errors (package-reinstall package-name))
@@ -2627,7 +2663,9 @@ With prefix argument, force reinstall of already installed packages."
                                      ("search"           . ess-execute-search)
                                      ("vignettes"        . ess-display-vignettes)))
           (define-key ess-mode-map (kbd "_") #'self-insert-command)
-          (let ((r-path (find-if #'file-exists-p (list "c:/Program Files/Microsoft/R Open/R-3.5.3/bin/x64/Rterm.exe"
+          (let ((r-path (find-if #'file-exists-p (list "C:/PROGRA~1/R/R-40~1.1/bin/x64/Rterm.exe"
+                                                       "c:/Program Files/R/R-3.6.3/bin/x64/Rterm.exe"
+                                                       "c:/Program Files/Microsoft/R Open/R-3.5.3/bin/x64/Rterm.exe"
                                                        "c:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/Rterm.exe"
                                                        "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
                                                        "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
@@ -2787,7 +2825,11 @@ With prefix argument, force reinstall of already installed packages."
 (customize-set-variable  'TeX-parse-self                  t)
 (customize-set-variable  'ansi-color-faces-vector         [default default default italic underline success warning error])
 (customize-set-variable  'ansi-color-names-vector         ["#212526" "#ff4b4b" "#b4fa70" "#fce94f" "#729fcf" "#e090d7" "#8cc4ff" "#eeeeec"])
-(customize-set-variable  'safe-local-variable-values      '((Syntax . ANSI-Common-LISP)))
+(customize-set-variable  'safe-local-variable-values      '((Syntax . ANSI-Common-LISP) (org-html-link-org-files-as-html)))
+
+ ;; '(package-selected-packages
+ ;;   (quote
+ ;;    (ess-R-data-view powershell ess-view htmlize yasnippet slime org magit inf-ruby ess auctex)))
 
 (setq custom-file "~/.emacs.d/custom.el")
 (if (file-exists-p custom-file)
