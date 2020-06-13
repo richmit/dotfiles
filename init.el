@@ -1053,9 +1053,9 @@ The column of numbers may be defined in two ways:
 Statstics:
   * Available:       sumsq, var, sum, mean, median, min, max, sd, range, n
   * Default printed:             sum, mean, median, min, max, sd, range, n
-  
-When called with a prefix argument (or when prefix-or-stats-wanted is an integer), the stats to print will be interactively queried from the user. 
-Non-interactively the prefix-or-stats-wanted argument should be a list of strings or a single string with a comma delimited list of stats. Note 
+
+When called with a prefix argument (or when prefix-or-stats-wanted is an integer), the stats to print will be interactively queried from the user.
+Non-interactively the prefix-or-stats-wanted argument should be a list of strings or a single string with a comma delimited list of stats. Note
 the function always returns all statistics in an alist regardless of what stats are printed."
   (interactive "r\np")
   (let* ((all-stats     '("sumsq" "var" "sum" "mean" "median" "min" "max" "sd" "range" "n"))
@@ -1127,7 +1127,7 @@ the function always returns all statistics in an alist regardless of what stats 
 ;; Make the buffer name column width wider (default is 19)
 (setq Buffer-menu-name-width 40)
 ;; No popups
-(setq use-dialog-box nil) 
+(setq use-dialog-box nil)
 ;; Turn on S-arrows for window selection
 (windmove-default-keybindings)
 ;; kill stuff in a read only buffer
@@ -1658,7 +1658,7 @@ the function always returns all statistics in an alist regardless of what stats 
                                    (progn (message "MJR-eshell-shebang-msys64-fixer: Changed binary '%s' to '%s'" intrp intrp-new)
                                           (return (list intrp-new file)))
                                    (let ((intrp-new-exe (concat intrp-new ".exe")))
-                                     (if (file-exists-p intrp-new-exe)           
+                                     (if (file-exists-p intrp-new-exe)
                                          (progn (message "MJR-eshell-shebang-msys64-fixer: Changed binary '%s' to '%s'" intrp intrp-new-exe)
                                                 (return (list intrp-new-exe file))))))))))
                     eshell-script-interpreter-result))
@@ -1763,12 +1763,12 @@ Operation is limited to region if a region is active."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-grep (file-name-or-list-of-same regex)
-  "Search the file, or list of files, for the given REGEX.  
+  "Search the file, or list of files, for the given REGEX.
 
 Results are presented in an xref buffer if xref is available, and in a grep-mode buffer otherwise.
 Will automatically ignore non-regular (directories, special, etc) and non-readable files.
 This function is 100% pure Emacs lisp -- no external tools are required"
-  (interactive "FFile: \nsRegular Expression: ")  
+  (interactive "FFile: \nsRegular Expression: ")
   (let ((good-file-names (remove-if (lambda (file-name)
                                       (or (if (not (file-exists-p   file-name)) (message "MJR-grep: File not found: %s" file-name))
                                           (if (not (file-regular-p  file-name)) (message "MJR-grep: File not regular: %s" file-name))
@@ -1867,6 +1867,54 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                                                 ("^[ \t]*>.*$"                (0 'message-odd-quoted-text-face))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "INIT: PKG SETUP: ESS")  ;; NOTE: We use INFERIOR-R-PROGRAM-NAME for org-mode setup
+(eval-after-load "ess-site"
+  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: ess!")
+          (customize-set-variable  'ess-use-flymake nil)
+          (customize-set-variable  'ess-fancy-comments nil)
+          (customize-set-variable  'ess-history-file nil)
+          (setq ess-handy-commands '(("set-width"        . ess-execute-screen-options)
+                                     ("rdired"           . ess-rdired)
+                                     ("change-directory" . ess-change-directory)
+                                     ("help-apropos"     . ess-display-help-apropos)
+                                     ("help-index"       . ess-display-package-index)
+                                     ("help-object"      . ess-display-help-on-object)
+                                     ("search"           . ess-execute-search)
+                                     ("vignettes"        . ess-display-vignettes)))
+          (define-key ess-mode-map (kbd "_") #'self-insert-command)
+          (let ((r-path (find-if #'file-exists-p (list "C:/Users/a0864027/PF/R/bin/x64/R.exe"
+                                                       "C:/Program Files/R/R-4.0.1/bin/x64/R.exe"
+                                                       "C:/Program Files/R/R-3.6.3/bin/x64/R.exe"
+                                                       "C:/Program Files/Microsoft/R Open/R-3.5.3/bin/x64/R.exe"
+                                                       "C:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/R.exe"
+                                                       "C:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/R.exe"
+                                                       "C:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/R.exe"
+                                                       "C:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/R.exe"
+                                                       "C:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/R.exe"
+                                                       "C:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/R.exe"))))
+            (if r-path
+                (setq inferior-R-program-name r-path)))
+          (setq ess-default-style 'OWN)
+          (add-hook 'ess-mode-hook
+                    (lambda ()
+                      (MJR-quiet-message "POST-INIT: HOOK: ess-mode-hook")
+                      ;;(define-key ess-mode-map (kbd "_") #'self-insert-command)
+                      (ess-set-style 'OWN)
+                      (setq ess-indent-level 2)
+                      (setq ess-indent-with-fancy-comments nil)
+                      ))
+          (add-hook 'inferior-ess-mode-hook
+                    (lambda ()
+                      (MJR-quiet-message "POST-INIT: HOOK: inferior-ess-mode-hook")
+                      (progn (ess-toggle-underscore 't)
+                             (ess-toggle-underscore nil))
+                      (ess-set-style 'OWN)
+                      (setq ess-indent-level 2)
+                      (setq ess-indent-with-fancy-comments nil)
+                      ))))
+(require 'ess-site nil 't)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: org-mode setup...")
 (if (not MJR-pookie-mode)
     (if 't ;; The big if is here so we can disable org-mode configuration before we do an ELPA package install of org...
@@ -1925,7 +1973,7 @@ This function is 100% pure Emacs lisp -- no external tools are required"
             "Wrap org-babel-execute-buffer"
             (interactive)
             (let ((org-confirm-babel-evaluate nil))
-              (funcall-interactively #'org-babel-execute-buffer)))          
+              (funcall-interactively #'org-babel-execute-buffer)))
 
           (setq org-html-postamble "Created by %a <%e>.  Rendered on %T via %c")
           (setq org-src-fontify-natively t)                         ;; Prety colors
@@ -1953,22 +2001,9 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                       (local-set-key  (kbd "C-c a")          'org-agenda)
                       ))
           ;; Need to set the R path on Windows...
-          (if (string-equal MJR-platform "WINDOWS-MGW")
-              (let ((r-path (find-if #'file-exists-p (list "C:/PROGRA~1/R/R-40~1.1/bin/x64/R.exe"
-                                                           "C:/PROGRA~1/R/R-36~1.3/bin/x64/R.exe"
-                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-35~1.3/bin/x64/R.exe"
-                                                           "C:/PROGRA~1/MICROS~2/ROPEN~1/R-35~1.3/bin/x64/R.exe"           
-                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-35~1.1/bin/x64/R.exe"
-                                                           "C:/PROGRA~1/MICROS~2/ROPEN~1/R-35~1.1/bin/x64/R.exe"
-                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-35~1.0/bin/x64/R.exe"
-                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-34~1.4/bin/x64/R.exe"
-                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-34~1.3/bin/x64/R.exe"
-                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-34~1.2/bin/x64/R.exe"
-                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-34~1.1/bin/x64/R.exe"
-                                                           "C:/PROGRA~1/MICROS~1/ROPEN~1/R-34~1.0/bin/x64/R.exe"))))             
-                (if r-path
-                    (setq org-babel-R-command (concat r-path " --slave --no-save"))
-                    (MJR-quiet-message "Error: Could not find R.exe binary for babel in org-mode on Windows"))))
+          (if (and (string-equal MJR-platform "WINDOWS-MGW") inferior-R-program-name)
+              (setq org-babel-R-command (concat "'" inferior-R-program-name "' --slave --no-save"))
+              (MJR-quiet-message "Error: Could not find R.exe binary for babel in org-mode on Windows"))
           ;; Need to set the maxima path on Windows...
           (if (string-equal MJR-platform "WINDOWS-MGW")
               (let ((max-path (find-if #'file-exists-p (list "C:/maxima-5.42.1/bin/maxima.bat"
@@ -2116,7 +2151,7 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                                                (file-exists-p "../build/makefile"))
                                            (buffer-file-name))
                                       (set (make-local-variable 'compile-command)
-	                                       (concat "make -C ../build " (shell-quote-argument (file-name-sans-extension  (file-name-nondirectory (buffer-file-name)))))))
+                                           (concat "make -C ../build " (shell-quote-argument (file-name-sans-extension  (file-name-nondirectory (buffer-file-name)))))))
                                   (c-set-style "MJR")
                                   (local-set-key "\C-c\C-c" 'compile))))))
 
@@ -2297,7 +2332,7 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                       (list "/usr"                                      "5.38.1") ;; Disto Location: Debian 9
                       (list "/usr"                                      "5.34.1") ;; Disto Location: Debian 8
                       (list "/usr"                                      "5.21.1") ;; Disto Location: Ubuntu 11
-                      )) 
+                      ))
       (multiple-value-bind (p  v) pv
         (let ((ep (concat p "/share/maxima/" v "/emacs")))
           (if (file-exists-p (concat ep "/maxima.el"))
@@ -2646,56 +2681,6 @@ With prefix argument, force reinstall of already installed packages."
                       (yas-global-mode 1)))
             (require 'yasnippet nil 't))))
     (MJR-quiet-message "INIT: PKG SETUP: yasnippet setup suppressed in pookie-mode"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "INIT: PKG SETUP: ESS")
-(eval-after-load "ess-site"
-  '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: ess!")
-          (customize-set-variable  'ess-use-flymake nil)
-          (customize-set-variable  'ess-fancy-comments nil)
-          (customize-set-variable  'ess-history-file nil)
-          (setq ess-handy-commands '(("set-width"        . ess-execute-screen-options)
-                                     ("rdired"           . ess-rdired)
-                                     ("change-directory" . ess-change-directory)
-                                     ("help-apropos"     . ess-display-help-apropos)
-                                     ("help-index"       . ess-display-package-index)
-                                     ("help-object"      . ess-display-help-on-object)
-                                     ("search"           . ess-execute-search)
-                                     ("vignettes"        . ess-display-vignettes)))
-          (define-key ess-mode-map (kbd "_") #'self-insert-command)
-          (let ((r-path (find-if #'file-exists-p (list "C:/PROGRA~1/R/R-40~1.1/bin/x64/Rterm.exe"
-                                                       "c:/Program Files/R/R-3.6.3/bin/x64/Rterm.exe"
-                                                       "c:/Program Files/Microsoft/R Open/R-3.5.3/bin/x64/Rterm.exe"
-                                                       "c:/Program Files/Microsoft/R Open/R-3.5.1/bin/x64/Rterm.exe"
-                                                       "c:/Program Files/Microsoft/R Open/R-3.5.0/bin/x64/Rterm.exe"
-                                                       "c:/Program Files/Microsoft/R Open/R-3.4.4/bin/x64/Rterm.exe"
-                                                       "c:/Program Files/Microsoft/R Open/R-3.4.2/bin/x64/Rterm.exe"
-                                                       "c:/Program Files/Microsoft/R Open/R-3.4.1/bin/x64/Rterm.exe"
-                                                       "c:/Program Files/Microsoft/R Open/R-3.4.0/bin/x64/Rterm.exe"))))
-            (if r-path
-                (setq inferior-R-program-name r-path)))
-          (setq ess-default-style 'OWN)
-
-          (add-hook 'ess-mode-hook
-                    (lambda ()
-                      (MJR-quiet-message "POST-INIT: HOOK: ess-mode-hook")
-                      ;;(define-key ess-mode-map (kbd "_") #'self-insert-command)
-                      (ess-set-style 'OWN)
-                      (setq ess-indent-level 2) 
-                      (setq ess-indent-with-fancy-comments nil)
-                      ))
-          (add-hook 'inferior-ess-mode-hook
-                    (lambda ()
-                      (MJR-quiet-message "POST-INIT: HOOK: inferior-ess-mode-hook")
-                                        ;(local-set-key (kbd "C-p") 'comint-previous-input) ;; Don't need.  Set in comint-mode-hook
-                                        ;(local-set-key (kbd "C-n") 'comint-next-input)      ;; Don't need.  Set in comint-mode-hook
-                      (progn (ess-toggle-underscore 't)
-                             (ess-toggle-underscore nil))
-                      (ess-set-style 'OWN)
-                      (setq ess-indent-level 2) 
-                      (setq ess-indent-with-fancy-comments nil)
-                      ))))
-(require 'ess-site nil 't)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: comint")
