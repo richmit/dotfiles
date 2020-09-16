@@ -83,7 +83,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'cl)
+(require 'cl-lib)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-quiet-message (fmt &rest rest)
@@ -132,10 +132,10 @@
                                (set var val))))
   ;; If we have a recognized login-name, then auto-config MJR-expert-mode, MJR-pookie-mode, & MJR-uname
   (let ((urln (user-real-login-name)))
-    (cond ((find urln '("richmit"
+    (cond ((cl-find urln '("richmit"
                         "a0864027"
                         "mjr")      :test #'string=) (progn (set-if-auto-config 'MJR-uname      "richmit")))
-          ((find urln '("jrichli"
+          ((cl-find urln '("jrichli"
                         "swift")    :test #'string=) (progn (set-if-auto-config 'MJR-uname      "jrichli")
                                                             (set-if-auto-config 'MJR-expert-mode nil)
                                                             (set-if-auto-config 'MJR-pookie-mode 't))))
@@ -147,7 +147,7 @@
   ;; Check some hardwired fixed paths first, then use the magical ~ path if we fail.
   (set-if-auto-config 'MJR-home (or (let ((tmp (expand-file-name "~")))
                                       (and tmp (file-exists-p tmp) tmp))
-                                    (find-if #'file-exists-p (mapcar (lambda (p) (concat p MJR-uname)) '("/Users/"  ;; OSX & Windows
+                                    (cl-find-if #'file-exists-p (mapcar (lambda (p) (concat p MJR-uname)) '("/Users/"  ;; OSX & Windows
                                                                                                          "/home/"
                                                                                                          "/u/")))))
   ;; Set MJR-home-bin, MJR-home-cor, & MJR-home-dot
@@ -192,8 +192,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: STAGE: initializing package manager packages...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq package-enable-at-startup nil)
-(package-initialize)
+(if (version< emacs-version "27.1")
+    (progn (setq package-enable-at-startup nil)
+           (package-initialize)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: STAGE: Require Section...")
@@ -228,7 +229,7 @@ so it gets picked up."
     (if (file-exists-p elisp-path)
         (let ((candidate-path-names (directory-files elisp-path 't (concat "^" package-name "[=-]"))))
           (if candidate-path-names
-              (let ((best-directory-path (find-if #'file-directory-p (sort candidate-path-names (lambda (a b) (string-lessp b a))))))
+              (let ((best-directory-path (cl-find-if #'file-directory-p (sort candidate-path-names (lambda (a b) (string-lessp b a))))))
                 (if best-directory-path
                     (file-name-as-directory best-directory-path))))))))
 
@@ -271,7 +272,7 @@ With prefix argument, also mark ps, html, dvi, and ps files."
                (if (looking-at-p dired-re-dir)
                    (string-equal (file-name-nondirectory fn) "auto")
                    (and (file-exists-p (concat (file-name-base fn) ".tex"))
-                        (find-if (lambda (re) (string-match re fn)) re-to-zap)))))
+                        (cl-find-if (lambda (re) (string-match re fn)) re-to-zap)))))
          "LaTeX temp file"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -292,7 +293,7 @@ With prefix argument, also mark ps, html, dvi, and ps files."
            (and fn
                 (file-exists-p fn)
                 (not (looking-at-p dired-re-dir))
-                (find-if (lambda (re) (string-match re fn)) re-to-zap)))
+                (cl-find-if (lambda (re) (string-match re fn)) re-to-zap)))
          "Jumk file"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -440,7 +441,7 @@ The number of verical windows will be min(8, max(2, prefix-arg))"
   (cond ((string-equal MJR-platform "WINDOWS-MGW") (w32-shell-execute "open" "."))
         ((string-equal MJR-platform "WINDOWS-CYG") (w32-shell-execute "open" "."))
         ((string-equal MJR-platform "DARWIN")      (start-process-shell-command "open" "open" "open " "."))
-        ((string-equal MJR-platform "LINUX")       (let ((fme (find-if #'executable-find (list "dolphin" "nautilus"))))
+        ((string-equal MJR-platform "LINUX")       (let ((fme (cl-find-if #'executable-find (list "dolphin" "nautilus"))))
                                                      (if fme
                                                          (start-process "file-explorer" nil fme (expand-file-name "."))
                                                          (message "MJR-open-cwd: ERROR: Could not find file manager binary"))))))
@@ -650,8 +651,8 @@ The 'MJR' comments come in one of two forms:
                                                                        (string-match "/[A-Z]+$" f)))))
                                                 (directory-files (concat MJR-home-cor "/codeBits/") 't)))))
            (let ((da-cat (if (require 'ido nil :noerror)
-                             (ido-completing-read "Category: " cat-str-v nil 't nil nil (find "MJR" cat-str-v :test #'string-equal))
-                             (read-string "Category: " (or (find "MJR" cat-str-v :test #'string-equal) (first cat-str-v)) 'cat-str-v))))
+                             (ido-completing-read "Category: " cat-str-v nil 't nil nil (cl-find "MJR" cat-str-v :test #'string-equal))
+                             (read-string "Category: " (or (cl-find "MJR" cat-str-v :test #'string-equal) (first cat-str-v)) 'cat-str-v))))
              (let ((file-type-v (append '("AUTO")
                                        (mapcar #'file-name-extension (file-expand-wildcards (concat MJR-home-cor "/codeBits/" da-cat "/top.*"))))))
                (let ((da-type (if (require 'ido nil :noerror)
@@ -661,7 +662,7 @@ The 'MJR' comments come in one of two forms:
         (let ((cur-file-name (buffer-file-name)))
           (let ((file-type (if (string= file-type "AUTO")
                                (if cur-file-name
-                                   (cdr (find-if (lambda (re) (string-match (car re) cur-file-name))
+                                   (cdr (cl-find-if (lambda (re) (string-match (car re) cur-file-name))
                                                  (list (cons "^makefile$" "make")
                                                        (cons "^Doxyfile$" "doxyfile")
                                                        (cons "\..+$"      (file-name-extension cur-file-name))))))
@@ -872,7 +873,7 @@ The 'MJR' comments come in one of two forms:
 (push (list "uname-long"
             nil
             (lambda () (let ((tmp (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1))))
-                         (and tmp (find tmp (system-users) :test #'string-equal))))
+                         (and tmp (cl-find tmp (system-users) :test #'string-equal))))
             '("/home/sysadmin/bin/pde %Q" "getent passwd %Q"))
       MJR-thingy-lookeruper-methods)
 ;; Look up a word via dictionary.reference.com
@@ -895,7 +896,7 @@ The 'MJR' comments come in one of two forms:
 (push (list "uname-short"
             nil
             (lambda () (let ((tmp (and (thing-at-point-looking-at "\\b\\([a-zA-Z][a-zA-Z0-9_-]+\\)\\b" 20) (match-string 1))))
-                         (and tmp (find tmp (system-users) :test #'string-equal))))
+                         (and tmp (cl-find tmp (system-users) :test #'string-equal))))
             '("getent passwd %Q"))
           MJR-thingy-lookeruper-methods)
 ;; Just toss it into a browser
@@ -994,7 +995,7 @@ gid, host name, dictionary word, and Google search."
          (progn
            (setq MJR-thingy-lookeruper-methods-clean
                  (loop for (cur-method-name cur-method-mode-regex cur-method-tap cur-method-search-command-list) in MJR-thingy-lookeruper-methods
-                       for cur-method-search-command = (find-if (lambda (f) (if (stringp f)
+                       for cur-method-search-command = (cl-find-if (lambda (f) (if (stringp f)
                                                                                 (let ((command-to-find (first (split-string f))))
                                                                                   (or (file-exists-p   command-to-find)
                                                                                       (executable-find command-to-find)))
@@ -1010,7 +1011,7 @@ gid, host name, dictionary word, and Google search."
          (if (if (stringp cur-method-mode-regex)
                  (string-match cur-method-mode-regex (symbol-name major-mode))
                  (or (not cur-method-mode-regex)
-                     (find-if (lambda (x) (string-match x (symbol-name major-mode))) cur-method-mode-regex)))
+                     (cl-find-if (lambda (x) (string-match x (symbol-name major-mode))) cur-method-mode-regex)))
              (let ((fnd-thingy (or have-region (and cur-method-tap (funcall cur-method-tap)))))
                (if fnd-thingy
                    (setq search-strings (append search-strings (list fnd-thingy))
@@ -1025,7 +1026,7 @@ gid, host name, dictionary word, and Google search."
                                                   (error "MJR-thingy-lookeruper: Method is invalid")))))
            ('t                            (error "MJR-thingy-lookeruper: Could not find a string to lookup")))))
   (message "MJR-thingy-lookeruper: '%s' via '%s'" string-to-lookup lookup-method)
-  (let ((the-command (nth 3 (find-if (lambda (c) (string-equal lookup-method (car c))) MJR-thingy-lookeruper-methods-clean))))
+  (let ((the-command (nth 3 (cl-find-if (lambda (c) (string-equal lookup-method (car c))) MJR-thingy-lookeruper-methods-clean))))
     (if the-command
         (if (stringp the-command)
             (let ((the-command-x the-command))
@@ -1227,7 +1228,7 @@ the function always returns all statistics in an alist regardless of what stats 
 ;; (setq prettify-symbols-unprettify-at-point 't)
 ;; (global-prettify-symbols-mode t)
 (if (string-equal MJR-platform "WINDOWS-MGW")
-    (let ((shell-path (find-if #'file-exists-p (list "c:/msys64/usr/bin/bash.exe"
+    (let ((shell-path (cl-find-if #'file-exists-p (list "c:/msys64/usr/bin/bash.exe"
                                                       ))))
       (if shell-path
           (progn (setq shell-file-name          shell-path)
@@ -1324,7 +1325,7 @@ the function always returns all statistics in an alist regardless of what stats 
 (MJR-quiet-message "INIT: PKG SETUP: rmail")
 (eval-after-load "rmail"
   '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: rmail!")
-          (let ((sepath (find-if #'file-exists-p '("/Users/Shared/mail/"))))
+          (let ((sepath (cl-find-if #'file-exists-p '("/Users/Shared/mail/"))))
             (if sepath
                 (setq rmail-secondary-file-directory sepath)))
           (setq rmail-secondary-file-regexp "\\.")))
@@ -1379,7 +1380,7 @@ the function always returns all statistics in an alist regardless of what stats 
 (eval-after-load "epa-file"
   '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: epa-file!")
           (if (string-match MJR-platform "WINDOWS-MGW")
-              (let ((gpgpath (find-if #'file-exists-p '("C:\\PROGRA~2\\GnuPG\\bin"
+              (let ((gpgpath (cl-find-if #'file-exists-p '("C:\\PROGRA~2\\GnuPG\\bin"
                                                         "C:\\PROGRA~1\\GnuPG\\bin"))))
                 (if gpgpath  (progn (custom-set-variables (list 'epg-gpg-program  (concat gpgpath "\\gpg.exe")))
                                     (setenv "PATH" (concat gpgpath ":" (getenv "PATH")))
@@ -1388,7 +1389,7 @@ the function always returns all statistics in an alist regardless of what stats 
 (eval-after-load "epg"
   '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: epg!")
           (if (string-match MJR-platform "WINDOWS-MGW")
-              (let ((gpgpath (find-if #'file-exists-p '("C:\\PROGRA~2\\GnuPG\\bin"
+              (let ((gpgpath (cl-find-if #'file-exists-p '("C:\\PROGRA~2\\GnuPG\\bin"
                                                         "C:\\PROGRA~1\\GnuPG\\bin"))))
                 (if gpgpath (custom-set-variables (list 'epg-gpg-program  (concat gpgpath "\\gpg.exe"))))))))
 
@@ -1468,7 +1469,7 @@ the function always returns all statistics in an alist regardless of what stats 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: cmake")
-(let ((cmake-path (find-if (lambda (p) (file-exists-p (concat p "/cmake-mode.el")))
+(let ((cmake-path (cl-find-if (lambda (p) (file-exists-p (concat p "/cmake-mode.el")))
                            (list "C:\\msys64\\usr\\share\\cmake-3.14.3\\editors\\emacs"
                                  "C:\\msys64\\usr\\share\\cmake-3.13.2\\editors\\emacs"
                                  "C:\\msys64\\mingw64\\share\\cmake-3.11\\editors\\emacs"
@@ -1508,11 +1509,11 @@ the function always returns all statistics in an alist regardless of what stats 
                                                              (goto-char pos)
                                                              (setq file (dired-get-file-for-visit)))
                                                            (select-window window)
-                                                           (find-file (file-name-sans-versions file t)))))))
+                                                           (cl-find-file (file-name-sans-versions file t)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (MJR-quiet-message "INIT: PKG SETUP: git")
-(let ((git-el-files (find-if (lambda (pl) (every #'file-exists-p pl))
+(let ((git-el-files (cl-find-if (lambda (pl) (cl-every #'file-exists-p pl))
                              (mapcar (lambda (p) (mapcar (lambda (f) (concat (file-name-as-directory p) f))
                                                          '("git.el" "git-blame.el")))
                                      (list (or (MJR-find-newest-core-package "git") "")
@@ -1672,7 +1673,7 @@ the function always returns all statistics in an alist regardless of what stats 
     (defun MJR-term (PROGRAM-TO-RUN)
       "Fire off an ansi-term with a nice, default buffer name.  Sets the EDITOR environment variable and makes sure emacs-server is running."
       (interactive (list (if (require 'ido nil :noerror)
-                             (ido-completing-read "Program to run: " (remove-if-not #'file-exists-p (list "/bin/zsh"
+                             (ido-completing-read "Program to run: " (cl-remove-if-not #'file-exists-p (list "/bin/zsh"
                                                                                                           "/bin/bash"
                                                                                                           (concat MJR-home-bin "/t")
                                                                                                           (concat MJR-home-bin "/tn")
@@ -1698,7 +1699,7 @@ the function always returns all statistics in an alist regardless of what stats 
 (defun MJR-emerge-git-conflict (file-name)
   "Merge a git conflict with ediff merge.  WARNING: sane people use magit for this, therefore this function is only for use by the insane."
   (interactive "fFile to merge: ")
-  (loop for buf = (find-buffer-visiting file-name)
+  (loop for buf = (cl-find-buffer-visiting file-name)
         while buf
         do (kill-buffer buf))
   (let ((fileA (make-temp-file "ediffmerge"))
@@ -1882,7 +1883,9 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                                      ("search"           . ess-execute-search)
                                      ("vignettes"        . ess-display-vignettes)))
           (define-key ess-mode-map (kbd "_") #'self-insert-command)
-          (let ((r-path (find-if #'file-exists-p (list "C:/Users/a0864027/PF/R/bin/x64/R.exe"
+          (let ((r-path (cl-find-if #'file-exists-p (list "C:/Users/a0864027/PF/R/R-4.0.2/bin/x64/R.exe"
+                                                       "C:/Users/a0864027/PF/R/R-4.0.1/bin/x64/R.exe"
+                                                       "C:/Program Files/R/R-4.0.2/bin/x64/R.exe"
                                                        "C:/Program Files/R/R-4.0.1/bin/x64/R.exe"
                                                        "C:/Program Files/R/R-3.6.3/bin/x64/R.exe"
                                                        "C:/Program Files/Microsoft/R Open/R-3.5.3/bin/x64/R.exe"
@@ -2006,7 +2009,7 @@ This function is 100% pure Emacs lisp -- no external tools are required"
               (MJR-quiet-message "Error: Could not find R.exe binary for babel in org-mode on Windows"))
           ;; Need to set the maxima path on Windows...
           (if (string-equal MJR-platform "WINDOWS-MGW")
-              (let ((max-path (find-if #'file-exists-p (list "C:/maxima-5.42.1/bin/maxima.bat"
+              (let ((max-path (cl-find-if #'file-exists-p (list "C:/maxima-5.42.1/bin/maxima.bat"
                                                              "C:/maxima-5.40.0/bin/maxima.bat"))))
                 (if max-path
                     (setq org-babel-maxima-command max-path)
@@ -2085,7 +2088,7 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                 (setq ispell-program-name "c:/Program Files (x86)/hunspell-1.3.2-3/bin/hunspell.exe")
                 (setq ispell-local-dictionary "en_US")
                 (setq ispell-local-dictionary-alist '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8))))
-              (let ((aspell-path (find-if #'file-exists-p
+              (let ((aspell-path (cl-find-if #'file-exists-p
                                           (list "/usr/bin/hunspell"
                                                 "/bin/hunspell"
                                                 "/usr/local/bin/aspell"
@@ -2173,7 +2176,7 @@ This function is 100% pure Emacs lisp -- no external tools are required"
     (if (let ((case-fold-search 't))
           (string-match "texlive" (getenv "PATH")))
         (MJR-quiet-message "INIT: Meta Windows TeX Live setup: NOP. PATH appears to already have TeX")
-        (let ((texlive-path (find-if #'file-exists-p
+        (let ((texlive-path (cl-find-if #'file-exists-p
                                      (list "C:/texlive/2018/bin/win32/"
                                            "C:/texlive/2017/bin/win32/"))))
           (if (not texlive-path)
@@ -2278,7 +2281,7 @@ This function is 100% pure Emacs lisp -- no external tools are required"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: Macaulay 2 setup...")
 (if nil
-    (let ((mac-path (find-if #'file-exists-p
+    (let ((mac-path (cl-find-if #'file-exists-p
                              (list "/usr/local/big/Macaulay2/1.7/share/emacs/site-lisp"
                                    "/Applications/Macaulay2-1.2/share/emacs/site-lisp/"
                                    "/Applications/Macaulay2-1.1/share/emacs/site-lisp/"
@@ -2317,7 +2320,7 @@ This function is 100% pure Emacs lisp -- no external tools are required"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: Maxima setup...")
-(multiple-value-bind (found-maxima-emacs-path found-maxima-bin-file found-maxima-image-file)
+(cl-multiple-value-bind (found-maxima-emacs-path found-maxima-bin-file found-maxima-image-file)
     (dolist (pv (list (list "C:/maxima-5.42.1"                          "5.42.1") ;; Standard location on Windows 10
                       (list "C:/maxima-5.40.0"                          "5.40.0") ;; Standard location on Windows 10
                       (list "/usr/local/big/maxima-5.40.0_sbcl-1.3.19"  "5.40.0") ;; Custom build on Debian 9
@@ -2333,14 +2336,14 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                       (list "/usr"                                      "5.34.1") ;; Disto Location: Debian 8
                       (list "/usr"                                      "5.21.1") ;; Disto Location: Ubuntu 11
                       ))
-      (multiple-value-bind (p  v) pv
+      (cl-multiple-value-bind (p  v) pv
         (let ((ep (concat p "/share/maxima/" v "/emacs")))
           (if (file-exists-p (concat ep "/maxima.el"))
               (return (list ep
-                            (find-if #'file-exists-p (list (concat p "/bin/maxima.bat")
+                            (cl-find-if #'file-exists-p (list (concat p "/bin/maxima.bat")
                                                            (concat p "/bin/maxima.exe")
                                                            (concat p "/bin/maxima")))
-                            (find-if #'file-exists-p (list (concat p "/lib/maxima/" v "binary-" "gcl")
+                            (cl-find-if #'file-exists-p (list (concat p "/lib/maxima/" v "binary-" "gcl")
                                                            (concat p "/lib/maxima/" v "binary-" "sbcl")))))))))
   (if found-maxima-emacs-path
       (progn (MJR-quiet-message "INIT: PKG SETUP: Specific version of maxima.el found...")
@@ -2424,7 +2427,7 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                        (bmk-target-options   (cdr bp))
                        (bmk-target-validated (if (stringp bmk-target-options)
                                                  (if (file-exists-p bmk-target-options) bmk-target-options)
-                                                 (find-if #'file-exists-p bmk-target-options)))
+                                                 (cl-find-if #'file-exists-p bmk-target-options)))
                        (bmk-target-expanded (and bmk-target-validated (expand-file-name bmk-target-validated))))
                   (if (and bmk-name bmk-target-expanded)
                       (let ((bmkl (list bmk-name (cons 'filename bmk-target-expanded))))
@@ -2447,7 +2450,7 @@ This function is 100% pure Emacs lisp -- no external tools are required"
 (MJR-quiet-message "INIT: PKG SETUP: HYPERSPEC...")
 (eval-after-load "hyperspec"
   '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: hyperspec!")
-          (let ((spec-to-use (find-if #'file-exists-p
+          (let ((spec-to-use (cl-find-if #'file-exists-p
                                       (list "/usr/share/doc/hyperspec/"
                                             "/Users/Shared/Doc2/software-dev/LISP/hyperspec/"
                                             "/media/sf_D_DRIVE/Doc2/software-dev/LISP/hyperspec/"
@@ -2487,7 +2490,7 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                                (call-interactively #'slime-edit-definition)
                                (progn (message "MJR-find-symbol-def: SLIME is not running.  Falling back to ETAGS")
                                       (call-interactively #'slime-edit-definition-with-etags))))
-                         (let ((slime-lisp-bin (find-if #'file-exists-p
+                         (let ((slime-lisp-bin (cl-find-if #'file-exists-p
                                                         (list "/usr/local/big/sbcl/1.3.11/bin/sbcl"
                                                               "/usr/local/big/sbcl/1.3.4/bin/sbcl"
                                                               "/usr/local/big/sbcl/1.2.14/bin/sbcl"
@@ -2644,7 +2647,7 @@ With prefix argument, force reinstall of already installed packages."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: yasnippet")
 (if (not MJR-pookie-mode)
-    (let ((yasnippet-snip-path (remove-if-not #'file-exists-p (list (concat MJR-home-cor   "/yasnippets")
+    (let ((yasnippet-snip-path (cl-remove-if-not #'file-exists-p (list (concat MJR-home-cor   "/yasnippets")
                                                                     (concat MJR-home-cor   "/yasnippet")))))
       (if yasnippet-snip-path
           (progn
@@ -2655,7 +2658,7 @@ With prefix argument, force reinstall of already installed packages."
                       (defun MJR-expand ()
                         "If no region is active, use yas-expand to attempt yasnippet expantion; otherwise call yas-insert-snippet."
                         (interactive)
-                        ;; (if (not (find 'fundamental-mode minor-mode-list))
+                        ;; (if (not (cl-find 'fundamental-mode minor-mode-list))
                         ;;     (yas-activate-extra-mode 'fundamental-mode))
                         (if (and transient-mark-mode (region-active-p))
                             (funcall-interactively #'yas-insert-snippet)
@@ -2751,7 +2754,7 @@ With prefix argument, force reinstall of already installed packages."
 ;; git keys
 (cond ((require 'magit nil 't) (global-set-key (kbd "C-c g") 'magit-status))
       ((require 'git   nil 't) (global-set-key (kbd "C-c g") 'git-status))
-      ('t                      ((MJR-quiet-message "MJR INIT: WARNING: Unable to bind C-c g to #'magit-status or #'git-status"))))
+      ('t                      (MJR-quiet-message "MJR INIT: WARNING: Unable to bind C-c g to #'magit-status or #'git-status")))
 
 ;; Start Slime or run slime-selector  --  R is for REPL.
 (if (not MJR-pookie-mode)

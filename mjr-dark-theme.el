@@ -280,8 +280,8 @@
  '(org-agenda-restriction-lock                ((t (:background "skyblue4"))))
  '(org-agenda-structure                       ((t (:foreground "LightSkyBlue"))))
  '(org-archived                               ((t (:foreground "grey70"))))
- '(org-block-begin-line                       ((t (:background "#151f3f" :inherit 'org-meta-line))))
- '(org-block-end-line                         ((t (:background "#151f3f" :inherit 'org-meta-line))))
+ '(org-block-begin-line                       ((t (:background "#151f3f" :inherit 'org-meta-line :extend t))))
+ '(org-block-end-line                         ((t (:background "#151f3f" :inherit 'org-meta-line :extend t))))
  '(org-document-info-keyword                  ((t (                      :inherit 'org-meta-line))))
  '(org-code                                   ((t (:foreground "grey70"))))
  '(org-column                                 ((t (:background "grey30" :slant normal :weight normal))))
@@ -470,9 +470,7 @@
  '(eshell-ls-picture-face                     ((t (                                                 :inherit 'default))))
  '(eshell-ls-product-face                     ((t (                                                 :inherit 'default))))
  '(eshell-ls-readonly-face                    ((t (                                                 :inherit 'default))))
-;; '(eshell-prompt-face                         ((t (                                                 :inherit 'comint-highlight-prompt))))
-
- '(eshell-prompt-face                         ((t (:foreground "Green" :bold t :weight bold))))
+ '(eshell-prompt-face                         ((t (:foreground "pink" :weight bold))))
 
  '(eshell-test-failed-face                    ((t (:foreground "OrangeRed"            :bold t :weight bold))))
  '(eshell-test-ok-face                        ((t (:foreground "Green"                :bold t :weight bold))))
