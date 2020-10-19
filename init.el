@@ -323,60 +323,67 @@ With prefix argument, also mark ps, html, dvi, and ps files."
     (switch-to-buffer ascii-buffer)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun MJR-eval-region (eval-how)
-        "Evaluate the region as calc, elisp, or lisp (via slime), put the result in the kill ring.  With prefix arg, insert result into buffer.
+(defun MJR-string-int-multibase-convert (in-string)
+  "If IN-STRING contains a single integer then return a string of with the integer represented in base 10, 16, 2, and 8.
+HEX, DEC, OCT, & BIN integers are recognized in C++, LISP, ELISP, & calc syntax.  In addition, numeric string escape sequences in C++ syntax are recognized."
+  (if in-string      
+      (let ((calc-int-string  (cond ((string-match-p "^[[:space:]]*0[xX][0-9a-fA-F]+[[:space:]]*$"  in-string) (replace-regexp-in-string "^[[:space:]]*0x" "16#" in-string))  ;; Single Integer in C++ HEX syntax 
+                                    ((string-match-p "^[[:space:]]*#[xX][0-9a-fA-F]+[[:space:]]*$"  in-string) (replace-regexp-in-string "^[[:space:]]*#x" "16#" in-string))  ;; Single Integer in LISP HEX syntax
+                                    ((string-match-p "^[[:space:]]*16#[0-9a-fA-F]+[[:space:]]*$"    in-string) in-string                                                   )  ;; Single Integer in calc HEX syntax
+                                    ((string-match-p "^[[:space:]]*0[bB][01]+[[:space:]]*$"         in-string) (replace-regexp-in-string "^[[:space:]]*0b" "2#"  in-string))  ;; Single Integer in C++ BIN syntax
+                                    ((string-match-p "^[[:space:]]*#[bB][01]+[[:space:]]*$"         in-string) (replace-regexp-in-string "^[[:space:]]*#b" "2#"  in-string))  ;; Single Integer in LISP BIN syntax
+                                    ((string-match-p "^[[:space:]]*2#[0-9a-fA-F]+*[[:space:]]*$"    in-string) in-string                                                   )  ;; Single Integer in calc BIN syntax
+                                    ((string-match-p "^[[:space:]]*0[0-7]+[[:space:]]*$"            in-string) (replace-regexp-in-string "^[[:space:]]*0"  ""    in-string))  ;; Single Integer in C++ OCT syntax 
+                                    ((string-match-p "^[[:space:]]*#[oO][0-7]+[[:space:]]*$"        in-string) (replace-regexp-in-string "^[[:space:]]*#o" "8#"  in-string))  ;; Single Integer in LISP OCT syntax
+                                    ((string-match-p "^[[:space:]]*8#[0-9a-fA-F]+[[:space:]]*$"     in-string) in-string                                                   )  ;; Single Integer in calc OCT syntax
+                                    ((string-match-p "^[[:space:]]*[1-9][0-9]*[[:space:]]*$"        in-string) in-string                                                   )  ;; Single Integer in C++/LISP/calc DEC syntax
+                                    ((string-match-p "^\\\\[0-7]\\{3\\}$"                           in-string) (replace-regexp-in-string "^\\\\"           "8#"  in-string))  ;; 1 byte Octal escape sequence
+                                    ((string-match-p "^\\\\X[0-9a-fA-F]\\{2\\}$"                    in-string) (replace-regexp-in-string "^\\\\X"          "16#" in-string))  ;; 1 byte Hex escape sequence
+                                    ((string-match-p "^\\\\U[0-9a-fA-F]\\{4\\}$"                    in-string) (replace-regexp-in-string "^\\\\U"          "16#" in-string))  ;; 2 byte Hex Unicode escape sequence
+                                    ((string-match-p "^\\\\U[0-9a-fA-F]\\{8\\}$"                    in-string) (replace-regexp-in-string "^\\\\U"          "16#" in-string))  ;; 4 byte Hex Unicode escape sequence                                    
+                                    )))
+        (if calc-int-string
+            (concat (calc-eval (list calc-int-string 'calc-number-radix 10))
+                    "  "
+                    (calc-eval (list calc-int-string 'calc-number-radix 16))
+                    "  "
+                    (calc-eval (list calc-int-string 'calc-number-radix 2))
+                    "  "
+                    (calc-eval (list calc-int-string 'calc-number-radix 8)))))))
 
-Note: In non-interactive mode, the result is also displayed as a message for 'calc' and 'elisp'.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun MJR-meta-eval (eval-how &optional eval-str)
+  "Evaluate the region as calc, elisp, or lisp (via slime), put the result in the kill ring and print it in a message.
 
-Interaction with options:
-  * delete-selection-mode is non-NIL => Then a prefix arg will cause the result to *replace* the region
-  * transient-mark-mode is non-NIL   => If region is not active, then interactive mode is used (results not put on kill ring)
-                                        * for 'calc' ... like calling quick-calc             -- i.e. C-c * q
-                                        * for 'elisp' .. like calling eval-expression        -- i.e. M-:
-                                        * for 'lisp' ... like calling slime-interactive-eval -- i.e. C-: (in a slime buffer)"
-        (interactive (list (if (require 'ido nil :noerror)
+eval-str: A string to evaluate.  
+          In interactive mode the active region is used. If the active region cotains a single an integer, the eval-how is not prompted 
+          and result is the integer converted to several bases.  If no active region, then prompt for string.
+eval-how: 'calc' ... like calling quick-calc             -- i.e. C-c * q
+          'elisp' .. like calling eval-expression        -- i.e. M-:
+          'lisp' ... like calling slime-interactive-eval -- i.e. C-: (in a slime buffer)"
+  (interactive (let* ((reg-str (if (or (null transient-mark-mode) (region-active-p))
+                                   (let* ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
+                                          (reg-max  (if (mark) (max (point) (mark)) (point-max))))
+                                     (if (< reg-min reg-max)
+                                         (buffer-substring-no-properties reg-min reg-max)))))
+                      (str-int  (MJR-string-int-multibase-convert reg-str)))
+                 (if str-int
+                     (list "int"
+                           str-int)
+                     (list (if (require 'ido nil :noerror)
                                (ido-completing-read "Eval how: " (if (and (functionp 'slime-eval-save) (functionp 'slime-interactive-eval))
                                                                      '("calc" "elisp" "lisp")
                                                                      '("calc" "elisp")))
-                               (read-string "Eval how: " "calc"))))
-        (if (or (null transient-mark-mode) (region-active-p))
-            (let* ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
-                   (reg-max  (if (mark) (max (point) (mark)) (point-max)))
-                   (val      (if (< reg-min reg-max)
-                                 (cond
-                                  ((string-equal eval-how "calc")  (kill-new (calc-eval (buffer-substring-no-properties reg-min reg-max))))
-                                  ((string-equal eval-how "elisp") (kill-new (format "%s" (eval (car (read-from-string (buffer-substring-no-properties reg-min reg-max)))))))
-                                  ((string-equal eval-how "lisp")  (slime-eval-save (buffer-substring-no-properties reg-min reg-max)))))))
-              (if val
-                  (if current-prefix-arg
-                      (progn (goto-char reg-max)
-                             (insert "=")
-                             (yank))
-                      (message "MJR-eval-region: Value: %s" val))
-                  (message "MJR-eval-region: Something went wrong")))
-            (cond
-             ((string-equal eval-how "calc")  (call-interactively #'quick-calc))
-             ((string-equal eval-how "elisp") (call-interactively #'eval-expression))
-             ((string-equal eval-how "lisp")  (call-interactively #'slime-interactive-eval)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun MJR-calc-eval-multibase-region ()
-  "Evaluate the region as calc code, and insert at end of region result in several bases."
-  (interactive)
-  (let* ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
-         (reg-max  (if (mark) (max (point) (mark)) (point-max)))
-         (in-num   (if (< reg-min reg-max) (buffer-substring-no-properties reg-min reg-max))))
-    (if in-num
-        (progn (goto-char reg-max)
-               (insert (concat " = "
-                               (calc-eval (list in-num 'calc-number-radix 10))
-                               "  "
-                               (calc-eval (list in-num 'calc-number-radix 16))
-                               "  "
-                               (calc-eval (list in-num 'calc-number-radix 2))
-                               "  "
-                               (calc-eval (list in-num 'calc-number-radix 8)))))
-        (message "MJR-calc-eval-multibase-region: Something went wrong"))))
+                               (read-string "Eval how: " "calc"))
+                           (or reg-str
+                               (read-string "Expression to evaluate: " ""))))))
+  (let ((val (cond ((string-equal eval-how "int")   (kill-new eval-str))
+                   ((string-equal eval-how "calc")  (kill-new (calc-eval eval-str)))
+                   ((string-equal eval-how "elisp") (kill-new (format "%s" (eval (car (read-from-string eval-str))))))
+                   ((string-equal eval-how "lisp")  (slime-eval-save eval-str)))))
+    (if val
+        (message "MJR-meta-eval: Value: %s" val)
+        (message "MJR-meta-eval: Something went wrong"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-bin "/curl"))
@@ -2775,7 +2782,7 @@ With prefix argument, force reinstall of already installed packages."
 (global-set-key (kbd "ESC ESC q") 'MJR-unfill)
 (global-set-key (kbd "ESC ESC g") 'goto-line)
 (global-set-key (kbd "ESC ESC ;") 'MJR-quick-code-comment)
-(global-set-key (kbd "ESC ESC :") 'MJR-eval-region)
+(global-set-key (kbd "ESC ESC :") 'MJR-meta-eval)
 (global-set-key (kbd "ESC =")     'MJR-describe-region-or-char)
 (global-set-key (kbd "C-c b")     'browse-url)
 (global-set-key (kbd "C-c c")     'compile)
