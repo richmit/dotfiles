@@ -76,6 +76,10 @@
 ;;  * bubbles - like SameGame.
 ;;  * display-time-world
 ;;
+;; Stuff to remember:
+;;  * Search for unicode stuff: C-x 8 enter
+;;  * list character tables: list-charset-chars
+;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -323,33 +327,33 @@ With prefix argument, also mark ps, html, dvi, and ps files."
     (switch-to-buffer ascii-buffer)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun MJR-string-int-multibase-convert (in-string)
-  "If IN-STRING contains a single integer then return a string of with the integer represented in base 10, 16, 2, and 8.
-HEX, DEC, OCT, & BIN integers are recognized in C++, LISP, ELISP, & calc syntax.  In addition, numeric string escape sequences in C++ syntax are recognized."
-  (if in-string      
-      (let ((calc-int-string  (cond ((string-match-p "^[[:space:]]*0[xX][0-9a-fA-F]+[[:space:]]*$"  in-string) (replace-regexp-in-string "^[[:space:]]*0x" "16#" in-string))  ;; Single Integer in C++ HEX syntax 
-                                    ((string-match-p "^[[:space:]]*#[xX][0-9a-fA-F]+[[:space:]]*$"  in-string) (replace-regexp-in-string "^[[:space:]]*#x" "16#" in-string))  ;; Single Integer in LISP HEX syntax
-                                    ((string-match-p "^[[:space:]]*16#[0-9a-fA-F]+[[:space:]]*$"    in-string) in-string                                                   )  ;; Single Integer in calc HEX syntax
-                                    ((string-match-p "^[[:space:]]*0[bB][01]+[[:space:]]*$"         in-string) (replace-regexp-in-string "^[[:space:]]*0b" "2#"  in-string))  ;; Single Integer in C++ BIN syntax
-                                    ((string-match-p "^[[:space:]]*#[bB][01]+[[:space:]]*$"         in-string) (replace-regexp-in-string "^[[:space:]]*#b" "2#"  in-string))  ;; Single Integer in LISP BIN syntax
-                                    ((string-match-p "^[[:space:]]*2#[0-9a-fA-F]+*[[:space:]]*$"    in-string) in-string                                                   )  ;; Single Integer in calc BIN syntax
-                                    ((string-match-p "^[[:space:]]*0[0-7]+[[:space:]]*$"            in-string) (replace-regexp-in-string "^[[:space:]]*0"  ""    in-string))  ;; Single Integer in C++ OCT syntax 
-                                    ((string-match-p "^[[:space:]]*#[oO][0-7]+[[:space:]]*$"        in-string) (replace-regexp-in-string "^[[:space:]]*#o" "8#"  in-string))  ;; Single Integer in LISP OCT syntax
-                                    ((string-match-p "^[[:space:]]*8#[0-9a-fA-F]+[[:space:]]*$"     in-string) in-string                                                   )  ;; Single Integer in calc OCT syntax
-                                    ((string-match-p "^[[:space:]]*[1-9][0-9]*[[:space:]]*$"        in-string) in-string                                                   )  ;; Single Integer in C++/LISP/calc DEC syntax
-                                    ((string-match-p "^\\\\[0-7]\\{3\\}$"                           in-string) (replace-regexp-in-string "^\\\\"           "8#"  in-string))  ;; 1 byte Octal escape sequence
-                                    ((string-match-p "^\\\\X[0-9a-fA-F]\\{2\\}$"                    in-string) (replace-regexp-in-string "^\\\\X"          "16#" in-string))  ;; 1 byte Hex escape sequence
-                                    ((string-match-p "^\\\\U[0-9a-fA-F]\\{4\\}$"                    in-string) (replace-regexp-in-string "^\\\\U"          "16#" in-string))  ;; 2 byte Hex Unicode escape sequence
-                                    ((string-match-p "^\\\\U[0-9a-fA-F]\\{8\\}$"                    in-string) (replace-regexp-in-string "^\\\\U"          "16#" in-string))  ;; 4 byte Hex Unicode escape sequence                                    
-                                    )))
-        (if calc-int-string
-            (concat (calc-eval (list calc-int-string 'calc-number-radix 10))
-                    "  "
-                    (calc-eval (list calc-int-string 'calc-number-radix 16))
-                    "  "
-                    (calc-eval (list calc-int-string 'calc-number-radix 2))
-                    "  "
-                    (calc-eval (list calc-int-string 'calc-number-radix 8)))))))
+(defun MJR-string-int-multibase-convert (in-string &optional separator)
+  "If IN-STRING contains a single integer then return a string with the integer represented in base 10, 16, 2, and 8 -- separated by SEPARATOR.
+HEX, DEC, OCT, & BIN integers may be in C++, LISP, ELISP, F77, & calc syntax.  Numeric string escape sequences in C++ syntax are recognized."
+  (let ((int-pattern (cl-find-if (lambda (x) (string-match-p (first x) in-string))
+                                (list (list "^[[:space:]]*0[xX][0-9a-fA-F]+[[:space:]]*$"  "^[[:space:]]*0x" "16#"    "C++"  "HEX" "INT"   )
+                                      (list "^[[:space:]]*0[bB][01]+[[:space:]]*$"         "^[[:space:]]*0b" "2#"     "C++"  "BIN" "INT"   )
+                                      (list "^[[:space:]]*0[0-7]+[[:space:]]*$"            "^[[:space:]]*0"  ""       "C++"  "OCT" "INT"   ) ;; before ALL DEC
+                                      (list "^[[:space:]]*[1-9][0-9]*[[:space:]]*$"        nil               nil      "ALL"  "DEC" "INT"   )
+                                      (list "^[[:space:]]*16#[0-9a-fA-F]+[[:space:]]*$"    nil               nil      "calc" "HEX" "INT"   )
+                                      (list "^[[:space:]]*2#[0-9a-fA-F]+*[[:space:]]*$"    nil               nil      "calc" "BIN" "INT"   )
+                                      (list "^[[:space:]]*8#[0-9a-fA-F]+[[:space:]]*$"     nil               nil      "calc" "OCT" "INT"   )
+                                      (list "^[[:space:]]*#[xX][0-9a-fA-F]+[[:space:]]*$"  "^[[:space:]]*#x" "16#"    "LISP" "HEX" "INT"   )
+                                      (list "^[[:space:]]*#[bB][01]+[[:space:]]*$"         "^[[:space:]]*#b" "2#"     "LISP" "BIN" "INT"   )
+                                      (list "^[[:space:]]*#[oO][0-7]+[[:space:]]*$"        "^[[:space:]]*#o" "8#"     "LISP" "OCT" "INT"   )
+                                      (list "^\\\\[0-7]\\{3\\}$"                           "^\\\\"           "8#"     "C++"  "OCT" "CHAR8" )
+                                      (list "^\\\\X[0-9a-fA-F]\\{2\\}$"                    "^\\\\X"          "16#"    "C++"  "HEX" "CHAR8" )
+                                      (list "^\\\\U[0-9a-fA-F]\\{4\\}$"                    "^\\\\U"          "16#"    "C++"  "HEX" "CHAR2" )
+                                      (list "^\\\\U[0-9a-fA-F]\\{8\\}$"                    "^\\\\U"          "16#"    "C++"  "HEX" "CHAR4" )
+                                      (list "^[[:space:]]*[bB]'[01]+'[[:space:]]*$"        "B'\\(.*\\)'"     "2#\\1"  "F77"  "BIN" "INT"   )
+                                      (list "^[[:space:]]*[oO]'[0-7]+'[[:space:]]*$"       "O'\\(.*\\)'"     "8#\\1"  "F77"  "OCT" "INT"   )
+                                      (list "^[[:space:]]*[xX]'[0-9a-fA-F]+'[[:space:]]*$" "X'\\(.*\\)'"     "16#\\1" "F77"  "HEX" "INT"   )
+                                      (list "^[[:space:]]*[zZ]'[0-9a-fA-F]+'[[:space:]]*$" "Z'\\(.*\\)'"     "16#\\1" "F77"  "HEX" "INT"   )))))
+    (if int-pattern
+        (let ((calc-int-string (if (second int-pattern)
+                                   (replace-regexp-in-string (second int-pattern) (third int-pattern) in-string)
+                                   in-string)))
+          (mapconcat (lambda (x) (calc-eval (list calc-int-string 'calc-number-radix x))) '(10 16 2 8) (or separator " "))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun MJR-meta-eval (eval-how &optional eval-str)
