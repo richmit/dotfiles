@@ -76,16 +76,6 @@
 ;;  * bubbles - like SameGame.
 ;;  * display-time-world
 ;;
-;; Stuff I Forget:
-;;  * Search for Unicode stuff: C-x 8 enter
-;;  * list character tables: list-charset-chars
-;;  * Macros
-;;    * C-x (     Start recording a macro
-;;    * C-x )     End macro recording
-;;    * C-x C-k r Run the last keyboard macro on each line that begins in the region (apply-macro-to-region-lines). 
-;;    * C-x e     Execute the most recently defined keyboard macro.  Hit 'e' to repeat
-;;  * Insert a sequence of numbers in a column: C-x r N (rectangle-number-lines).  Use prefix to set start and number format
-;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -416,24 +406,32 @@ Intended to be bound to M-=.  When mark=point or no mar, call describe-char.  Ot
       (call-interactively #'describe-char)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun MJR-scratch (&optional mode-to-use)
-  "Create a new scratch buffer with specified mode and switch to it."
-  (interactive (list (if (require 'ido nil :noerror)
+(defun MJR-scratch (&optional mode-to-use initial-contents)
+  "Create a new scratch buffer with current region's contents and switch to it.
+The mode for the new buffer is interactively queried.  With prefix argument you can specify an arbitrary mode, without you get a safe list."
+  (interactive (list (if (and (null current-prefix-arg) (require 'ido nil :noerror))
                          (ido-completing-read "New buffer mode: " '("lisp-interaction-mode" "text-mode" "org-mode" "mail-mode"))
-                         (read-string "New buffer mode: " "lisp-interaction-mode"))))
+                         (read-string "New buffer mode: " "lisp-interaction-mode"))
+                     (if (or (null transient-mark-mode) (region-active-p))
+                         (let ((reg-min  (if (mark) (min (point) (mark)) (point-min)))
+                               (reg-max  (if (mark) (max (point) (mark)) (point-max))))
+                           (if (< reg-min reg-max)
+                               (buffer-substring-no-properties reg-min reg-max))))))
   (let* ((new-buf-mode-str (if (not (stringp mode-to-use))
                                "lisp-interaction-mode"
                                mode-to-use))
          (new-buf-mode-sym (let ((mode-sym (intern new-buf-mode-str)))
                              (if (fboundp mode-sym)
                                  mode-sym)))
-         (new-buf-mode-suf (if (string-equal "lisp-interaction-mode" new-buf-mode-str) "" (concat "-" new-buf-mode-str))))        
+         (new-buf-mode-suf (if (string-equal "lisp-interaction-mode" new-buf-mode-str) "" (concat "-" new-buf-mode-str))))
     (if new-buf-mode-sym
         (let* ((new-buf-name (generate-new-buffer-name (concat "*scratch" new-buf-mode-suf "*")))
-               (new-buffer   (get-buffer-create new-buf-name)))    
+               (new-buffer   (get-buffer-create new-buf-name)))
           (with-current-buffer new-buffer
             (funcall new-buf-mode-sym)
-            (switch-to-buffer-other-window new-buffer)))
+            (switch-to-buffer-other-window new-buffer)
+            (if initial-contents
+                (insert initial-contents))))
         (message "MJR-scratch: ERROR: MODE-TO-USE was not found"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -927,8 +925,8 @@ The 'MJR' comments come in one of two forms:
             nil
             (lambda () (and (thing-at-point-looking-at ".+" 20) (match-string 0)))
             (if (string-equal MJR-platform "WINDOWS-MGW")
-                (list (lambda (lstr) (browse-url (concat "http://google.com/#q=" (url-hexify-string string-to-lookup)))))
-                (list (concat MJR-home-bin "/browser -foreground 100 -new-window 'http://google.com/#q=%U' &"))))
+                (list (lambda (lstr) (browse-url (concat "http://google.com/search?q=" (url-hexify-string string-to-lookup)))))
+                (list (concat MJR-home-bin "/browser -foreground 100 -new-window 'http://google.com/search?q=%U' &"))))
       MJR-thingy-lookeruper-methods)
 ;; Look up a user name (uname)
 (push (list "uname-short"
@@ -1090,16 +1088,16 @@ The column of numbers may be defined in two ways:
   * Number found under the point, and on subsiquent lines below the current one and in the same column as the point.
 
 Statstics:
-  * Available:       sumsq, var, sum, mean, median, min, max, sd, range, n
-  * Default printed:             sum, mean, median, min, max, sd, range, n
+  * Available:       sumsq, var, pvar, sum, mean, median, min, max, sd, psd, range, n
+  * Default printed:                   sum, mean, median, min, max, sd, psd, range, n
 
 When called with a prefix argument (or when prefix-or-stats-wanted is an integer), the stats to print will be interactively queried from the user.
 Non-interactively the prefix-or-stats-wanted argument should be a list of strings or a single string with a comma delimited list of stats. Note
 the function always returns all statistics in an alist regardless of what stats are printed."
   (interactive "r\np")
-  (let* ((all-stats     '("sumsq" "var" "sum" "mean" "median" "min" "max" "sd" "range" "n"))
+  (let* ((all-stats     '("sumsq" "var" "pvar" "sum" "mean" "median" "min" "max" "sd" "psd" "range" "n"))
          (stats-wanted (cond ((and (listp prefix-or-stats-wanted) (not (null prefix-or-stats-wanted)))   prefix-or-stats-wanted)
-                             ((stringp prefix-or-stats-wanted)                                 (split-string prefix-or-stats-wanted "[^a-zA-Z]"))
+                             ((stringp prefix-or-stats-wanted)                                           (split-string prefix-or-stats-wanted "[^a-zA-Z]"))
                              ((and (numberp prefix-or-stats-wanted) (not (= 1 prefix-or-stats-wanted)))  (split-string  (let ((stat-names (append all-stats (list (mapconcat 'identity all-stats ",")))))
                                                                                                                           (if (require 'ido nil :noerror)
                                                                                                                               (ido-completing-read "Stats to compute: " stat-names)
@@ -1137,13 +1135,15 @@ the function always returns all statistics in an alist regardless of what stats 
          (the-median   (if (cl-evenp the-n) (/ (+  (nth (/ (- the-n 1) 2) sorted-data) (nth (/ the-n 2) sorted-data)) 2.0) (nth (/ the-n 2) sorted-data)))
          (the-sumsq    (apply '+ (mapcar (lambda (x) (* x x)) sorted-data)))
          (the-var      (if (< 0 the-n) (- (/ the-sumsq the-n) (* the-mean the-mean))))
-         (the-sd       (if (< 0 the-var) (sqrt the-var)))
+         (the-pvar     (if (< 1 the-n) (/ (* the-var the-n) (- the-n 1))))
+         (the-sd       (if (and the-var (< 0 the-var)) (sqrt the-var)))
+         (the-psd      (if (and the-pvar (< 0 the-pvar)) (sqrt the-pvar)))
          (the-max      (car (last sorted-data)))
          (the-range    (- the-max the-min))
          (stat-alist   (list (cons "min"   the-min)   (cons "max"     the-max)    (cons "sum"   the-sum) (cons "sumsq" the-sumsq)
                              (cons "mean"  the-mean)  (cons "median"  the-median) (cons "sd"    the-sd)  (cons "var"   the-var)
-                             (cons "range" the-range) (cons "n"       the-n)))
-         (stat-string  (apply #'concat (mapcar (lambda (stat-name) (format " %s: %s" stat-name (cdr (assoc stat-name stat-alist)))) stats-wanted))))
+                             (cons "range" the-range) (cons "n"       the-n)      (cons "psd"   the-psd) (cons "pvar"  the-pvar)))
+         (stat-string  (apply #'concat (mapcar (lambda (stat-name) (let ((stat-val (cdr (assoc stat-name stat-alist)))) (if stat-val (format " %s: %s" stat-name stat-val) ""))) stats-wanted))))
     (kill-new stat-string)
     (message  stat-string)
     stat-alist))
@@ -1990,13 +1990,18 @@ This function is 100% pure Emacs lisp -- no external tools are required"
             (let ((org-confirm-babel-evaluate nil))
               (funcall-interactively #'org-babel-execute-buffer)))
 
+          (setq org-adapt-indentation nil) ;; Don't indent by heading level
+          (setq org-edit-src-content-indentation 0) ;; Don't add a fixed indent inside blocks
+          ;;(setq org-src-preserve-indentation t)
           (setq org-html-postamble "Created by %a <%e>.  Rendered on %T via %c")
           (setq org-src-fontify-natively t)                         ;; Prety colors
           (setq org-src-tab-acts-natively t)                        ;; tab as in source mode
           (add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode))  ;; Make sure *.org files use org-mode
           (setq org-log-done 'time)                                 ;; Log timestamps on done TODO items
-          (setq org-indent-mode t)                                  ;; Indent stuff
+
+          (setq org-startup-indented nil)                           ;; Do Not Indent stuff
           (setq org-startup-folded nil)                             ;; Start with un-folded view
+          (electric-indent-mode -1)                                 ;; Don't do stupid stuff on enter
           (setq org-export-with-sub-superscripts nil)               ;; "_" and "^" are not special
           (setq org-confirm-babel-evaluate 't)                      ;; Ask about evals
           (setq org-export-babel-evaluate nil)                      ;; Do NOT eval on export
@@ -2837,3 +2842,17 @@ With prefix argument, force reinstall of already installed packages."
 ;;   (beginning-of-line)
 ;;   (insert (reverse (delete-and-extract-region (line-beginning-position)
 ;;                                               (line-end-position)))))
+
+
+;; (defun MJR-random-printable-string (len)
+;; "Random printable string -- useful for passwords"
+;;   (apply #'concat
+;;          (cl-loop repeat len
+;;                   collect (char-to-string (+ 33 (random 94))))))
+
+;; (defun MJR-insert-random-printable-string (len)
+;;   "Insert random printable string -- useful for passwords.  String length = Prefix, or 20 with no prefix"
+;;   (interactive "P")
+;;   (cl-loop repeat (if len (prefix-numeric-value len) 20)
+;;            do (insert (+ 33 (random 94)))))
+
