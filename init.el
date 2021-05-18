@@ -59,8 +59,8 @@
 ;;     * Several paths are checked for Macaulay, Maxima, and common lisp.
 ;;
 ;; I keep common stuff in a "core" directory I take with me.  Some stuff this config looks for:
-;;     * MJR-home-cor/codeBits/  -- A directory of source code templates MJR-prepend-header
-;;     * MJR-home-cor/codeBits/cheaderSTD.txt  -- Used by MJR-fix-c-includes
+;;     * MJR-home-cor/codeBits/  -- A directory of source code templates MJR-prepend-header-der
+;;     * MJR-home-cor/codeBits/cheaderSTD.txt  -- Used by MJR-fix-c-includes-der
 ;;     * MJR-home-cor/elisp      -- A directory containing various bits of elisp
 ;;        * MJR-home-cor/elisp/git/
 ;;        * MJR-home-cor/elisp/gap/
@@ -204,6 +204,23 @@
 (require 'paren)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "INIT: STAGE: Theme....")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;(require 'custom)
+(defun MJR-try-theme ()
+  (if MJR-pookie-mode
+      nil
+      (if (load-theme 'mjr-dark 't  )
+          (MJR-quiet-message "INIT: THEME: Loaded mjr-dark!")
+          (progn (MJR-quiet-message "INIT: THEME: Failed to load mjr-dark!  Trying manjo-dark")
+                 (if (load-theme 'manjo-dark 't)
+                     (MJR-quiet-message "INIT: THEME: manjo-dark!")
+                     (MJR-quiet-message "INIT: THEME: Failed to load mjr-dark!"))))))
+(MJR-try-theme)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: STAGE: Autoloads for things in init file...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (autoload 'thing-at-point-looking-at "thingatpt"  "Return non-nil if point is in or just after a match for REGEXP." t)
@@ -232,6 +249,20 @@ so it gets picked up."
               (let ((best-directory-path (cl-find-if #'file-directory-p (sort candidate-path-names (lambda (a b) (string-lessp b a))))))
                 (if best-directory-path
                     (file-name-as-directory best-directory-path))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;g
+(defun MJR-funcall-in-buffer-or-dired-marked (func &rest func-args)
+  "In a non-dired buffer, execute FUNC.  In dired, find-file each marked file and execute FUNC in each buffer.
+Note if the file is already in a buffer, that buffer will be used.  If the buffer contents don't match the file, then query to revert the buffer before funcall"
+  (if (not (equal major-mode 'dired-mode))
+      (apply func func-args)
+      (let ((marked-files (dired-get-marked-files)))
+        (if (null marked-files)
+            (error "MJR-dired-mapc: ERROR: No marked files!!")
+            (mapc (lambda (file-name)
+                    (with-current-buffer (find-file-noselect file-name) 
+                      (apply func func-args)))
+                  marked-files)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; On windows, we set the font we like and then setup a way to adjust its size in the face of DPI changes
@@ -280,7 +311,7 @@ With prefix argument, also mark ps, html, dvi, and ps files."
   "Flag junk files for deletion -- see MJR-dired-flag-latex-junk-files too."
   (interactive)
   (if (not (string-equal (symbol-name major-mode) "dired-mode"))
-      (message "MJR-dired-flag-latex-junk-files: Must be in dired-mode to use this function!")
+      (message "MJR-dired-flag-junk: Must be in dired-mode to use this function!")
       (let ((dired-marker-char dired-del-marker)
             (re-to-zap         '("^NUL$"
                                  "^.+~$"
@@ -616,70 +647,58 @@ The 'MJR' comments come in one of two forms:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-cor "/codeBits/cheaderSTD.txt"))
     (progn
-      (MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-fix-c-includes: DEFINED!")
-      (defun MJR-fix-c-includes ()
+      (MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-fix-c-includes-der: DEFINED!")
+      (defun MJR-fix-c-includes-der ()
         "Fixes C/C++ #include lines to match my standard header format.
 
-         In dired-mode operate on marked (or current) file(s); otherwise operate on current buffer.
+         In dired-mode operate on marked (or current) file(s); otherwise operate on current buffer.  If any of the marked files are already loaded
+         in a buffer it is best to save them first -- so you can do an ediff-current-file to see what changed.
 
-         The standard header format is defined by a header DB stored in core/codeBits/cheaderSTD.txt.
-
-         Returns number of files modified in dired-mode; otherwise the number of lines modified."
+         The standard header format is defined by a header DB stored in core/codeBits/cheaderSTD.txt."
         (interactive)
-        (let ((proc-buffer (lambda ()
-                             (let ((case-fold-search   nil)
-                                   (include-line-regex "^\\s-*#[iI][nN][cC][lL][uU][dD][eE]\\s-*\\([<\"]\\)\\([^>\"]+\\)\\([>\"]\\).*$") ;; Optional whitespace, "include" case insenstive, optional whitespace, < or " (1), non-empty string not containing < or " (2), < or " (3), optional stuff, end of line
-                                   (golden-includes    nil)
-                                   (change-count       0))
-                               ;; Read golden include data
-                               (with-temp-buffer
-                                 (insert-file-contents (concat MJR-home-cor "/codeBits/cheaderSTD.txt"))
-                                 (goto-char (point-min))
-                                 (while (re-search-forward include-line-regex nil t)
-                                   (let ((golden-include-line (match-string 0))
-                                         (golden-include-name (match-string 2)))
-                                     (push (cons golden-include-name golden-include-line) golden-includes))))
-                               ;; Process Buffer
-                               (goto-char (point-min))
-                               (while (re-search-forward include-line-regex nil t)
-                                 (let ((include-line        (match-string 0))
-                                       (include-delim-start (match-string 1))
-                                       (include-name        (match-string 2))
-                                       (include-delim-end   (match-string 3)))
-                                   (if (or (and (string-equal include-delim-start "<")  (string-equal include-delim-end ">"))
-                                           (and (string-equal include-delim-start "\"") (string-equal include-delim-end "\"")))
-                                       (let ((golden-line (cdr (assoc include-name golden-includes))))
-                                         (if (and golden-line (not (string-equal golden-line include-line)))
-                                             (progn
-                                               (replace-match golden-line nil nil)
-                                               (cl-incf change-count)))))))
-                               change-count))))
-          (if (string-equal (symbol-name major-mode) "dired-mode")
-              (let ((prefix-value (prefix-numeric-value current-prefix-arg))
-                    (file-change-count 0))
-                (mapc (lambda (file-name)
-                        (message "MJR-fix-c-includes: Processing file: %s" file-name)
-                        (with-temp-file file-name
-                          (insert-file-contents file-name)
-                          (if (and (< prefix-value 2) (< 0 (funcall proc-buffer)))
-                              (progn (cl-incf file-change-count)
-                                     (copy-file file-name (make-backup-file-name file-name) 1)))))
-                      (dired-get-marked-files))
-                line-change-count)
-              (save-excursion
-                (funcall proc-buffer))))))
-    (message "INIT: STAGE: Define MJR Functions: MJR-fix-c-includes: NOT defined!  We could not find the codeBits/cheaderSTD.txt file!"))
+        (let ((case-fold-search   nil)
+              (include-line-regex "^\\s-*#[iI][nN][cC][lL][uU][dD][eE]\\s-*\\([<\"]\\)\\([^>\"]+\\)\\([>\"]\\).*$") ;; Optional whitespace, "include" case insenstive, optional whitespace, < or " (1), non-empty string not containing < or " (2), < or " (3), optional stuff, end of line
+              (golden-includes    nil)
+              (change-count       0))
+          ;; Read golden include data
+          (with-temp-buffer (insert-file-contents (concat MJR-home-cor "/codeBits/cheaderSTD.txt"))
+                            (goto-char (point-min))
+                            (while (re-search-forward include-line-regex nil t)
+                              (let ((golden-include-line (match-string 0))
+                                    (golden-include-name (match-string 2)))
+                                (push (cons golden-include-name golden-include-line) golden-includes))))
+          ;; Process buffer(s)
+          (MJR-funcall-in-buffer-or-dired-marked (lambda () 
+                                                   (save-excursion
+                                                     (message "MJR-fix-c-includes-der: Processing buffer: %s" (buffer-name))
+                                                     (goto-char (point-min))
+                                                     (while (re-search-forward include-line-regex nil t)
+                                                       (let ((include-line        (match-string 0))
+                                                             (include-delim-start (match-string 1))
+                                                             (include-name        (match-string 2))
+                                                             (include-delim-end   (match-string 3)))
+                                                         (if (or (and (string-equal include-delim-start "<")  (string-equal include-delim-end ">"))
+                                                                 (and (string-equal include-delim-start "\"") (string-equal include-delim-end "\"")))
+                                                             (let ((golden-line (cdr (assoc include-name golden-includes))))
+                                                               (if (and golden-line (not (string-equal golden-line include-line)))
+                                                                   (progn
+                                                                     (replace-match golden-line nil nil)
+                                                                     (cl-incf change-count))))))))))
+          (message "MJR-fix-c-includes-der: Fixed %d include lines" change-count))))
+    (message "INIT: STAGE: Define MJR Functions: MJR-fix-c-includes-der: NOT defined!  We could not find the codeBits/cheaderSTD.txt file!"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-cor "/codeBits/"))
     (progn
-      (MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-prepend-header: DEFINED!")
-      (defun MJR-prepend-header (cat-str file-type)
+      (MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-prepend-header-der: DEFINED!")
+      (defun MJR-prepend-header-der (cat-str file-type)
         "Determine the buffer file type, and populate the buffer with an appropriate header and, if the buffer is empty, a template.
+
+         If run in dired-mode, then marked files will be loaded and operated on.
 
          Some text in the templates gets expanded: YYYY-MM-DD, YYYY, FILENAME, FILEPATHNAME
 
-         Headers and templates are categorized into groups appropriate to different uses: MJR, TI, HWP."
+         Headers and templates are categorized into groups appropriate to different uses.."
         (interactive
          (let ((cat-str-v (mapcar #'file-name-nondirectory
                                   (cl-remove-if (lambda (f) (or (not (file-directory-p f))
@@ -695,42 +714,44 @@ The 'MJR' comments come in one of two forms:
                                   (ido-completing-read "Type: " file-type-v nil 't nil nil "AUTO")
                                   (read-string "Type: " "AUTO" 'file-type-v))))
                  (list da-cat da-type))))))
-        (let ((cur-file-name (buffer-file-name)))
-          (let ((file-type (if (string= file-type "AUTO")
-                               (if cur-file-name
-                                   (cdr (cl-find-if (lambda (re) (string-match (car re) cur-file-name))
-                                                    (list (cons "^makefile$" "make")
-                                                          (cons "^Doxyfile$" "doxyfile")
-                                                          (cons "\..+$"      (file-name-extension cur-file-name))))))
-                               file-type)))
-            (if file-type
-                (let* ((src-path      (concat MJR-home-cor "/codeBits/"))
-                       (top-file-name (concat src-path "/" cat-str "/top."      file-type))
-                       (tpl-file-name (concat src-path "/" cat-str "/template." file-type)))
-                  (message top-file-name)
-                  (if (file-exists-p top-file-name)
-                      (if (file-readable-p top-file-name)
-                          (let ((top-string (with-temp-buffer
-                                              (insert-file-contents top-file-name)
-                                              (buffer-string)))
-                                (do-template (and (= (point-min) (point-max)) (file-readable-p tpl-file-name))))
-                            (dolist (cur-rpl (list (cons "YYYY-MM-DD"   (MJR-date "%Y-%m-%d"))
-                                                   (cons "YYYY"         (MJR-date "%Y"))
-                                                   (cons "FILENAME"     (if cur-file-name (file-name-nondirectory cur-file-name)))
-                                                   (cons "FILEPATHNAME" cur-file-name)))
-                              (if (cdr cur-rpl)
-                                  (setq top-string (replace-regexp-in-string (car cur-rpl) (cdr cur-rpl) top-string 't 't))))
-                            (goto-char (point-min))
-                            (insert top-string)
-                            (if do-template
-                                (if  (file-readable-p tpl-file-name)
-                                     (insert-file-contents tpl-file-name)
-                                     (MJR-quiet-message "MJR-prepend-header: ERROR: Could not find TEMPLATE file for this file type")))
-                            (message "MJR-prepend-header: INFO: Header prepended"))
-                          (message "MJR-prepend-header: ERROR: Found TOP file, but can not read it"))
-                      (message "MJR-prepend-header: ERROR: Could not find TOP file for this file type")))
-                (message "MJR-prepend-header: ERROR: Could not figure out file type"))))))
-    (message "INIT: STAGE: Define MJR Functions: MJR-prepend-header: NOT defined!  We could not find the codeBits directory!"))
+        (MJR-funcall-in-buffer-or-dired-marked
+         (lambda ()
+           (let ((cur-file-name (buffer-file-name)))
+             (let ((file-type (if (string= file-type "AUTO")
+                                  (if cur-file-name
+                                      (cdr (cl-find-if (lambda (re) (string-match (car re) cur-file-name))
+                                                       (list (cons "^makefile$" "make")
+                                                             (cons "^Doxyfile$" "doxyfile")
+                                                             (cons "\..+$"      (file-name-extension cur-file-name))))))
+                                  file-type)))
+               (if file-type
+                   (let* ((src-path      (concat MJR-home-cor "/codeBits/"))
+                          (top-file-name (concat src-path "/" cat-str "/top."      file-type))
+                          (tpl-file-name (concat src-path "/" cat-str "/template." file-type)))
+                     (message top-file-name)
+                     (if (file-exists-p top-file-name)
+                         (if (file-readable-p top-file-name)
+                             (let ((top-string (with-temp-buffer
+                                                 (insert-file-contents top-file-name)
+                                                 (buffer-string)))
+                                   (do-template (and (= (point-min) (point-max)) (file-readable-p tpl-file-name))))
+                               (dolist (cur-rpl (list (cons "YYYY-MM-DD"   (MJR-date "%Y-%m-%d"))
+                                                      (cons "YYYY"         (MJR-date "%Y"))
+                                                      (cons "FILENAME"     (if cur-file-name (file-name-nondirectory cur-file-name)))
+                                                      (cons "FILEPATHNAME" cur-file-name)))
+                                 (if (cdr cur-rpl)
+                                     (setq top-string (replace-regexp-in-string (car cur-rpl) (cdr cur-rpl) top-string 't 't))))
+                               (goto-char (point-min))
+                               (insert top-string)
+                               (if do-template
+                                   (if  (file-readable-p tpl-file-name)
+                                        (insert-file-contents tpl-file-name)
+                                        (message "MJR-prepend-header-der(%s): ERROR: Could not find TEMPLATE file for this file type" (buffer-name))))
+                               (message "MJR-prepend-header-der(%s): INFO: Header prepended" (buffer-name)))
+                             (message "MJR-prepend-header-der(%s): ERROR: Found TOP file, but can not read it" (buffer-name)))
+                         (message "MJR-prepend-header-der(%s): ERROR: Could not find TOP file for this file type" (buffer-name))))
+                   (message "MJR-prepend-header-der(%s): ERROR: Could not figure out file type" (buffer-name)))))))))
+    (message "INIT: STAGE: Define MJR Functions: MJR-prepend-header-der: NOT defined!  We could not find the codeBits directory!"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (file-exists-p (concat MJR-home-bin "/latexit.rb"))
@@ -927,6 +948,14 @@ The 'MJR' comments come in one of two forms:
             (if (string-equal MJR-platform "WINDOWS-MGW")
                 (list (lambda (lstr) (browse-url (concat "http://google.com/search?q=" (url-hexify-string string-to-lookup)))))
                 (list (concat MJR-home-bin "/browser -foreground 100 -new-window 'http://google.com/search?q=%U' &"))))
+      MJR-thingy-lookeruper-methods)
+;; Look via bing
+(push (list "bing"
+            nil
+            (lambda () (and (thing-at-point-looking-at ".+" 20) (match-string 0)))
+            (if (string-equal MJR-platform "WINDOWS-MGW")
+                (list (lambda (lstr) (browse-url (concat "https://www.bing.com/search?q=" (url-hexify-string string-to-lookup)))))
+                (list (concat MJR-home-bin "/browser -foreground 100 -new-window 'https://www.bing.com/search?q=%U' &"))))
       MJR-thingy-lookeruper-methods)
 ;; Look up a user name (uname)
 (push (list "uname-short"
@@ -1148,6 +1177,23 @@ the function always returns all statistics in an alist regardless of what stats 
     (message  stat-string)
     stat-alist))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;g
+(MJR-quiet-message "INIT: STAGE: Define MJR Functions: MJR-org-export-der: DEFINED!")
+(defun MJR-org-export-der (execute-blocks tangle-blocks export-html export-pdf)
+  "Evaluate all code blocks, export to HTML, and tangle current file or all marked files in dired-mode
+The suffix -der (DirEd Ready) means this function works on a buffer or on marked files in dired."
+  (interactive (if (null current-prefix-arg)
+                   (list (y-or-n-p "Evaluate all blocks?")
+                         (y-or-n-p "Tangle all blocks?")
+                         (y-or-n-p "Export to HTML?")
+                         (y-or-n-p "Export to PDF via LaTeX?"))
+                   (list 't 't 't 't)))
+  (MJR-funcall-in-buffer-or-dired-marked (lambda ()
+                                           (if execute-blocks (MJR-org-babel-execute-buffer))
+                                           (if tangle-blocks (org-babel-tangle))
+                                           (if export-html (org-html-export-to-html))
+                                           (if export-pdf (org-latex-export-to-pdf)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: STAGE: Generic Global Emacs Config Stuff...")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1335,6 +1381,29 @@ the function always returns all statistics in an alist regardless of what stats 
               (if (file-exists-p "/msys64/usr/share/man")
                   (setenv "MANPATH" "/usr/share/man")))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(MJR-quiet-message "INIT: PKG SETUP: man")
+(eval-after-load "ediff-init"
+  (add-hook 'ediff-load-hook
+            ;; We can't set this stuff in a theme I like the default colors, but I use a dark background making foreground colors I use difficult to see on
+            ;; light gray backgrounds.  I could change the background to be dark, or the foreground to be dark.  I have not decided which I like better. ;)
+            (lambda ()
+              (progn (set-face-foreground ediff-current-diff-face-A           "White")
+                     (set-face-foreground ediff-current-diff-face-Ancestor    "White")
+                     (set-face-foreground ediff-current-diff-face-B           "White")
+                     (set-face-foreground ediff-current-diff-face-C           "White")
+                     (set-face-foreground ediff-fine-diff-face-A              "White")
+                     (set-face-foreground ediff-fine-diff-face-Ancestor       "White")
+                     (set-face-foreground ediff-fine-diff-face-B              "White")
+                     (set-face-foreground ediff-fine-diff-face-C              "White")
+                     (set-face-foreground ediff-even-diff-face-A              "Black")
+                     (set-face-foreground ediff-even-diff-face-Ancestor       "Black")
+                     (set-face-foreground ediff-even-diff-face-B              "Black")
+                     (set-face-foreground ediff-even-diff-face-C              "Black")
+                     (set-face-foreground ediff-odd-diff-face-A               "Black")
+                     (set-face-foreground ediff-odd-diff-face-Ancestor        "Black")
+                     (set-face-foreground ediff-odd-diff-face-B               "Black")
+                     (set-face-foreground ediff-odd-diff-face-C               "Black")))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: PKG SETUP: vc")
 ;; Use ediff for = binding
@@ -1532,6 +1601,8 @@ the function always returns all statistics in an alist regardless of what stats 
           (add-hook 'dired-mode-hook
                     (lambda ()
                       (MJR-quiet-message "POST-INIT: HOOK: diredc-mode-hook")
+                      (local-set-key (kbd "C-c o")     'MJR-org-export-der)
+                      (local-set-key (kbd "C-c j")     'MJR-dired-flag-junk)
                       (if (boundp 'ido-enable-replace-completing-read)
                           (setq ido-enable-replace-completing-read nil))))  ;; If ido is loaded, make sure we don't use it in dired
           (define-key dired-mode-map (kbd "<mouse-3>") (lambda (event)
@@ -1575,15 +1646,15 @@ the function always returns all statistics in an alist regardless of what stats 
 (MJR-quiet-message "INIT: PKG SETUP: eshell")
 (eval-after-load "em-term"
   '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: em-term!")
-          (mapc (lambda (i) (add-to-list 'eshell-visual-commands i)) '("s" "sn" "sscreen" "sscreen.sh"
-                                                                       "t" "tn" "td" "tnn" "stmux" "stmux.sh"
-                                                                       "hexDump.rb" "hexDump"
-                                                                       "byteAnalysis.rb" "byteAnalysis"
-                                                                       "getSecret.sh" "getSecret"
-                                                                       "hlflt.rb" "hlflt"
-                                                                       "logTail.rb" "logTail"
-                                                                       ))
-          (mapcar (lambda (i) (add-to-list 'eshell-visual-subcommands i)) '(("git" "help" "log" "l" "ll" "diff" "show")))))
+          (if (not (string-match MJR-platform "WINDOWS-MGW"))
+              (progn (mapc (lambda (i) (add-to-list 'eshell-visual-commands i)) '("s" "sn" "sscreen" "sscreen.sh"
+                                                                                  "t" "tn" "td" "tnn" "stmux" "stmux.sh"
+                                                                                  "hexDump.rb" "hexDump"
+                                                                                  "byteAnalysis.rb" "byteAnalysis"
+                                                                                  "getSecret.sh" "getSecret"
+                                                                                  "hlflt.rb" "hlflt"
+                                                                                  "logTail.rb" "logTail"))
+                     (mapcar (lambda (i) (add-to-list 'eshell-visual-subcommands i)) '(("git" "help" "log" "l" "ll" "diff" "show")))))))
 (eval-after-load "esh-mode"
   '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: esh-mode!")
           (defun MJR-eshell-insert-last-word (n)
@@ -1645,6 +1716,8 @@ the function always returns all statistics in an alist regardless of what stats 
                                 (local-set-key (kbd "C-n")     'eshell-next-input)
                                 (if (not (server-running-p))
                                     (server-start))
+                                (if (string-match MJR-platform "WINDOWS-MGW")
+                                    (setenv "GIT_PAGER" "cat"))
                                 (setenv "PAGER" "cat")
                                 (setenv "EDITOR" (format "emacsclient -f %s" server-name)))))))
 (if (string-match MJR-platform "WINDOWS-MGW")
@@ -2031,7 +2104,26 @@ This function is 100% pure Emacs lisp -- no external tools are required"
                 (if max-path
                     (setq org-babel-maxima-command max-path)
                     (MJR-quiet-message "Error: Could not find maxima.bat batch file for babel in org-mode on Windows"))))
-          ))
+          ;; Handy dired function 
+          (defun MJR-dired-org-export (execute-blocks tangle-blocks export-html)
+            "Evaluate all code blocks, export to HTML, and tangle current file or all marked files in dired-mode"
+            (interactive (if (null current-prefix-arg)
+                             (list (y-or-n-p "Evaluate all blocks?")
+                                   (y-or-n-p "Tangle all blocks?")
+                                   (y-or-n-p "Export to HTML?"))
+                             (list 't 't 't)))
+            (if (not (equal major-mode 'dired-mode))
+                (message "MJR-dired-org-to-html-and-code: ERROR: Not in dired mode!!")
+                (let ((marked-files (dired-get-marked-files)))
+                  (if (null marked-files)
+                      (message "MJR-dired-org-to-html-and-code: ERROR: No marked files!!")
+                      (mapc (lambda (f)
+                              (with-current-buffer (find-file-noselect f)
+                                (if execute-blocks (MJR-org-babel-execute-buffer))
+                                (if tangle-blocks (org-babel-tangle))
+                                (if export-html (org-html-export-to-html))))
+                            marked-files)))
+                (message "dired-get-marked-files: Complete!")))))
     (MJR-quiet-message "INIT: PKG SETUP: org-mode setup suppressed in pookie-mode"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2707,23 +2799,6 @@ With prefix argument, force reinstall of already installed packages."
   '(progn (MJR-quiet-message "POST-INIT: EVAL-AFTER: dos-w32!")
           ;; I use a bash shell not DOS.  On DOS the value should be "NUL", but for base I need to reset it back to "/dev/null"
           (setq null-device "/dev/null")))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(MJR-quiet-message "INIT: STAGE: Theme....")
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;(require 'custom)
-(defun MJR-try-theme ()
-  (if MJR-pookie-mode
-      nil
-      (if (load-theme 'mjr-dark 't  )
-          (MJR-quiet-message "INIT: THEME: Loaded mjr-dark!")
-          (progn (MJR-quiet-message "INIT: THEME: Failed to load mjr-dark!  Trying manjo-dark")
-                 (if (load-theme 'manjo-dark 't)
-                     (MJR-quiet-message "INIT: THEME: manjo-dark!")
-                     (MJR-quiet-message "INIT: THEME: Failed to load mjr-dark!"))))))
-(MJR-try-theme)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (MJR-quiet-message "INIT: STAGE: Setup global aliases....")
